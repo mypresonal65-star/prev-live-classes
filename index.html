@@ -103,31 +103,21 @@
     
     <div class="separator">OR</div>
     
-    <!-- Google Sign-In Option -->
+    <!-- Google Sign-In Option (Direct Login - No Token Verification) -->
     <div style="margin-top:20px;padding-top:20px;border-top:1px solid #e8edf6;">
-      <p style="color:#6a7c94;font-size:0.85rem;margin-bottom:12px;">
-        🎬 <strong>YouTube Private Videos</strong> — Sign in with Google
+      <p style="color:#6a7c94;font-size:0.85rem;margin-bottom:8px;">
+        🎬 <strong>YouTube Private Videos</strong>
+      </p>
+      <p style="color:#8b949e;font-size:0.75rem;margin-bottom:12px;">
+        Sign in with Google to watch private YouTube videos.
       </p>
       
-      <!-- Google OAuth Redirect (PC Fix) -->
+      <!-- Simple Google Login Button -->
       <a href="https://accounts.google.com/o/oauth2/v2/auth?client_id=853267104713-46mrftcdeva7a8di4bdq6i6br29bd3vn.apps.googleusercontent.com&redirect_uri=https://prev-live-classes-azio.onrender.com&response_type=token&scope=https://www.googleapis.com/auth/youtube.readonly&prompt=select_account"
          target="_blank"
          style="display:inline-block;background:#1a2b4c;color:white;padding:12px 28px;border-radius:40px;text-decoration:none;font-weight:500;margin:8px 0;width:100%;text-align:center;">
         🔑 Sign in with Google
       </a>
-      <p style="color:#8b949e;font-size:0.75rem;margin-top:4px;">
-        Login in new tab. Token will be auto-detected.
-      </p>
-      
-      <!-- Token Input -->
-      <div style="margin-top:12px;">
-        <input type="text" id="googleTokenInput" placeholder="Or paste token here" 
-               style="width:100%;padding:10px 14px;border:1px solid #d9e1ec;border-radius:16px;font-size:0.85rem;margin-bottom:8px;" />
-        <button onclick="manualGoogleLogin()" 
-                style="padding:10px 20px;background:#2d7a9b;color:white;border:none;border-radius:40px;cursor:pointer;font-size:0.85rem;width:100%;">
-          ✅ Verify & Login
-        </button>
-      </div>
     </div>
   </div>
 
@@ -207,10 +197,30 @@
         const params = new URLSearchParams(hash.substring(1));
         const token = params.get('access_token');
         if (token) {
-          document.getElementById('googleTokenInput').value = token;
-          setTimeout(function() {
-            manualGoogleLogin();
-          }, 500);
+          // Directly save token and login
+          googleAccessToken = token;
+          // Decode token to get user info (JWT decode)
+          try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            googleUser = {
+              email: payload.email,
+              name: payload.name,
+              picture: payload.picture,
+              id: payload.sub
+            };
+            
+            localStorage.setItem(GOOGLE_SESSION_KEY, JSON.stringify({
+              user: googleUser,
+              accessToken: googleAccessToken,
+              loginTime: Date.now()
+            }));
+            
+            document.getElementById('loginSuccess').textContent = '✅ Google Sign-In successful!';
+            showVideoContent();
+            fetchPlaylists();
+          } catch(e) {
+            console.error('Token decode error:', e);
+          }
         }
       }
     })();
@@ -262,53 +272,6 @@
         }
       }, 1000);
     }
-
-    // ==================== MANUAL GOOGLE LOGIN ====================
-    window.manualGoogleLogin = function() {
-      const token = document.getElementById('googleTokenInput').value.trim();
-      if (!token) {
-        document.getElementById('loginError').textContent = '⚠️ Please paste your Google access token';
-        return;
-      }
-      
-      document.getElementById('loginSuccess').textContent = '⏳ Verifying token...';
-      
-      fetch('/api/verify-google-token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken: token })
-      })
-      .then(res => {
-        if (!res.ok) throw new Error('Server error: ' + res.status);
-        return res.json();
-      })
-      .then(data => {
-        if (data.success) {
-          googleUser = data.user;
-          googleAccessToken = token;
-          
-          localStorage.setItem(GOOGLE_SESSION_KEY, JSON.stringify({
-            user: googleUser,
-            accessToken: googleAccessToken,
-            loginTime: Date.now()
-          }));
-          
-          document.getElementById('loginError').textContent = '';
-          document.getElementById('loginSuccess').textContent = '✅ Google Sign-In successful!';
-          document.getElementById('googleTokenInput').value = '';
-          
-          showVideoContent();
-          fetchPlaylists();
-        } else {
-          document.getElementById('loginError').textContent = '❌ ' + (data.error || 'Invalid token');
-          document.getElementById('loginSuccess').textContent = '';
-        }
-      })
-      .catch(err => {
-        document.getElementById('loginError').textContent = '❌ Network error: ' + err.message;
-        document.getElementById('loginSuccess').textContent = '';
-      });
-    };
 
     function checkGoogleSession() {
       try {
@@ -774,7 +737,7 @@
       document.getElementById('videoContent').style.display = 'none';
     }
 
-    console.log('✅ Video Portal loaded - PC + Mobile Google Login Fixed');
+    console.log('✅ Video Portal loaded - Google Login Fixed');
   })();
 </script>
 </body>
