@@ -83,6 +83,20 @@
     .separator::before, .separator::after { content: ''; flex: 1; border-bottom: 1px solid #d9e1ec; }
     .separator::before { margin-right: 16px; }
     .separator::after { margin-left: 16px; }
+    
+    .google-login-small { 
+      background: #1a2b4c; 
+      color: white; 
+      border: none; 
+      padding: 6px 16px; 
+      border-radius: 40px; 
+      cursor: pointer; 
+      font-size: 0.75rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .google-login-small:hover { background: #2f4370; }
   </style>
 </head>
 <body>
@@ -119,7 +133,8 @@
            data-client_id="853267104713-46mrftcdeva7a8di4bdq6i6br29bd3vn.apps.googleusercontent.com"
            data-callback="handleGoogleLogin"
            data-auto_prompt="false"
-           data-use_fedcm_for_prompt="true">
+           data-use_fedcm_for_prompt="true"
+           data-prompt_parent_id="g_id_onload">
       </div>
       <div class="g_id_signin" 
            data-type="standard" 
@@ -136,7 +151,7 @@
   <div id="videoContent" style="display: none;">
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
       <div id="statusBar" class="status-bar">🔄 Loading videos...</div>
-      <div id="sessionTimer" class="session-timer">⏰ Time left: --:--:--</div>
+      <div id="sessionTimer" class="session-timer">⏰ Time left: 3d 00:00:00</div>
     </div>
     <div id="playlistSelector" class="playlist-selector">
       <div class="empty-state">Loading playlists...</div>
@@ -237,7 +252,7 @@
     let googleAccessToken = null;
     let resetCheckInterval = null;
 
-    // ==================== GOOGLE LOGIN (FIXED) ====================
+    // ==================== GOOGLE LOGIN ====================
     window.handleGoogleLogin = function(response) {
       console.log('Google login response received:', response);
       
@@ -302,20 +317,20 @@
       }
     }
 
-    // ==================== RESET AFTER 3 DAYS ====================
+    // ==================== RESET AFTER 3 DAYS (FIXED) ====================
 
     function getTimeUntilReset() {
-      const lastReset = localStorage.getItem(RESET_KEY);
+      let lastReset = localStorage.getItem(RESET_KEY);
       if (!lastReset) {
-        localStorage.setItem(RESET_KEY, Date.now().toString());
-        return RESET_DURATION;
+        lastReset = Date.now().toString();
+        localStorage.setItem(RESET_KEY, lastReset);
       }
       const elapsed = Date.now() - parseInt(lastReset);
       return Math.max(0, RESET_DURATION - elapsed);
     }
 
     function formatTimeWithDays(ms) {
-      if (ms < 0) return '00:00:00';
+      if (ms < 0 || isNaN(ms)) return '3d 00:00:00';
       const days = Math.floor(ms / (1000 * 60 * 60 * 24));
       const hours = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
@@ -343,7 +358,6 @@
         
         if (document.getElementById('videoContent').style.display !== 'none') {
           document.getElementById('resetBanner').style.display = 'block';
-          document.getElementById('resetBanner').textContent = '🔄 Session expired after 3 days. Please login again.';
           setTimeout(() => {
             document.getElementById('resetBanner').style.display = 'none';
             logout();
@@ -356,6 +370,11 @@
 
     function startResetTimer() {
       if (resetCheckInterval) clearInterval(resetCheckInterval);
+      
+      // Ensure RESET_KEY exists
+      if (!localStorage.getItem(RESET_KEY)) {
+        localStorage.setItem(RESET_KEY, Date.now().toString());
+      }
       
       resetCheckInterval = setInterval(() => {
         const timeLeft = getTimeUntilReset();
@@ -450,6 +469,26 @@
       }
     }
 
+    // ==================== SHOW GOOGLE LOGIN POPUP ====================
+    window.showGoogleLogin = function() {
+      // Show the login container with Google button
+      document.getElementById('loginContainer').style.display = 'block';
+      document.getElementById('loginContainer').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      
+      // Trigger Google Sign-In button click
+      const googleBtn = document.querySelector('.g_id_signin');
+      if (googleBtn) {
+        // Find and click the actual Google button inside
+        const btn = googleBtn.querySelector('[role="button"]');
+        if (btn) {
+          btn.click();
+        } else {
+          // Fallback: trigger click on the container
+          googleBtn.click();
+        }
+      }
+    };
+
     // ==================== LOGOUT ====================
 
     window.logout = function() {
@@ -480,7 +519,7 @@
       }
     };
 
-    // ==================== SHOW VIDEO CONTENT (FIXED) ====================
+    // ==================== SHOW VIDEO CONTENT ====================
     function showVideoContent() {
       const user = currentUser || googleUser;
       if (!user) return;
@@ -496,16 +535,21 @@
           '<span style="background:#e6f5e6;color:#1a5d3c;padding:2px 12px;border-radius:40px;font-size:0.75rem;">✅ YouTube Connected</span>' : 
           '<span style="background:#fff3cd;color:#856404;padding:2px 12px;border-radius:40px;font-size:0.75rem;">⚠️ YouTube Login Required</span>'
         }
+        ${!isGoogleLoggedIn ? 
+          `<button class="google-login-small" onclick="window.showGoogleLogin()">🔑 Sign in with Google</button>` : 
+          ''
+        }
         <button class="logout-btn" onclick="window.logout()">Logout</button>
       `;
       
-      // Show YouTube login prompt if not logged in with Google
       if (!isGoogleLoggedIn) {
         const statusBar = document.getElementById('statusBar');
         if (statusBar) {
           statusBar.innerHTML = `
             📌 <strong>YouTube Private Videos:</strong> 
-            <span style="color:#1a2b4c;">Please sign in with Google above to watch private YouTube videos.</span>
+            <span style="color:#1a2b4c;">Please </span>
+            <a href="#" onclick="window.showGoogleLogin();return false;" style="color:#1a2b4c;font-weight:600;text-decoration:underline;cursor:pointer;">sign in with Google</a>
+            <span style="color:#1a2b4c;"> to watch private YouTube videos.</span>
           `;
           statusBar.style.background = '#fff3cd';
           statusBar.style.color = '#856404';
@@ -525,14 +569,17 @@
     // ==================== CHECK SESSION ====================
 
     function checkExistingSession() {
-      // Check for Google session first
+      // Ensure RESET_KEY exists
+      if (!localStorage.getItem(RESET_KEY)) {
+        localStorage.setItem(RESET_KEY, Date.now().toString());
+      }
+      
       if (checkGoogleSession()) {
         showVideoContent();
         fetchPlaylists();
         return true;
       }
 
-      // Check for regular session
       checkAndResetSession();
       const session = getSession();
       if (session && session.user && isSessionValid()) {
@@ -674,7 +721,6 @@
           const wrapper = document.getElementById(`wrapper-${playerId}`);
           if (!wrapper) return;
           
-          // Toggle visibility
           if (wrapper.style.display === 'block') {
             wrapper.style.display = 'none';
             wrapper.innerHTML = '';
@@ -700,17 +746,13 @@
             delete window[`player_${playerId}`];
           }
 
-          // ========== CHECK VIDEO TYPE ==========
-          // 1. YOUTUBE (Unlisted + Private)
           if (isYouTubeLink(link)) {
             const videoId = extractYouTubeId(link);
             if (videoId) {
               let embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`;
-              
               if (googleUser) {
                 embedUrl += `&origin=${window.location.origin}`;
               }
-              
               wrapper.innerHTML = `
                 <iframe 
                   src="${embedUrl}"
@@ -720,22 +762,11 @@
                   style="width:100%;height:100%;aspect-ratio:16/9;border:none;border-radius:12px;"
                 ></iframe>
               `;
-              
-              setTimeout(() => {
-                try {
-                  const iframe = wrapper.querySelector('iframe');
-                  if (iframe) {
-                    console.log('YouTube iframe loaded.');
-                  }
-                } catch(e) {}
-              }, 3000);
-              
               wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
               return;
             }
           }
           
-          // 2. HLS (.m3u8)
           if (isHLSLink(link) && Hls.isSupported()) {
             const videoEl = document.createElement('video');
             videoEl.id = playerId;
@@ -789,7 +820,6 @@
             return;
           }
           
-          // 3. MP4
           if (isMP4Link(link)) {
             const videoEl = document.createElement('video');
             videoEl.id = playerId;
@@ -819,7 +849,6 @@
             return;
           }
           
-          // 4. UNKNOWN - show error
           wrapper.innerHTML = `
             <div style="padding:40px;text-align:center;color:#b33a3a;background:#0d1117;border-radius:12px;">
               ⚠️ Unsupported video format.<br>
@@ -884,13 +913,18 @@
 
     // ==================== INIT ====================
 
+    // Ensure RESET_KEY exists
+    if (!localStorage.getItem(RESET_KEY)) {
+      localStorage.setItem(RESET_KEY, Date.now().toString());
+    }
+
     const hasSession = checkExistingSession();
     if (!hasSession) {
       document.getElementById('loginContainer').style.display = 'block';
       document.getElementById('videoContent').style.display = 'none';
     }
 
-    console.log('✅ Video Portal loaded - Fixed version');
+    console.log('✅ Video Portal loaded - Fixed with 3-day timer');
   })();
 </script>
 </body>
