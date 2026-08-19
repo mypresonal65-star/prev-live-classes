@@ -43,6 +43,8 @@
     .login-container h2 { margin-bottom: 20px; color: #0b1a33; }
     .login-container p { color: #4c637f; margin-bottom: 16px; }
     .login-container .error { color: #b33a3a; font-size: 0.9rem; margin-top: 12px; }
+    .login-container input { width: 100%; padding: 12px 16px; border: 1px solid #d9e1ec; border-radius: 16px; font-size: 0.95rem; margin-bottom: 12px; }
+    .login-container button { width: 100%; padding: 12px; background: #0b1a33; color: white; border: none; border-radius: 16px; font-weight: 600; cursor: pointer; }
     
     .playlist-selector { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; padding: 16px; background: #f8faff; border-radius: 20px; }
     .playlist-btn { padding: 10px 24px; border: 2px solid #d9e1ec; border-radius: 40px; background: white; color: #1a2b4c; font-weight: 500; cursor: pointer; transition: 0.15s; }
@@ -76,8 +78,11 @@
     .video-type-badge.hls { background: #1a7a3a20; color: #1a7a3a; }
     .video-type-badge.mp4 { background: #1a2b4c20; color: #1a2b4c; }
     
-    /* Google Sign-In Button Style */
     .g_id_signin { display: flex; justify-content: center; margin: 10px 0; }
+    .separator { display: flex; align-items: center; text-align: center; margin: 16px 0; color: #8b949e; font-size: 0.85rem; }
+    .separator::before, .separator::after { content: ''; flex: 1; border-bottom: 1px solid #d9e1ec; }
+    .separator::before { margin-right: 16px; }
+    .separator::after { margin-left: 16px; }
   </style>
 </head>
 <body>
@@ -88,27 +93,42 @@
   </div>
   
   <!-- Reset Banner -->
-  <div id="resetBanner" class="reset-banner">🔄 Session reset at 6:00 AM. Please login again.</div>
+  <div id="resetBanner" class="reset-banner">🔄 Session expired after 3 days. Please login again.</div>
   
   <!-- Login Container -->
   <div id="loginContainer" class="login-container">
     <h2>🔐 Login to Access Videos</h2>
     <p>Enter your email and access key</p>
-    <input type="email" id="loginEmail" placeholder="Enter your email" style="width:100%;padding:12px 16px;border:1px solid #d9e1ec;border-radius:16px;font-size:0.95rem;margin-bottom:12px;" />
-    <input type="text" id="loginKey" placeholder="Enter your access key" style="width:100%;padding:12px 16px;border:1px solid #d9e1ec;border-radius:16px;font-size:0.95rem;margin-bottom:12px;" />
-    <button id="loginBtn" style="width:100%;padding:12px;background:#0b1a33;color:white;border:none;border-radius:16px;font-weight:600;cursor:pointer;">Login</button>
+    <input type="email" id="loginEmail" placeholder="Enter your email" />
+    <input type="text" id="loginKey" placeholder="Enter your access key" />
+    <button id="loginBtn">Login</button>
     <div id="loginError" class="error"></div>
     <div id="loginSuccess" style="color:#1a7a3a;font-size:0.9rem;margin-top:8px;"></div>
     
+    <div class="separator">OR</div>
+    
     <!-- Google Sign-In Option -->
-    <div style="margin-top:20px;padding-top:20px;border-top:1px solid #e8edf6;">
-      <p style="color:#6a7c94;font-size:0.85rem;">Or sign in with Google for YouTube Private Videos</p>
+    <div style="margin-top:8px;">
+      <p style="color:#6a7c94;font-size:0.85rem;margin-bottom:8px;">
+        🎬 <strong>YouTube Private Videos</strong>
+      </p>
+      <p style="color:#8b949e;font-size:0.75rem;margin-bottom:12px;">
+        Sign in with Google to watch private YouTube videos. One-time login, session saved for 7 days.
+      </p>
       <div id="g_id_onload"
            data-client_id="853267104713-46mrftcdeva7a8di4bdq6i6br29bd3vn.apps.googleusercontent.com"
            data-callback="handleGoogleLogin"
-           data-auto_prompt="false">
+           data-auto_prompt="false"
+           data-use_fedcm_for_prompt="true">
       </div>
-      <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="outline" data-text="signin_with" data-size="large"></div>
+      <div class="g_id_signin" 
+           data-type="standard" 
+           data-shape="rectangular" 
+           data-theme="outline" 
+           data-text="signin_with" 
+           data-size="large"
+           data-logo_alignment="left">
+      </div>
     </div>
   </div>
 
@@ -116,7 +136,7 @@
   <div id="videoContent" style="display: none;">
     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
       <div id="statusBar" class="status-bar">🔄 Loading videos...</div>
-      <div id="sessionTimer" class="session-timer">⏰ Time to reset: --:--:--</div>
+      <div id="sessionTimer" class="session-timer">⏰ Time left: --:--:--</div>
     </div>
     <div id="playlistSelector" class="playlist-selector">
       <div class="empty-state">Loading playlists...</div>
@@ -208,45 +228,60 @@
     const SESSION_KEY = 'video_portal_session';
     const RESET_KEY = 'video_portal_reset';
     const GOOGLE_SESSION_KEY = 'google_session';
+    const RESET_DURATION = 3 * 24 * 60 * 60 * 1000; // 3 days
 
     let playlists = [];
     let currentPlaylistId = null;
     let currentUser = null;
     let googleUser = null;
     let googleAccessToken = null;
-    let timerInterval = null;
     let resetCheckInterval = null;
 
-    // ==================== GOOGLE LOGIN ====================
+    // ==================== GOOGLE LOGIN (FIXED) ====================
     window.handleGoogleLogin = function(response) {
-      console.log('Google login response received');
-      // Verify token on server
+      console.log('Google login response received:', response);
+      
+      if (!response || !response.credential) {
+        document.getElementById('loginError').textContent = '❌ Google login failed: No credential received';
+        return;
+      }
+      
+      document.getElementById('loginSuccess').textContent = '⏳ Verifying Google account...';
+      
       fetch('/api/verify-google-token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken: response.credential })
       })
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error('Server error: ' + res.status);
+        return res.json();
+      })
       .then(data => {
         if (data.success) {
           googleUser = data.user;
           googleAccessToken = data.accessToken;
-          // Save google session
+          
           localStorage.setItem(GOOGLE_SESSION_KEY, JSON.stringify({
             user: googleUser,
             accessToken: googleAccessToken,
             loginTime: Date.now()
           }));
+          
           document.getElementById('loginError').textContent = '';
           document.getElementById('loginSuccess').textContent = '✅ Google Sign-In successful!';
+          
           showVideoContent();
           fetchPlaylists();
         } else {
           document.getElementById('loginError').textContent = '❌ ' + (data.error || 'Google login failed');
+          document.getElementById('loginSuccess').textContent = '';
         }
       })
       .catch(err => {
+        console.error('Google login error:', err);
         document.getElementById('loginError').textContent = '❌ Network error: ' + err.message;
+        document.getElementById('loginSuccess').textContent = '';
       });
     };
 
@@ -255,7 +290,6 @@
         const data = localStorage.getItem(GOOGLE_SESSION_KEY);
         if (!data) return false;
         const session = JSON.parse(data);
-        // Check if session is less than 7 days old
         if (Date.now() - session.loginTime > 7 * 24 * 60 * 60 * 1000) {
           localStorage.removeItem(GOOGLE_SESSION_KEY);
           return false;
@@ -268,44 +302,48 @@
       }
     }
 
-    // ==================== RESET AT 6 AM ====================
-
-    function getNextResetTime() {
-      const now = new Date();
-      const reset = new Date(now);
-      reset.setHours(6, 0, 0, 0);
-      
-      if (now >= reset) {
-        reset.setDate(reset.getDate() + 1);
-      }
-      return reset;
-    }
+    // ==================== RESET AFTER 3 DAYS ====================
 
     function getTimeUntilReset() {
-      const now = new Date();
-      const reset = getNextResetTime();
-      return reset.getTime() - now.getTime();
+      const lastReset = localStorage.getItem(RESET_KEY);
+      if (!lastReset) {
+        localStorage.setItem(RESET_KEY, Date.now().toString());
+        return RESET_DURATION;
+      }
+      const elapsed = Date.now() - parseInt(lastReset);
+      return Math.max(0, RESET_DURATION - elapsed);
     }
 
-    function formatTime(ms) {
+    function formatTimeWithDays(ms) {
       if (ms < 0) return '00:00:00';
-      const hours = Math.floor(ms / (1000 * 60 * 60));
+      const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
       const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((ms % (1000 * 60)) / 1000);
+      
+      if (days > 0) {
+        return `${days}d ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+      }
       return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     }
 
     function checkAndResetSession() {
       const lastReset = localStorage.getItem(RESET_KEY);
-      const now = new Date();
-      const today = now.toDateString();
+      const now = Date.now();
       
-      if (!lastReset || lastReset !== today) {
+      if (!lastReset) {
+        localStorage.setItem(RESET_KEY, now.toString());
+        return false;
+      }
+      
+      if (now - parseInt(lastReset) >= RESET_DURATION) {
+        localStorage.setItem(RESET_KEY, now.toString());
         localStorage.removeItem(SESSION_KEY);
-        localStorage.setItem(RESET_KEY, today);
+        localStorage.removeItem(GOOGLE_SESSION_KEY);
         
         if (document.getElementById('videoContent').style.display !== 'none') {
           document.getElementById('resetBanner').style.display = 'block';
+          document.getElementById('resetBanner').textContent = '🔄 Session expired after 3 days. Please login again.';
           setTimeout(() => {
             document.getElementById('resetBanner').style.display = 'none';
             logout();
@@ -324,16 +362,17 @@
         const timerEl = document.getElementById('sessionTimer');
         
         if (timerEl) {
-          timerEl.textContent = `⏰ Reset in: ${formatTime(timeLeft)}`;
+          timerEl.textContent = `⏰ Time left: ${formatTimeWithDays(timeLeft)}`;
           timerEl.className = 'session-timer';
+          
           if (timeLeft < 60 * 60 * 1000) {
             timerEl.classList.add('danger');
           } else if (timeLeft < 3 * 60 * 60 * 1000) {
             timerEl.classList.add('warning');
           }
         }
-
-        if (timeLeft < 0) {
+        
+        if (timeLeft <= 0) {
           checkAndResetSession();
         }
       }, 1000);
@@ -363,19 +402,9 @@
 
     function clearSession() {
       localStorage.removeItem(SESSION_KEY);
-      if (timerInterval) {
-        clearInterval(timerInterval);
-        timerInterval = null;
-      }
     }
 
     function isSessionValid() {
-      const lastReset = localStorage.getItem(RESET_KEY);
-      const today = new Date().toDateString();
-      if (!lastReset || lastReset !== today) {
-        localStorage.removeItem(SESSION_KEY);
-        return false;
-      }
       const session = getSession();
       if (!session) return false;
       return true;
@@ -411,15 +440,7 @@
           successEl.textContent = '✅ Login successful! Loading videos...';
           
           saveSession(data.user, key);
-          
-          document.getElementById('loginContainer').style.display = 'none';
-          document.getElementById('videoContent').style.display = 'block';
-          document.getElementById('userInfo').innerHTML = `
-            👤 ${data.user.email}
-            <button class="logout-btn" onclick="window.logout()">Logout</button>
-          `;
-          
-          startResetTimer();
+          showVideoContent();
           fetchPlaylists();
         } else {
           errorEl.textContent = '❌ ' + (data.error || 'Login failed');
@@ -449,7 +470,6 @@
         clearInterval(resetCheckInterval);
         resetCheckInterval = null;
       }
-      // Dispose players
       for (let key in window) {
         if (key.startsWith('player_') && window[key] && typeof window[key].dispose === 'function') {
           try { window[key].dispose(); } catch(e) {}
@@ -460,18 +480,54 @@
       }
     };
 
+    // ==================== SHOW VIDEO CONTENT (FIXED) ====================
+    function showVideoContent() {
+      const user = currentUser || googleUser;
+      if (!user) return;
+      
+      document.getElementById('loginContainer').style.display = 'none';
+      document.getElementById('videoContent').style.display = 'block';
+      
+      const isGoogleLoggedIn = !!googleUser;
+      
+      document.getElementById('userInfo').innerHTML = `
+        👤 ${user.email}
+        ${isGoogleLoggedIn ? 
+          '<span style="background:#e6f5e6;color:#1a5d3c;padding:2px 12px;border-radius:40px;font-size:0.75rem;">✅ YouTube Connected</span>' : 
+          '<span style="background:#fff3cd;color:#856404;padding:2px 12px;border-radius:40px;font-size:0.75rem;">⚠️ YouTube Login Required</span>'
+        }
+        <button class="logout-btn" onclick="window.logout()">Logout</button>
+      `;
+      
+      // Show YouTube login prompt if not logged in with Google
+      if (!isGoogleLoggedIn) {
+        const statusBar = document.getElementById('statusBar');
+        if (statusBar) {
+          statusBar.innerHTML = `
+            📌 <strong>YouTube Private Videos:</strong> 
+            <span style="color:#1a2b4c;">Please sign in with Google above to watch private YouTube videos.</span>
+          `;
+          statusBar.style.background = '#fff3cd';
+          statusBar.style.color = '#856404';
+        }
+      } else {
+        const statusBar = document.getElementById('statusBar');
+        if (statusBar) {
+          statusBar.textContent = '✅ YouTube connected. You can watch private videos.';
+          statusBar.style.background = '#e6f5e6';
+          statusBar.style.color = '#1a5d3c';
+        }
+      }
+      
+      startResetTimer();
+    }
+
     // ==================== CHECK SESSION ====================
 
     function checkExistingSession() {
       // Check for Google session first
       if (checkGoogleSession()) {
-        document.getElementById('loginContainer').style.display = 'none';
-        document.getElementById('videoContent').style.display = 'block';
-        document.getElementById('userInfo').innerHTML = `
-          👤 ${googleUser.email} (Google)
-          <button class="logout-btn" onclick="window.logout()">Logout</button>
-        `;
-        startResetTimer();
+        showVideoContent();
         fetchPlaylists();
         return true;
       }
@@ -481,13 +537,7 @@
       const session = getSession();
       if (session && session.user && isSessionValid()) {
         currentUser = session.user;
-        document.getElementById('loginContainer').style.display = 'none';
-        document.getElementById('videoContent').style.display = 'block';
-        document.getElementById('userInfo').innerHTML = `
-          👤 ${session.user.email}
-          <button class="logout-btn" onclick="window.logout()">Logout</button>
-        `;
-        startResetTimer();
+        showVideoContent();
         fetchPlaylists();
         return true;
       }
@@ -628,7 +678,6 @@
           if (wrapper.style.display === 'block') {
             wrapper.style.display = 'none';
             wrapper.innerHTML = '';
-            // Cleanup
             if (window[`hls_${playerId}`]) {
               try { window[`hls_${playerId}`].destroy(); } catch(e) {}
               delete window[`hls_${playerId}`];
@@ -642,7 +691,6 @@
           
           wrapper.style.display = 'block';
           
-          // Cleanup existing instances
           if (window[`hls_${playerId}`]) {
             try { window[`hls_${playerId}`].destroy(); } catch(e) {}
             delete window[`hls_${playerId}`];
@@ -657,11 +705,8 @@
           if (isYouTubeLink(link)) {
             const videoId = extractYouTubeId(link);
             if (videoId) {
-              // For YouTube Private videos, user needs to be signed in with Google
-              // For Unlisted, no login required
               let embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`;
               
-              // If user is logged in with Google, add origin param for better compatibility
               if (googleUser) {
                 embedUrl += `&origin=${window.location.origin}`;
               }
@@ -676,15 +721,11 @@
                 ></iframe>
               `;
               
-              // Handle private video error - if user not signed in
               setTimeout(() => {
                 try {
                   const iframe = wrapper.querySelector('iframe');
                   if (iframe) {
-                    // Check if iframe content has error
-                    // Note: Cross-origin, can't access content directly
-                    // Fallback: if video doesn't load, show message
-                    console.log('YouTube iframe loaded. If video is private, ensure user is signed in with Google.');
+                    console.log('YouTube iframe loaded.');
                   }
                 } catch(e) {}
               }, 3000);
@@ -849,8 +890,7 @@
       document.getElementById('videoContent').style.display = 'none';
     }
 
-    console.log('✅ Video Portal loaded - YouTube Unlisted + Private supported');
-    console.log('📌 Google Sign-In available for Private YouTube videos');
+    console.log('✅ Video Portal loaded - Fixed version');
   })();
 </script>
 </body>
