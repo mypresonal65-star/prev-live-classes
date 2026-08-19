@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Admin Panel</title>
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
     body { background: #f0f4fb; min-height: 100vh; display: flex; justify-content: center; padding: 30px 16px; }
@@ -85,6 +87,12 @@
     
     .key-display { background: #f0f4fb; padding: 12px 16px; border-radius: 12px; font-family: monospace; word-break: break-all; margin: 8px 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
     .key-display .key-text { font-size: 1.1rem; color: #0b1a33; }
+    
+    .g_id_signin { display: flex; justify-content: center; margin: 10px 0; }
+    .separator { display: flex; align-items: center; text-align: center; margin: 16px 0; color: #8b949e; font-size: 0.85rem; }
+    .separator::before, .separator::after { content: ''; flex: 1; border-bottom: 1px solid #d9e1ec; }
+    .separator::before { margin-right: 16px; }
+    .separator::after { margin-left: 16px; }
   </style>
 </head>
 <body>
@@ -106,6 +114,16 @@
     <div class="flex-row">
       <button class="btn btn-primary" id="unlockBtn">🔓 Login</button>
     </div>
+
+    <!-- Google Sign-In Option for Admin -->
+    <div class="separator">OR</div>
+    <p style="color:#6a7c94;font-size:0.85rem;text-align:center;margin-bottom:12px;">Sign in with Google</p>
+    <div id="g_id_onload"
+         data-client_id="853267104713-46mrftcdeva7a8di4bdq6i6br29bd3vn.apps.googleusercontent.com"
+         data-callback="handleAdminGoogleLogin"
+         data-auto_prompt="false">
+    </div>
+    <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="outline" data-text="signin_with" data-size="large"></div>
   </div>
 
   <!-- Admin Content -->
@@ -320,6 +338,40 @@
         errorEl.textContent = '❌ Connection error: ' + error.message;
       }
     }
+
+    // ==================== ADMIN GOOGLE LOGIN ====================
+    window.handleAdminGoogleLogin = function(response) {
+      console.log('Admin Google login response received');
+      
+      fetch('/api/verify-google-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken: response.credential })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          // Check if admin email is authorized
+          const adminEmails = ['YOUR_ADMIN_EMAIL@gmail.com']; // Add admin emails
+          if (adminEmails.includes(data.user.email)) {
+            isAuthenticated = true;
+            document.getElementById('passwordGate').style.display = 'none';
+            document.getElementById('adminContent').style.display = 'block';
+            document.getElementById('pwdError').textContent = '';
+            loadPlaylists();
+            loadUsers();
+            showFeedback('✅ Welcome Admin ' + data.user.email, 'success', 'playlistFeedback');
+          } else {
+            document.getElementById('pwdError').textContent = '❌ You are not authorized as admin';
+          }
+        } else {
+          document.getElementById('pwdError').textContent = '❌ ' + (data.error || 'Google login failed');
+        }
+      })
+      .catch(err => {
+        document.getElementById('pwdError').textContent = '❌ Network error: ' + err.message;
+      });
+    };
 
     // ==================== LOAD PLAYLISTS ====================
     async function loadPlaylists() {
