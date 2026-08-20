@@ -210,7 +210,7 @@
           <button class="live-refresh-btn" id="liveRefreshBtn">🔄 Refresh</button>
         </div>
         
-        <div class="live-title" id="liveTitle">Loading live videos...</div>
+        <div class="live-title" id="liveTitle">Loading live stream...</div>
         
         <!-- Live Video Player -->
         <div class="player-wrapper" id="livePlayerWrapper" style="min-height: 300px;">
@@ -253,54 +253,106 @@
 
 <script>
 // ========================================================================
-//  ANTI-DEVELOPER TOOLS
+//  ANTI-DEVELOPER TOOLS - FROM YOUR PROVIDED CODE
 // ========================================================================
 (function antiDevTools() {
-    const isMobile = /Mobi|Android|iPhone|iPad|iPod|Opera Mini|BlackBerry|IEMobile/i.test(navigator.userAgent) || window.innerWidth < 768;
-    
-    if (!isMobile) {
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'F12' || e.keyCode === 123 ||
-                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.keyCode === 73)) ||
-                (e.ctrlKey && e.shiftKey && (e.key === 'J' || e.key === 'j' || e.keyCode === 74)) ||
-                (e.ctrlKey && e.key === 'U') ||
-                (e.ctrlKey && e.shiftKey && e.key === 'C')) {
-                e.preventDefault();
-                e.stopPropagation();
-                window.location.replace('https://www.google.com');
-                return false;
-            }
-        });
+    // Keyboard shortcuts - INSTANT BLOCK
+    document.addEventListener('keydown', function(e) {
+        const key = e.key;
+        const ctrl = e.ctrlKey;
+        const shift = e.shiftKey;
 
-        setInterval(function() {
+        if (key === 'F12' || e.keyCode === 123) {
+            e.preventDefault();
+            e.stopPropagation();
+            window.location.replace('https://www.google.com');
+            return false;
+        }
+        if (ctrl && shift && (key === 'I' || key === 'i' || e.keyCode === 73)) {
+            e.preventDefault();
+            e.stopPropagation();
+            window.location.replace('https://www.google.com');
+            return false;
+        }
+        if (ctrl && shift && (key === 'J' || key === 'j' || e.keyCode === 74)) {
+            e.preventDefault();
+            e.stopPropagation();
+            window.location.replace('https://www.google.com');
+            return false;
+        }
+        if (ctrl && (key === 'U' || key === 'u' || e.keyCode === 85)) {
+            e.preventDefault();
+            e.stopPropagation();
+            window.location.replace('https://www.google.com');
+            return false;
+        }
+        if (ctrl && shift && (key === 'C' || key === 'c' || e.keyCode === 67)) {
+            e.preventDefault();
+            e.stopPropagation();
+            window.location.replace('https://www.google.com');
+            return false;
+        }
+    });
+
+    // RIGHT CLICK: ALLOWED
+
+    function isMobile() {
+        return /Mobi|Android|iPhone|iPad|iPod|Opera Mini|BlackBerry|IEMobile/i.test(navigator.userAgent);
+    }
+
+    // Desktop: INSTANT DEVTOOLS DETECTION
+    if (!isMobile()) {
+        let detectionCount = 0;
+
+        function detectDevTools() {
             const widthDiff = window.outerWidth - window.innerWidth;
             const heightDiff = window.outerHeight - window.innerHeight;
-            if (widthDiff > 100 || heightDiff > 100) {
-                console.clear();
-                if (window.performance && performance.clearResourceTimings) {
-                    performance.clearResourceTimings();
-                }
-                window.location.replace('https://www.google.com');
-            }
-        }, 100);
 
-        setInterval(function() {
+            const start = performance.now();
+            console.log('%c', {});
+            const end = performance.now();
+
+            if (window.Firebug && window.Firebug.chrome && window.Firebug.chrome.isInitialized) {
+                detectionCount++;
+                if (detectionCount >= 1) {
+                    window.location.replace('https://www.google.com');
+                }
+                return;
+            }
+
+            if (widthDiff > 100 || heightDiff > 100 || (end - start > 10)) {
+                detectionCount++;
+                if (detectionCount >= 1) {
+                    window.location.replace('https://www.google.com');
+                }
+            } else {
+                detectionCount = 0;
+            }
+        }
+
+        setInterval(detectDevTools, 100);
+    }
+
+    // NETWORK TAB CLEAR
+    setInterval(function() {
+        try {
             if (window.performance && performance.clearResourceTimings) {
                 performance.clearResourceTimings();
             }
-        }, 100);
+        } catch(e) {}
+    }, 100);
 
-        setInterval(function() { console.clear(); }, 50);
+    // CONSOLE CLEAR
+    setInterval(function() { console.clear(); }, 50);
 
-        const noop = function() {};
-        console.log = noop;
-        console.warn = noop;
-        console.error = noop;
-        console.info = noop;
-        console.debug = noop;
-        console.table = noop;
-        console.dir = noop;
-    }
+    const noop = function() {};
+    console.log = noop;
+    console.warn = noop;
+    console.error = noop;
+    console.info = noop;
+    console.debug = noop;
+    console.table = noop;
+    console.dir = noop;
 })();
 
 // ========================================================================
@@ -713,7 +765,7 @@
     }
 
     // ========================================================================
-    //  LIVE STREAM - SAME AS RECORDED PLAYER
+    //  LIVE STREAM - FROM YOUR PROVIDED CODE
     // ========================================================================
     async function loadLiveStream() {
         try {
@@ -729,6 +781,7 @@
                 liveStatus.textContent = '✅ Live stream loaded';
                 liveStatus.style.color = '#1a7a3a';
                 
+                // Destroy existing players
                 if (liveHls) {
                     try { liveHls.destroy(); } catch(e) {}
                     liveHls = null;
@@ -738,6 +791,7 @@
                     livePlayer = null;
                 }
                 
+                // Reset video element
                 const wrapper = document.getElementById('livePlayerWrapper');
                 wrapper.innerHTML = '';
                 const newVideo = document.createElement('video');
@@ -752,8 +806,9 @@
                 
                 const newVideoEl = document.getElementById('live-video');
                 
-                // SAME AS RECORDED PLAYER
+                // ========== PLAYER WITH HLS.js + Video.js ==========
                 if (data.link && data.link.includes('.m3u8') && Hls.isSupported()) {
+                    // HLS.js for playback
                     liveHls = new Hls({
                         enableWorker: true,
                         lowLatencyMode: true,
@@ -771,6 +826,7 @@
                     
                     liveHls.on(Hls.Events.MANIFEST_PARSED, function() {
                         newVideoEl.play().catch(e => console.log('Play error:', e));
+                        // Start duration timer
                         if (!liveStartTime) {
                             liveStartTime = Date.now();
                             updateLiveDuration();
@@ -788,6 +844,7 @@
                         }
                     });
                     
+                    // Video.js for controls overlay
                     livePlayer = videojs(newVideoEl, {
                         controls: true,
                         fluid: true,
@@ -847,6 +904,7 @@
         }
         player.play();
         
+        // Start timer
         if (!liveStartTime) {
             liveStartTime = Date.now();
             updateLiveDuration();
@@ -855,6 +913,7 @@
         }
     }
 
+    // ========== UPDATE LIVE DURATION (LECTURE COMPLETED) ==========
     function updateLiveDuration() {
         if (!liveStartTime) return;
         const elapsed = Math.floor((Date.now() - liveStartTime) / 1000);
@@ -1268,7 +1327,7 @@
         document.getElementById('videoContent').style.display = 'none';
     }
 
-    console.log('✅ Video Portal loaded - Live + Recorded tabs');
+    console.log('✅ Video Portal loaded - Live Stream with Duration Timer');
 })();
 </script>
 </body>
