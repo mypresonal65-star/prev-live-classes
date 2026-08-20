@@ -137,7 +137,7 @@
     
     <div class="separator">OR</div>
     
-    <!-- Google Sign-In Option (Token Removed) -->
+    <!-- Google Sign-In Option -->
     <div style="margin-top:20px;padding-top:20px;border-top:1px solid #e8edf6;">
       <p style="color:#6a7c94;font-size:0.85rem;margin-bottom:8px;">
         🎬 <strong>YouTube Private Videos</strong>
@@ -161,7 +161,7 @@
       <div id="sessionTimer" class="session-timer">⏰ 72:00:00</div>
     </div>
     
-    <!-- Playlist Selector with Dropdown + Search (Search only playlists) -->
+    <!-- Playlist Selector with Dropdown + Search -->
     <div id="playlistSelector" class="playlist-selector">
       <div style="display:flex; gap:12px; flex-wrap:wrap; width:100%; align-items:center;">
         <select id="playlistDropdown" style="flex:2; min-width:150px; padding:10px 20px; border:2px solid #d9e1ec; border-radius:40px; background:white; color:#1a2b4c; font-weight:500; cursor:pointer;">
@@ -226,7 +226,6 @@
     const SESSION_KEY = 'video_portal_session';
     const GOOGLE_SESSION_KEY = 'google_session';
     const RESET_DURATION = 3 * 24 * 60 * 60 * 1000; // 3 days
-    const KEY_GEN_COOLDOWN = 3 * 24 * 60 * 60 * 1000; // 3 days
 
     let playlists = [];
     let currentPlaylistId = null;
@@ -283,8 +282,9 @@
         
         if (!data.valid) {
           clearSession();
+          localStorage.removeItem(GOOGLE_SESSION_KEY);
+          alert('⚠️ You have been logged out because you logged in from another device.');
           logout();
-          alert('⚠️ You have been logged out. Another device logged in with this account.');
           return false;
         }
         return true;
@@ -293,13 +293,14 @@
       }
     }
 
+    // Check session validity every 15 seconds
     setInterval(function() {
       if (document.getElementById('videoContent').style.display !== 'none') {
         validateSession();
       }
-    }, 30000);
+    }, 15000);
 
-    // ==================== KEY GENERATION (3 Day Cooldown) ====================
+    // ==================== KEY GENERATION ====================
     async function generateKey() {
       const email = document.getElementById('genKeyEmail').value.trim();
       const statusEl = document.getElementById('genKeyStatus');
@@ -373,12 +374,6 @@
       }
     })();
 
-    // ==================== MANUAL GOOGLE LOGIN (Direct) ====================
-    window.manualGoogleLogin = function() {
-      // Direct Google login - token auto-detected from URL
-      // This function is kept for compatibility
-    };
-
     function checkGoogleSession() {
       try {
         const data = localStorage.getItem(GOOGLE_SESSION_KEY);
@@ -394,7 +389,7 @@
       } catch(e) { return false; }
     }
 
-    // ==================== SIMPLE TIMER ====================
+    // ==================== TIMER ====================
     function startResetTimer() {
       if (resetCheckInterval) clearInterval(resetCheckInterval);
       
@@ -461,7 +456,11 @@
         const response = await fetch(API_BASE + '/auth/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, key, sessionId: getSession()?.sessionId || generateSessionId() })
+          body: JSON.stringify({ 
+            email, 
+            key, 
+            sessionId: getSession()?.sessionId || generateSessionId() 
+          })
         });
 
         const data = await response.json();
@@ -484,7 +483,24 @@
     }
 
     // ==================== LOGOUT ====================
-    window.logout = function() {
+    window.logout = async function() {
+      const session = getSession();
+      
+      if (session && session.user) {
+        try {
+          await fetch(API_BASE + '/auth/logout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              sessionId: session.sessionId,
+              email: session.user.email
+            })
+          });
+        } catch(e) {
+          console.error('Logout error:', e);
+        }
+      }
+      
       clearSession();
       localStorage.removeItem(GOOGLE_SESSION_KEY);
       currentUser = null;
@@ -603,7 +619,7 @@
       return false;
     }
 
-    // ==================== FETCH PLAYLISTS (FIXED) ====================
+    // ==================== FETCH PLAYLISTS ====================
     async function fetchPlaylists() {
       const statusBar = document.getElementById('statusBar');
       try {
@@ -615,7 +631,6 @@
           playlists = data.playlists;
           statusBar.textContent = `✅ ${playlists.length} playlists loaded`;
           
-          // Update dropdown
           const dropdown = document.getElementById('playlistDropdown');
           dropdown.innerHTML = '<option value="">Select a playlist...</option>';
           playlists.forEach(playlist => {
@@ -625,7 +640,6 @@
             dropdown.appendChild(option);
           });
           
-          // Auto-select first playlist
           if (playlists.length > 0) {
             dropdown.value = playlists[0].id;
             currentPlaylistId = playlists[0].id;
@@ -640,13 +654,12 @@
       }
     }
 
-    // ==================== RENDER PLAYLISTS (With Search Filter) ====================
+    // ==================== RENDER PLAYLISTS ====================
     function renderPlaylists() {
       const container = document.getElementById('chaptersContainer');
       const dropdown = document.getElementById('playlistDropdown');
       const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
       
-      // Filter playlists based on search
       let filteredPlaylists = playlists;
       if (searchTerm !== '') {
         filteredPlaylists = playlists.filter(p => 
@@ -654,7 +667,6 @@
         );
       }
       
-      // Update dropdown with filtered playlists
       const currentValue = dropdown.value;
       dropdown.innerHTML = '<option value="">Select a playlist...</option>';
       filteredPlaylists.forEach(playlist => {
@@ -664,18 +676,15 @@
         dropdown.appendChild(option);
       });
       
-      // Restore selected value if it exists in filtered list
       if (currentValue && filteredPlaylists.some(p => p.id === currentValue)) {
         dropdown.value = currentValue;
       }
       
-      // Show no results message
       if (filteredPlaylists.length === 0 && searchTerm !== '') {
         container.innerHTML = `<div class="empty-state">🔍 No playlists found matching "${searchTerm}"</div>`;
         return;
       }
       
-      // Get selected playlist from dropdown
       const selectedId = dropdown.value;
       if (!selectedId) {
         container.innerHTML = `<div class="empty-state">Select a playlist from the dropdown</div>`;
@@ -722,7 +731,7 @@
       attachPlayEvents();
     }
 
-    // ==================== SEARCH FUNCTIONALITY (Playlist Search) ====================
+    // ==================== SEARCH ====================
     function searchPlaylists() {
       const dropdown = document.getElementById('playlistDropdown');
       dropdown.value = '';
@@ -770,7 +779,6 @@
             delete window[`player_${playerId}`];
           }
 
-          // YouTube
           if (link && (link.includes('youtube.com') || link.includes('youtu.be'))) {
             const videoId = extractYouTubeId(link);
             if (videoId) {
@@ -792,7 +800,6 @@
             }
           }
           
-          // HLS
           if (link && link.includes('.m3u8') && Hls.isSupported()) {
             const videoEl = document.createElement('video');
             videoEl.id = playerId;
@@ -846,7 +853,6 @@
             return;
           }
           
-          // MP4
           if (link && (link.includes('.mp4') || link.includes('.webm'))) {
             const videoEl = document.createElement('video');
             videoEl.id = playerId;
@@ -936,7 +942,6 @@
     document.getElementById('genKeyBtn').addEventListener('click', generateKey);
     document.getElementById('genKeyEmail').addEventListener('keydown', (e) => { if (e.key === 'Enter') generateKey(); });
     
-    // FIXED: Playlist dropdown change event
     document.getElementById('playlistDropdown').addEventListener('change', function() {
       const selectedId = this.value;
       if (selectedId) {
@@ -978,7 +983,7 @@
       document.getElementById('videoContent').style.display = 'none';
     }
 
-    console.log('✅ Video Portal loaded - Playlist selection fixed');
+    console.log('✅ Video Portal loaded - Auto logout on other device');
   })();
 </script>
 </body>
