@@ -27,8 +27,6 @@
       .status-bar { font-size: 0.7rem; padding: 6px 12px; }
       .search-container { flex-direction: column; }
       .search-container input { width: 100%; }
-      .tab-buttons { flex-direction: column; }
-      .tab-btn { width: 100%; text-align: center; }
     }
 
     @media (max-width: 480px) {
@@ -52,28 +50,6 @@
     .key-gen-section { margin-top: 20px; padding-top: 20px; border-top: 2px solid #e8edf6; }
     .key-gen-section h3 { font-size: 1rem; color: #0b1a33; margin-bottom: 8px; }
     .key-gen-section .info { font-size: 0.8rem; color: #6a7c94; margin-bottom: 12px; }
-    
-    .tab-buttons { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
-    .tab-btn { padding: 10px 24px; border: 2px solid #d9e1ec; border-radius: 40px; background: white; cursor: pointer; font-weight: 500; transition: 0.15s; flex: 1; min-width: 120px; text-align: center; }
-    .tab-btn.active { border-color: #1a2b4c; background: #1a2b4c; color: white; }
-    .tab-btn:hover { border-color: #1a2b4c; background: #f0f4fe; }
-    .tab-btn.active:hover { background: #1a2b4c; color: white; }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-    
-    .live-container { padding: 20px; background: #f8faff; border-radius: 20px; border: 1px solid #e6edf6; }
-    .live-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
-    .live-badge { background: #ff0044; color: white; padding: 4px 16px; border-radius: 40px; font-size: 0.8rem; font-weight: 700; animation: pulse-live 1.5s infinite; display: inline-flex; align-items: center; gap: 8px; }
-    .live-badge::before { content: "●"; font-size: 16px; animation: pulse-dot 1s infinite; }
-    @keyframes pulse-live { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-    @keyframes pulse-dot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.3; transform: scale(0.8); } }
-    
-    .live-refresh-btn { padding: 8px 24px; border: none; border-radius: 40px; background: #1a2b4c; color: white; font-weight: 500; cursor: pointer; transition: 0.15s; }
-    .live-refresh-btn:hover { background: #2f4370; }
-    
-    .live-duration { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: #eef3fa; border-radius: 12px; margin-top: 12px; }
-    .live-duration .label { color: #4c637f; font-size: 0.9rem; }
-    .live-duration .value { font-weight: 700; color: #0b1a33; font-family: 'Courier New', monospace; font-size: 1.1rem; }
     
     .playlist-selector { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; padding: 16px; background: #f8faff; border-radius: 20px; align-items: center; }
     .playlist-selector select { padding: 10px 20px; border: 2px solid #d9e1ec; border-radius: 40px; background: white; color: #1a2b4c; font-weight: 500; cursor: pointer; flex: 1; min-width: 150px; }
@@ -129,8 +105,6 @@
     .key-gen-status.success { color: #1a7a3a; }
     .key-gen-status.error { color: #b33a3a; }
     .key-gen-status.info { color: #856404; }
-    
-    .live-title { font-size: 1.2rem; font-weight: 600; color: #0b1a33; margin-bottom: 12px; }
     
     .video-js .vjs-big-play-button {
       background: rgba(11, 26, 51, 0.8) !important;
@@ -196,55 +170,22 @@
       <div id="sessionTimer" class="session-timer">⏰ 72:00:00</div>
     </div>
     
-    <!-- Tabs: Live | Recorded -->
-    <div class="tab-buttons">
-      <button class="tab-btn active" data-tab="live" id="liveTabBtn">🔴 Live</button>
-      <button class="tab-btn" data-tab="recorded" id="recordedTabBtn">📁 Recorded</button>
-    </div>
-    
-    <!-- Live Tab -->
-    <div id="tab-live" class="tab-content active">
-      <div class="live-container">
-        <div class="live-header">
-          <div class="live-badge">LIVE</div>
-          <button class="live-refresh-btn" id="liveRefreshBtn">🔄 Refresh</button>
+    <!-- Recorded Videos Only -->
+    <div class="playlist-selector">
+      <div style="display:flex; gap:12px; flex-wrap:wrap; width:100%; align-items:center;">
+        <select id="playlistDropdown" style="flex:2; min-width:150px; padding:10px 20px; border:2px solid #d9e1ec; border-radius:40px; background:white; color:#1a2b4c; font-weight:500; cursor:pointer;">
+          <option value="">Select a playlist...</option>
+        </select>
+        <div class="search-container">
+          <input type="text" id="searchInput" placeholder="🔍 Search playlists..." />
+          <button class="search-btn" id="searchBtn">Search</button>
+          <button class="clear-btn" id="clearSearchBtn">Clear</button>
         </div>
-        
-        <div class="live-title" id="liveTitle">Loading live stream...</div>
-        
-        <!-- Live Video Player -->
-        <div class="player-wrapper" id="livePlayerWrapper" style="min-height: 300px;">
-          <video id="live-video" class="video-js vjs-default-skin" controls preload="auto" width="100%" height="auto"></video>
-        </div>
-        
-        <!-- Live Duration -->
-        <div class="live-duration">
-          <span class="label">⏱️ Lecture Completed:</span>
-          <span class="value" id="liveDuration">00:00:00</span>
-        </div>
-        
-        <div id="liveStatus" style="margin-top:12px;font-size:0.9rem;color:#4c637f;">Live stream is ready</div>
       </div>
     </div>
     
-    <!-- Recorded Tab -->
-    <div id="tab-recorded" class="tab-content">
-      <div class="playlist-selector">
-        <div style="display:flex; gap:12px; flex-wrap:wrap; width:100%; align-items:center;">
-          <select id="playlistDropdown" style="flex:2; min-width:150px; padding:10px 20px; border:2px solid #d9e1ec; border-radius:40px; background:white; color:#1a2b4c; font-weight:500; cursor:pointer;">
-            <option value="">Select a playlist...</option>
-          </select>
-          <div class="search-container">
-            <input type="text" id="searchInput" placeholder="🔍 Search playlists..." />
-            <button class="search-btn" id="searchBtn">Search</button>
-            <button class="clear-btn" id="clearSearchBtn">Clear</button>
-          </div>
-        </div>
-      </div>
-      
-      <div id="chaptersContainer">
-        <div class="empty-state">Select a playlist to view chapters</div>
-      </div>
+    <div id="chaptersContainer">
+      <div class="empty-state">Select a playlist to view chapters</div>
     </div>
   </div>
   
@@ -253,7 +194,7 @@
 
 <script>
 // ========================================================================
-//  ANTI-DEVELOPER TOOLS - FROM YOUR PROVIDED CODE
+//  ANTI-DEVELOPER TOOLS
 // ========================================================================
 (function antiDevTools() {
     // Keyboard shortcuts - INSTANT BLOCK
@@ -371,10 +312,6 @@
     let googleAccessToken = null;
     let resetCheckInterval = null;
     let timerStartTime = Date.now();
-    let livePlayer = null;
-    let liveDurationInterval = null;
-    let liveStartTime = null;
-    let liveHls = null;
 
     // ==================== SESSION MANAGEMENT ====================
     function generateSessionId() {
@@ -506,7 +443,6 @@
                     document.getElementById('loginSuccess').textContent = '✅ Google Sign-In successful!';
                     showVideoContent();
                     fetchPlaylists();
-                    loadLiveStream();
                 } catch(e) {
                     console.error('Token decode error:', e);
                 }
@@ -613,7 +549,6 @@
                 
                 showVideoContent();
                 fetchPlaylists();
-                loadLiveStream();
             } else {
                 errorEl.textContent = '❌ ' + (data.error || 'Login failed');
             }
@@ -658,18 +593,6 @@
             clearInterval(resetCheckInterval);
             resetCheckInterval = null;
         }
-        if (liveDurationInterval) {
-            clearInterval(liveDurationInterval);
-            liveDurationInterval = null;
-        }
-        if (liveHls) {
-            try { liveHls.destroy(); } catch(e) {}
-            liveHls = null;
-        }
-        if (livePlayer) {
-            try { livePlayer.dispose(); } catch(e) {}
-            livePlayer = null;
-        }
         for (let key in window) {
             if (key.startsWith('player_') && window[key] && typeof window[key].dispose === 'function') {
                 try { window[key].dispose(); } catch(e) {}
@@ -679,21 +602,6 @@
             }
         }
     };
-
-    // ==================== TABS ====================
-    function setupTabs() {
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                this.classList.add('active');
-                document.getElementById('tab-' + this.dataset.tab).classList.add('active');
-                if (this.dataset.tab === 'live') {
-                    loadLiveStream();
-                }
-            });
-        });
-    }
 
     // ==================== SHOW VIDEO CONTENT ====================
     function showVideoContent() {
@@ -762,166 +670,6 @@
         }
         
         startResetTimer();
-    }
-
-    // ========================================================================
-    //  LIVE STREAM - FROM YOUR PROVIDED CODE
-    // ========================================================================
-    async function loadLiveStream() {
-        try {
-            const response = await fetch(API_BASE + '/live');
-            const data = await response.json();
-            
-            const liveTitle = document.getElementById('liveTitle');
-            const liveStatus = document.getElementById('liveStatus');
-            const videoEl = document.getElementById('live-video');
-            
-            if (data.success && data.link) {
-                liveTitle.textContent = data.title || 'Live Stream';
-                liveStatus.textContent = '✅ Live stream loaded';
-                liveStatus.style.color = '#1a7a3a';
-                
-                // Destroy existing players
-                if (liveHls) {
-                    try { liveHls.destroy(); } catch(e) {}
-                    liveHls = null;
-                }
-                if (livePlayer) {
-                    try { livePlayer.dispose(); } catch(e) {}
-                    livePlayer = null;
-                }
-                
-                // Reset video element
-                const wrapper = document.getElementById('livePlayerWrapper');
-                wrapper.innerHTML = '';
-                const newVideo = document.createElement('video');
-                newVideo.id = 'live-video';
-                newVideo.className = 'video-js vjs-default-skin';
-                newVideo.setAttribute('controls', '');
-                newVideo.setAttribute('preload', 'auto');
-                newVideo.style.width = '100%';
-                newVideo.style.height = '100%';
-                newVideo.style.aspectRatio = '16/9';
-                wrapper.appendChild(newVideo);
-                
-                const newVideoEl = document.getElementById('live-video');
-                
-                // ========== PLAYER WITH HLS.js + Video.js ==========
-                if (data.link && data.link.includes('.m3u8') && Hls.isSupported()) {
-                    // HLS.js for playback
-                    liveHls = new Hls({
-                        enableWorker: true,
-                        lowLatencyMode: true,
-                        maxBufferLength: 30,
-                        maxMaxBufferLength: 60,
-                        xhrSetup: function(xhr, url) {
-                            xhr.setRequestHeader('Referer', 'https://classplusapp.com/');
-                            xhr.setRequestHeader('Origin', 'https://classplusapp.com');
-                            xhr.withCredentials = true;
-                        }
-                    });
-                    
-                    liveHls.loadSource(data.link);
-                    liveHls.attachMedia(newVideoEl);
-                    
-                    liveHls.on(Hls.Events.MANIFEST_PARSED, function() {
-                        newVideoEl.play().catch(e => console.log('Play error:', e));
-                        // Start duration timer
-                        if (!liveStartTime) {
-                            liveStartTime = Date.now();
-                            updateLiveDuration();
-                            if (liveDurationInterval) clearInterval(liveDurationInterval);
-                            liveDurationInterval = setInterval(updateLiveDuration, 1000);
-                        }
-                    });
-                    
-                    liveHls.on(Hls.Events.ERROR, function(event, data) {
-                        console.error('HLS Error:', data);
-                        if (data.fatal) {
-                            liveStatus.textContent = '❌ Live stream error. Please refresh.';
-                            liveStatus.style.color = '#b33a3a';
-                            tryFallbackLivePlayer(newVideoEl, data.link);
-                        }
-                    });
-                    
-                    // Video.js for controls overlay
-                    livePlayer = videojs(newVideoEl, {
-                        controls: true,
-                        fluid: true,
-                        html5: {
-                            nativeAudioTracks: false,
-                            nativeVideoTracks: false,
-                        }
-                    });
-                    
-                } else if (data.link) {
-                    tryFallbackLivePlayer(newVideoEl, data.link);
-                } else {
-                    liveStatus.textContent = '⚠️ No live stream available';
-                    liveStatus.style.color = '#856404';
-                }
-                
-            } else {
-                liveTitle.textContent = 'No live stream';
-                liveStatus.textContent = '⚠️ No live stream configured. Please check admin panel.';
-                liveStatus.style.color = '#856404';
-            }
-        } catch (error) {
-            console.error('Live stream error:', error);
-            document.getElementById('liveStatus').textContent = '❌ Failed to load live stream: ' + error.message;
-            document.getElementById('liveStatus').style.color = '#b33a3a';
-        }
-    }
-
-    // ========== FALLBACK LIVE PLAYER ==========
-    function tryFallbackLivePlayer(videoEl, link) {
-        if (liveHls) {
-            try { liveHls.destroy(); } catch(e) {}
-            liveHls = null;
-        }
-        
-        const player = videojs(videoEl, {
-            autoplay: true,
-            controls: true,
-            fluid: true,
-            html5: {
-                hls: {
-                    enableLowInitialPlaylist: true,
-                    smoothQualityChange: true,
-                    overrideNative: true,
-                },
-                nativeAudioTracks: false,
-                nativeVideoTracks: false,
-            }
-        });
-        
-        livePlayer = player;
-        
-        if (link && link.includes('.m3u8')) {
-            player.src({ src: link, type: 'application/x-mpegURL' });
-        } else if (link) {
-            player.src({ src: link, type: 'video/mp4' });
-        }
-        player.play();
-        
-        // Start timer
-        if (!liveStartTime) {
-            liveStartTime = Date.now();
-            updateLiveDuration();
-            if (liveDurationInterval) clearInterval(liveDurationInterval);
-            liveDurationInterval = setInterval(updateLiveDuration, 1000);
-        }
-    }
-
-    // ========== UPDATE LIVE DURATION (LECTURE COMPLETED) ==========
-    function updateLiveDuration() {
-        if (!liveStartTime) return;
-        const elapsed = Math.floor((Date.now() - liveStartTime) / 1000);
-        const hours = Math.floor(elapsed / 3600);
-        const minutes = Math.floor((elapsed % 3600) / 60);
-        const seconds = elapsed % 60;
-        document.getElementById('liveDuration').textContent = 
-            `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     }
 
     // ==================== FETCH PLAYLISTS ====================
@@ -1248,7 +996,6 @@
         if (checkGoogleSession()) {
             showVideoContent();
             fetchPlaylists();
-            loadLiveStream();
             return true;
         }
 
@@ -1257,7 +1004,6 @@
             currentUser = session.user;
             showVideoContent();
             fetchPlaylists();
-            loadLiveStream();
             return true;
         }
         return false;
@@ -1288,24 +1034,11 @@
         if (e.key === 'Escape') clearSearch();
     });
     
-    document.getElementById('liveRefreshBtn').addEventListener('click', function() {
-        liveStartTime = Date.now();
-        updateLiveDuration();
-        loadLiveStream();
-    });
-    
     setupTabs();
 
     // ==================== DISPOSE PLAYERS ====================
     window.addEventListener('beforeunload', function() {
         if (resetCheckInterval) clearInterval(resetCheckInterval);
-        if (liveDurationInterval) clearInterval(liveDurationInterval);
-        if (liveHls) {
-            try { liveHls.destroy(); } catch(e) {}
-        }
-        if (livePlayer) {
-            try { livePlayer.dispose(); } catch(e) {}
-        }
         for (let key in window) {
             if (key.startsWith('player_') && window[key] && typeof window[key].dispose === 'function') {
                 try { window[key].dispose(); } catch(e) {}
@@ -1327,7 +1060,7 @@
         document.getElementById('videoContent').style.display = 'none';
     }
 
-    console.log('✅ Video Portal loaded - Live Stream with Duration Timer');
+    console.log('✅ Video Portal loaded - Recorded videos only');
 })();
 </script>
 </body>
