@@ -204,7 +204,7 @@
 </div>
 
 <script>
-  // ==================== DEVELOPER TOOLS PROTECTION ====================
+  // ==================== DEVELOPER TOOLS PROTECTION (ADMIN) ====================
   (function() {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
     
@@ -212,13 +212,12 @@
       document.addEventListener('keydown', function(e) {
         if (e.key === 'F12' || 
             (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
-            (e.ctrlKey && e.key === 'U')) {
+            (e.ctrlKey && e.key === 'U') ||
+            (e.ctrlKey && e.shiftKey && e.key === 'C')) {
           e.preventDefault();
           window.location.href = 'https://www.google.com';
         }
       });
-
-      let devToolsDetected = false;
 
       function detectDevTools() {
         const threshold = 160;
@@ -226,20 +225,20 @@
         const heightThreshold = window.outerHeight - window.innerHeight > threshold;
         
         if (widthThreshold || heightThreshold) {
-          if (!devToolsDetected) {
-            devToolsDetected = true;
-            console.clear();
-            setTimeout(function() {
-              window.location.href = 'https://www.google.com';
-            }, 100);
-          }
-        } else {
-          devToolsDetected = false;
+          console.clear();
+          setTimeout(function() {
+            window.location.href = 'https://www.google.com';
+          }, 100);
         }
       }
 
-      setInterval(detectDevTools, 100);
-      setInterval(function() { console.clear(); }, 100);
+      setInterval(detectDevTools, 200);
+      
+      setInterval(function() {
+        if (window.performance && performance.clearResourceTimings) {
+          performance.clearResourceTimings();
+        }
+      }, 100);
 
       const noop = function() {};
       console.log = noop;
