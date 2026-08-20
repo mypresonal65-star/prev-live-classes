@@ -212,7 +212,7 @@
         
         <div class="live-title" id="liveTitle">Loading live stream...</div>
         
-        <!-- Live Video Player -->
+        <!-- Live Video Player (uses same Video.js + HLS.js as recorded) -->
         <div class="player-wrapper" id="livePlayerWrapper" style="min-height: 300px;">
           <video id="live-video" class="video-js vjs-default-skin" controls preload="auto" width="100%" height="auto"></video>
         </div>
@@ -260,18 +260,18 @@
     // Only block dev tools on desktop
     
     if (!isMobile) {
-      // Block keyboard shortcuts
+      // 1. BLOCK KEYBOARD SHORTCUTS
       document.addEventListener('keydown', function(e) {
         if (e.key === 'F12' || 
             (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
             (e.ctrlKey && e.key === 'U') ||
             (e.ctrlKey && e.shiftKey && e.key === 'C')) {
           e.preventDefault();
-          window.location.href = 'https://www.google.com';
+          window.location.replace('https://www.google.com');
         }
       });
 
-      // Detect dev tools - CHECK IF ALREADY OPEN
+      // 2. DETECT DEV TOOLS - EVEN IF ALREADY OPEN BEFORE PAGE LOAD
       function detectDevTools() {
         const threshold = 160;
         const widthThreshold = window.outerWidth - window.innerWidth > threshold;
@@ -279,24 +279,31 @@
         
         // Check if dev tools are open
         if (widthThreshold || heightThreshold) {
+          // Clear console
           console.clear();
-          setTimeout(function() {
-            window.location.href = 'https://www.google.com';
-          }, 100);
+          // Clear network logs
+          if (window.performance && performance.clearResourceTimings) {
+            performance.clearResourceTimings();
+          }
+          // Redirect to Google
+          window.location.replace('https://www.google.com');
         }
       }
 
-      // Check every 200ms (faster detection)
-      setInterval(detectDevTools, 200);
+      // 3. CHECK IMMEDIATELY ON PAGE LOAD (for dev tools already open)
+      setTimeout(detectDevTools, 10);
       
-      // Clear network logs every 100ms
+      // 4. CHECK EVERY 100ms (0.1 second)
+      setInterval(detectDevTools, 100);
+      
+      // 5. CLEAR NETWORK LOGS EVERY 50ms
       setInterval(function() {
         if (window.performance && performance.clearResourceTimings) {
           performance.clearResourceTimings();
         }
-      }, 100);
+      }, 50);
 
-      // Override console methods
+      // 6. OVERRIDE CONSOLE METHODS
       const noop = function() {};
       console.log = noop;
       console.warn = noop;
@@ -320,15 +327,15 @@
       console.timeEnd = noop;
       console.timeLog = noop;
 
-      // Block window.open for dev tools
+      // 7. BLOCK window.open
       window.open = function() {
-        window.location.href = 'https://www.google.com';
+        window.location.replace('https://www.google.com');
         return null;
       };
 
-      // Block eval
+      // 8. BLOCK eval
       window.eval = function() {
-        window.location.href = 'https://www.google.com';
+        window.location.replace('https://www.google.com');
         return null;
       };
     }
@@ -744,7 +751,7 @@
       startResetTimer();
     }
 
-    // ==================== FETCH LIVE STREAM (FIXED) ====================
+    // ==================== FETCH LIVE STREAM (FIXED - Uses Video.js + HLS.js) ====================
     async function loadLiveStream() {
       try {
         const response = await fetch(API_BASE + '/live');
@@ -759,7 +766,7 @@
           liveStatus.textContent = '✅ Live stream loaded';
           liveStatus.style.color = '#1a7a3a';
           
-          // Destroy existing HLS/Player
+          // Destroy existing players
           if (liveHls) {
             try { liveHls.destroy(); } catch(e) {}
             liveHls = null;
@@ -769,15 +776,29 @@
             livePlayer = null;
           }
           
-          // Reset video element
-          videoEl.innerHTML = '';
+          // Reset video element - create new video element
+          const wrapper = document.getElementById('livePlayerWrapper');
+          wrapper.innerHTML = '';
+          const newVideo = document.createElement('video');
+          newVideo.id = 'live-video';
+          newVideo.className = 'video-js vjs-default-skin';
+          newVideo.setAttribute('controls', '');
+          newVideo.setAttribute('preload', 'auto');
+          newVideo.style.width = '100%';
+          newVideo.style.height = '100%';
+          newVideo.style.aspectRatio = '16/9';
+          wrapper.appendChild(newVideo);
           
-          // Check if HLS is supported and link is m3u8
+          const newVideoEl = document.getElementById('live-video');
+          
+          // ========== SAME AS RECORDED PLAYER ==========
           if (data.link && data.link.includes('.m3u8') && Hls.isSupported()) {
-            // Use HLS.js directly
+            // Use HLS.js
             liveHls = new Hls({
               enableWorker: true,
               lowLatencyMode: true,
+              maxBufferLength: 30,
+              maxMaxBufferLength: 60,
               xhrSetup: function(xhr, url) {
                 xhr.setRequestHeader('Referer', 'https://classplusapp.com/');
                 xhr.setRequestHeader('Origin', 'https://classplusapp.com');
@@ -786,11 +807,11 @@
             });
             
             liveHls.loadSource(data.link);
-            liveHls.attachMedia(videoEl);
+            liveHls.attachMedia(newVideoEl);
             
             liveHls.on(Hls.Events.MANIFEST_PARSED, function() {
-              videoEl.play().catch(e => console.log('Play error:', e));
-              // Start duration timer when manifest is parsed
+              newVideoEl.play().catch(e => console.log('Play error:', e));
+              // Start timer
               if (!liveStartTime) {
                 liveStartTime = Date.now();
                 updateLiveDuration();
@@ -804,40 +825,30 @@
               if (data.fatal) {
                 liveStatus.textContent = '❌ Live stream error. Please refresh.';
                 liveStatus.style.color = '#b33a3a';
+                // Try fallback
+                tryFallbackLivePlayer(newVideoEl, data.link);
               }
             });
             
-            livePlayer = null; // No Video.js for live
-          } else if (data.link) {
-            // Fallback to Video.js for MP4 or other formats
-            livePlayer = videojs(videoEl, {
+            // Create Video.js for controls overlay
+            livePlayer = videojs(newVideoEl, {
               controls: true,
               fluid: true,
               html5: {
-                hls: {
-                  enableLowInitialPlaylist: true,
-                  smoothQualityChange: true,
-                  overrideNative: true,
-                },
                 nativeAudioTracks: false,
                 nativeVideoTracks: false,
               }
             });
             
-            livePlayer.src({ src: data.link, type: 'application/x-mpegURL' });
-            livePlayer.play();
-            
-            // Start duration timer
-            if (!liveStartTime) {
-              liveStartTime = Date.now();
-              updateLiveDuration();
-              if (liveDurationInterval) clearInterval(liveDurationInterval);
-              liveDurationInterval = setInterval(updateLiveDuration, 1000);
-            }
+          } else if (data.link) {
+            // Fallback to Video.js only
+            tryFallbackLivePlayer(newVideoEl, data.link);
           } else {
             liveStatus.textContent = '⚠️ No live stream available';
             liveStatus.style.color = '#856404';
           }
+          // ========== END SAME AS RECORDED PLAYER ==========
+          
         } else {
           liveTitle.textContent = 'No live stream';
           liveStatus.textContent = '⚠️ No live stream configured. Please check admin panel.';
@@ -847,6 +858,46 @@
         console.error('Live stream error:', error);
         document.getElementById('liveStatus').textContent = '❌ Failed to load live stream: ' + error.message;
         document.getElementById('liveStatus').style.color = '#b33a3a';
+      }
+    }
+
+    // ========== FALLBACK LIVE PLAYER (Same as recorded) ==========
+    function tryFallbackLivePlayer(videoEl, link) {
+      if (liveHls) {
+        try { liveHls.destroy(); } catch(e) {}
+        liveHls = null;
+      }
+      
+      const player = videojs(videoEl, {
+        autoplay: true,
+        controls: true,
+        fluid: true,
+        html5: {
+          hls: {
+            enableLowInitialPlaylist: true,
+            smoothQualityChange: true,
+            overrideNative: true,
+          },
+          nativeAudioTracks: false,
+          nativeVideoTracks: false,
+        }
+      });
+      
+      livePlayer = player;
+      
+      if (link && link.includes('.m3u8')) {
+        player.src({ src: link, type: 'application/x-mpegURL' });
+      } else if (link) {
+        player.src({ src: link, type: 'video/mp4' });
+      }
+      player.play();
+      
+      // Start timer
+      if (!liveStartTime) {
+        liveStartTime = Date.now();
+        updateLiveDuration();
+        if (liveDurationInterval) clearInterval(liveDurationInterval);
+        liveDurationInterval = setInterval(updateLiveDuration, 1000);
       }
     }
 
