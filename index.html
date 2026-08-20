@@ -9,9 +9,6 @@
   <script src="https://cdn.jsdelivr.net/npm/hls.js@0.14.17/dist/hls.min.js"></script>
   <script src="https://accounts.google.com/gsi/client"></script>
   <style>
-    /* ============================================================
-       COMPLETE STYLES
-       ============================================================ */
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
     body { background: #f0f4fb; min-height: 100vh; display: flex; justify-content: center; padding: 30px 16px; }
     .app { max-width: 1100px; width: 100%; background: white; border-radius: 36px; box-shadow: 0 20px 50px rgba(0,0,0,0.04); padding: 28px 30px; }
@@ -64,6 +61,20 @@
     .tab-content { display: none; }
     .tab-content.active { display: block; }
     
+    .live-container { padding: 20px; background: #f8faff; border-radius: 20px; border: 1px solid #e6edf6; }
+    .live-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+    .live-badge { background: #ff0044; color: white; padding: 4px 16px; border-radius: 40px; font-size: 0.8rem; font-weight: 700; animation: pulse-live 1.5s infinite; display: inline-flex; align-items: center; gap: 8px; }
+    .live-badge::before { content: "●"; font-size: 16px; animation: pulse-dot 1s infinite; }
+    @keyframes pulse-live { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+    @keyframes pulse-dot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.3; transform: scale(0.8); } }
+    
+    .live-refresh-btn { padding: 8px 24px; border: none; border-radius: 40px; background: #1a2b4c; color: white; font-weight: 500; cursor: pointer; transition: 0.15s; }
+    .live-refresh-btn:hover { background: #2f4370; }
+    
+    .live-duration { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: #eef3fa; border-radius: 12px; margin-top: 12px; }
+    .live-duration .label { color: #4c637f; font-size: 0.9rem; }
+    .live-duration .value { font-weight: 700; color: #0b1a33; font-family: 'Courier New', monospace; font-size: 1.1rem; }
+    
     .playlist-selector { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; padding: 16px; background: #f8faff; border-radius: 20px; align-items: center; }
     .playlist-selector select { padding: 10px 20px; border: 2px solid #d9e1ec; border-radius: 40px; background: white; color: #1a2b4c; font-weight: 500; cursor: pointer; flex: 1; min-width: 150px; }
     .playlist-selector select:focus { border-color: #1a2b4c; outline: none; }
@@ -85,20 +96,6 @@
     .play-btn:hover { background: #1f3457; }
     .player-wrapper { width: 100%; margin-top: 12px; border-radius: 16px; overflow: hidden; background: #000; min-height: 200px; }
     .player-wrapper iframe { width: 100%; height: 100%; min-height: 200px; aspect-ratio: 16/9; border: none; }
-    
-    .live-container { padding: 20px; background: #f8faff; border-radius: 20px; border: 1px solid #e6edf6; }
-    .live-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
-    .live-badge { background: #ff0044; color: white; padding: 4px 16px; border-radius: 40px; font-size: 0.8rem; font-weight: 700; animation: pulse-live 1.5s infinite; display: inline-flex; align-items: center; gap: 8px; }
-    .live-badge::before { content: "●"; font-size: 16px; animation: pulse-dot 1s infinite; }
-    @keyframes pulse-live { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-    @keyframes pulse-dot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.3; transform: scale(0.8); } }
-    
-    .live-refresh-btn { padding: 8px 24px; border: none; border-radius: 40px; background: #1a2b4c; color: white; font-weight: 500; cursor: pointer; transition: 0.15s; }
-    .live-refresh-btn:hover { background: #2f4370; }
-    
-    .live-duration { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: #eef3fa; border-radius: 12px; margin-top: 12px; }
-    .live-duration .label { color: #4c637f; font-size: 0.9rem; }
-    .live-duration .value { font-weight: 700; color: #0b1a33; font-family: 'Courier New', monospace; font-size: 1.1rem; }
     
     .empty-state { color: #6a7c94; padding: 40px 0; text-align: center; font-style: italic; }
     .playlist-title { font-size: 1.4rem; font-weight: 600; color: #0b1a33; margin-bottom: 16px; }
@@ -213,14 +210,14 @@
           <button class="live-refresh-btn" id="liveRefreshBtn">🔄 Refresh</button>
         </div>
         
-        <div class="live-title" id="liveTitle">Loading live stream...</div>
+        <div class="live-title" id="liveTitle">Loading live videos...</div>
         
-        <!-- Live Video Player - SAME AS RECORDED -->
+        <!-- Live Video Player -->
         <div class="player-wrapper" id="livePlayerWrapper" style="min-height: 300px;">
           <video id="live-video" class="video-js vjs-default-skin" controls preload="auto" width="100%" height="auto"></video>
         </div>
         
-        <!-- Live Duration - ACTUAL TIME -->
+        <!-- Live Duration -->
         <div class="live-duration">
           <span class="label">⏱️ Lecture Completed:</span>
           <span class="value" id="liveDuration">00:00:00</span>
@@ -716,7 +713,7 @@
     }
 
     // ========================================================================
-    //  LIVE STREAM PLAYER - SAME AS RECORDED PLAYER
+    //  LIVE STREAM - SAME AS RECORDED PLAYER
     // ========================================================================
     async function loadLiveStream() {
         try {
@@ -732,7 +729,6 @@
                 liveStatus.textContent = '✅ Live stream loaded';
                 liveStatus.style.color = '#1a7a3a';
                 
-                // Destroy existing players
                 if (liveHls) {
                     try { liveHls.destroy(); } catch(e) {}
                     liveHls = null;
@@ -742,7 +738,6 @@
                     livePlayer = null;
                 }
                 
-                // Reset video element
                 const wrapper = document.getElementById('livePlayerWrapper');
                 wrapper.innerHTML = '';
                 const newVideo = document.createElement('video');
@@ -757,11 +752,8 @@
                 
                 const newVideoEl = document.getElementById('live-video');
                 
-                // ============================================================
-                //  SAME AS RECORDED PLAYER - HLS.js + Video.js
-                // ============================================================
+                // SAME AS RECORDED PLAYER
                 if (data.link && data.link.includes('.m3u8') && Hls.isSupported()) {
-                    // HLS.js for playback
                     liveHls = new Hls({
                         enableWorker: true,
                         lowLatencyMode: true,
@@ -779,7 +771,6 @@
                     
                     liveHls.on(Hls.Events.MANIFEST_PARSED, function() {
                         newVideoEl.play().catch(e => console.log('Play error:', e));
-                        // Start duration timer
                         if (!liveStartTime) {
                             liveStartTime = Date.now();
                             updateLiveDuration();
@@ -797,7 +788,6 @@
                         }
                     });
                     
-                    // Video.js for controls overlay (like recorded)
                     livePlayer = videojs(newVideoEl, {
                         controls: true,
                         fluid: true,
@@ -808,7 +798,6 @@
                     });
                     
                 } else if (data.link) {
-                    // Fallback - Video.js only
                     tryFallbackLivePlayer(newVideoEl, data.link);
                 } else {
                     liveStatus.textContent = '⚠️ No live stream available';
@@ -827,7 +816,7 @@
         }
     }
 
-    // ========== FALLBACK LIVE PLAYER (Same as recorded fallback) ==========
+    // ========== FALLBACK LIVE PLAYER ==========
     function tryFallbackLivePlayer(videoEl, link) {
         if (liveHls) {
             try { liveHls.destroy(); } catch(e) {}
@@ -858,7 +847,6 @@
         }
         player.play();
         
-        // Start timer
         if (!liveStartTime) {
             liveStartTime = Date.now();
             updateLiveDuration();
@@ -867,7 +855,6 @@
         }
     }
 
-    // ========== UPDATE LIVE DURATION (Actual time) ==========
     function updateLiveDuration() {
         if (!liveStartTime) return;
         const elapsed = Math.floor((Date.now() - liveStartTime) / 1000);
@@ -1242,12 +1229,9 @@
         if (e.key === 'Escape') clearSearch();
     });
     
-    // ========== LIVE REFRESH BUTTON - RESETS TIMER AND RELOADS ==========
     document.getElementById('liveRefreshBtn').addEventListener('click', function() {
-        // Reset duration timer
         liveStartTime = Date.now();
         updateLiveDuration();
-        // Reload stream
         loadLiveStream();
     });
     
@@ -1284,7 +1268,7 @@
         document.getElementById('videoContent').style.display = 'none';
     }
 
-    console.log('✅ Video Portal loaded - Live player uses same code as recorded');
+    console.log('✅ Video Portal loaded - Live + Recorded tabs');
 })();
 </script>
 </body>
