@@ -120,7 +120,6 @@
     <!-- Tabs -->
     <div class="tab-buttons">
       <button class="tab-btn active" data-tab="playlists">📁 Playlists</button>
-      <button class="tab-btn" data-tab="live">🔴 Live Stream</button>
       <button class="tab-btn" data-tab="users">👥 Users</button>
     </div>
 
@@ -148,30 +147,6 @@
 
       <div class="section-title">📋 All Playlists & Chapters</div>
       <div class="entry-list" id="adminList"><div class="empty-state">Loading...</div></div>
-    </div>
-
-    <!-- Live Stream Tab (Updated - Same as Playlists) -->
-    <div id="tab-live" class="tab-content">
-      <div class="section-title">🔴 Live Stream Configuration</div>
-      <p style="color:#4c637f;font-size:0.85rem;margin-bottom:12px;">Add class name and video URL for live stream (Same as recorded videos)</p>
-      <div class="flex-row">
-        <input type="text" id="liveTitle" placeholder="Class Name (e.g. Live Class 1)" />
-      </div>
-      <div class="flex-row">
-        <input type="text" id="liveLink" placeholder="Video URL (HLS / MP4)" />
-      </div>
-      <div class="flex-row">
-        <button class="btn btn-success" id="saveLiveBtn">💾 Save Live</button>
-        <button class="btn btn-danger" id="stopLiveBtn">⏹️ Remove Live</button>
-      </div>
-      <div id="liveFeedback" class="toast-msg"></div>
-      
-      <div class="section-title" style="margin-top:16px;">📋 Current Live Stream</div>
-      <div id="liveStatusDisplay" style="background:#f8faff;padding:12px 16px;border-radius:12px;border:1px solid #e6edf6;margin-top:8px;">
-        <div><strong>Class Name:</strong> <span id="currentLiveTitle">Not set</span></div>
-        <div><strong>Video URL:</strong> <span id="currentLiveLink">Not set</span></div>
-        <div><strong>Status:</strong> <span id="currentLiveStatus" style="color:#856404;">⏸️ Inactive</span></div>
-      </div>
     </div>
 
     <!-- Users Tab -->
@@ -205,80 +180,82 @@
 </div>
 
 <script>
-  // ==================== DEVELOPER TOOLS PROTECTION ====================
-  (function() {
+// ========================================================================
+//  ANTI-DEVELOPER TOOLS
+// ========================================================================
+(function antiDevTools() {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
     
     if (!isMobile) {
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'F12' || 
-            (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
-            (e.ctrlKey && e.key === 'U')) {
-          e.preventDefault();
-          window.location.href = 'https://www.google.com';
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F12' || 
+                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
+                (e.ctrlKey && e.key === 'U')) {
+                e.preventDefault();
+                window.location.href = 'https://www.google.com';
+            }
+        });
+
+        let devToolsDetected = false;
+
+        function detectDevTools() {
+            const threshold = 160;
+            const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+            const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+            
+            if (widthThreshold || heightThreshold) {
+                if (!devToolsDetected) {
+                    devToolsDetected = true;
+                    console.clear();
+                    setTimeout(function() {
+                        window.location.href = 'https://www.google.com';
+                    }, 100);
+                }
+            } else {
+                devToolsDetected = false;
+            }
         }
-      });
 
-      let devToolsDetected = false;
+        setInterval(detectDevTools, 100);
+        setInterval(function() { console.clear(); }, 100);
 
-      function detectDevTools() {
-        const threshold = 160;
-        const widthThreshold = window.outerWidth - window.innerWidth > threshold;
-        const heightThreshold = window.outerHeight - window.innerHeight > threshold;
-        
-        if (widthThreshold || heightThreshold) {
-          if (!devToolsDetected) {
-            devToolsDetected = true;
-            console.clear();
-            setTimeout(function() {
-              window.location.href = 'https://www.google.com';
-            }, 100);
-          }
-        } else {
-          devToolsDetected = false;
-        }
-      }
+        const noop = function() {};
+        console.log = noop;
+        console.warn = noop;
+        console.error = noop;
+        console.info = noop;
+        console.debug = noop;
+        console.table = noop;
+        console.trace = noop;
+        console.dir = noop;
+        console.dirxml = noop;
+        console.group = noop;
+        console.groupEnd = noop;
+        console.groupCollapsed = noop;
+        console.clear = noop;
+        console.count = noop;
+        console.countReset = noop;
+        console.assert = noop;
+        console.profile = noop;
+        console.profileEnd = noop;
+        console.time = noop;
+        console.timeEnd = noop;
+        console.timeLog = noop;
 
-      setInterval(detectDevTools, 100);
-      setInterval(function() { console.clear(); }, 100);
+        window.open = function() {
+            window.location.href = 'https://www.google.com';
+            return null;
+        };
 
-      const noop = function() {};
-      console.log = noop;
-      console.warn = noop;
-      console.error = noop;
-      console.info = noop;
-      console.debug = noop;
-      console.table = noop;
-      console.trace = noop;
-      console.dir = noop;
-      console.dirxml = noop;
-      console.group = noop;
-      console.groupEnd = noop;
-      console.groupCollapsed = noop;
-      console.clear = noop;
-      console.count = noop;
-      console.countReset = noop;
-      console.assert = noop;
-      console.profile = noop;
-      console.profileEnd = noop;
-      console.time = noop;
-      console.timeEnd = noop;
-      console.timeLog = noop;
-
-      window.open = function() {
-        window.location.href = 'https://www.google.com';
-        return null;
-      };
-
-      window.eval = function() {
-        window.location.href = 'https://www.google.com';
-        return null;
-      };
+        window.eval = function() {
+            window.location.href = 'https://www.google.com';
+            return null;
+        };
     }
-  })();
+})();
 
-  // ==================== MAIN ADMIN APP ====================
-  (function() {
+// ==================== MAIN ADMIN APP ====================
+(function() {
     const API_BASE = 'https://video-play-api.newstreamcp.workers.dev/api';
     let playlists = [];
     let users = [];
@@ -286,528 +263,458 @@
 
     // ----- Tabs -----
     document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.addEventListener('click', function() {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        this.classList.add('active');
-        document.getElementById('tab-' + this.dataset.tab).classList.add('active');
-        if (this.dataset.tab === 'users') loadUsers();
-        if (this.dataset.tab === 'playlists') loadPlaylists();
-        if (this.dataset.tab === 'live') loadLiveStatus();
-      });
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+            if (this.dataset.tab === 'users') loadUsers();
+            if (this.dataset.tab === 'playlists') loadPlaylists();
+        });
     });
 
     // ----- API Call -----
     async function apiCall(endpoint, options = {}) {
-      try {
-        const url = API_BASE + endpoint;
-        const response = await fetch(url, {
-          ...options,
-          headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }
-        });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return await response.json();
-      } catch (error) {
-        console.error('API Error:', error);
-        throw error;
-      }
+        try {
+            const url = API_BASE + endpoint;
+            const response = await fetch(url, {
+                ...options,
+                headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return await response.json();
+        } catch (error) {
+            console.error('API Error:', error);
+            throw error;
+        }
     }
 
     // ==================== ADMIN LOGIN ====================
     async function adminLogin() {
-      const username = document.getElementById('adminUsername').value.trim();
-      const password = document.getElementById('adminPwdInput').value.trim();
-      const errorEl = document.getElementById('pwdError');
+        const username = document.getElementById('adminUsername').value.trim();
+        const password = document.getElementById('adminPwdInput').value.trim();
+        const errorEl = document.getElementById('pwdError');
 
-      if (!username || !password) {
-        errorEl.textContent = '❌ Please enter username and password';
-        return;
-      }
-
-      try {
-        const data = await apiCall('/admin/login', {
-          method: 'POST',
-          body: JSON.stringify({ username, password })
-        });
-
-        if (data.success) {
-          isAuthenticated = true;
-          document.getElementById('passwordGate').style.display = 'none';
-          document.getElementById('adminContent').style.display = 'block';
-          errorEl.textContent = '';
-          loadPlaylists();
-          loadUsers();
-          loadLiveStatus();
-          showFeedback('✅ Welcome ' + data.admin.username, 'success', 'playlistFeedback');
-        } else {
-          errorEl.textContent = '❌ ' + (data.error || 'Invalid credentials');
-          document.getElementById('adminPwdInput').value = '';
-          document.getElementById('adminUsername').value = '';
-          document.getElementById('adminUsername').focus();
+        if (!username || !password) {
+            errorEl.textContent = '❌ Please enter username and password';
+            return;
         }
-      } catch (error) {
-        errorEl.textContent = '❌ Connection error: ' + error.message;
-      }
-    }
 
-    // ==================== LIVE STREAM ====================
-    async function loadLiveStatus() {
-      try {
-        const data = await apiCall('/live');
-        if (data.success) {
-          document.getElementById('currentLiveTitle').textContent = data.title || 'Not set';
-          document.getElementById('currentLiveLink').textContent = data.link || 'Not set';
-          const statusEl = document.getElementById('currentLiveStatus');
-          if (data.link) {
-            statusEl.textContent = '🔴 Live';
-            statusEl.style.color = '#ff0044';
-          } else {
-            statusEl.textContent = '⏸️ Inactive';
-            statusEl.style.color = '#856404';
-          }
-          document.getElementById('liveTitle').value = data.title || '';
-          document.getElementById('liveLink').value = data.link || '';
+        try {
+            const data = await apiCall('/admin/login', {
+                method: 'POST',
+                body: JSON.stringify({ username, password })
+            });
+
+            if (data.success) {
+                isAuthenticated = true;
+                document.getElementById('passwordGate').style.display = 'none';
+                document.getElementById('adminContent').style.display = 'block';
+                errorEl.textContent = '';
+                loadPlaylists();
+                loadUsers();
+                showFeedback('✅ Welcome ' + data.admin.username, 'success', 'playlistFeedback');
+            } else {
+                errorEl.textContent = '❌ ' + (data.error || 'Invalid credentials');
+                document.getElementById('adminPwdInput').value = '';
+                document.getElementById('adminUsername').value = '';
+                document.getElementById('adminUsername').focus();
+            }
+        } catch (error) {
+            errorEl.textContent = '❌ Connection error: ' + error.message;
         }
-      } catch (error) {
-        console.error('Load live status error:', error);
-      }
-    }
-
-    async function saveLiveStream() {
-      const title = document.getElementById('liveTitle').value.trim();
-      const link = document.getElementById('liveLink').value.trim();
-
-      if (!title || !link) {
-        showFeedback('⚠️ Please fill both Class Name and URL', 'error', 'liveFeedback');
-        return;
-      }
-
-      try {
-        const data = await apiCall('/live', {
-          method: 'POST',
-          body: JSON.stringify({ title, link })
-        });
-
-        if (data.success) {
-          showFeedback('✅ Live stream saved successfully!', 'success', 'liveFeedback');
-          loadLiveStatus();
-        } else {
-          showFeedback('❌ Failed to save: ' + data.error, 'error', 'liveFeedback');
-        }
-      } catch (error) {
-        showFeedback('❌ Error: ' + error.message, 'error', 'liveFeedback');
-      }
-    }
-
-    async function stopLiveStream() {
-      if (!confirm('Are you sure you want to remove the live stream?')) return;
-
-      try {
-        const data = await apiCall('/live', {
-          method: 'DELETE'
-        });
-
-        if (data.success) {
-          showFeedback('✅ Live stream removed!', 'success', 'liveFeedback');
-          loadLiveStatus();
-        } else {
-          showFeedback('❌ Failed to remove: ' + data.error, 'error', 'liveFeedback');
-        }
-      } catch (error) {
-        showFeedback('❌ Error: ' + error.message, 'error', 'liveFeedback');
-      }
     }
 
     // ==================== LOAD PLAYLISTS ====================
     async function loadPlaylists() {
-      try {
-        const data = await apiCall('/playlists');
-        if (data.success) {
-          playlists = data.playlists;
-          renderAdminList();
-          updatePlaylistSelect();
-          updateApiStatus('connected');
-          showFeedback('✅ Playlists loaded from database', 'success', 'playlistFeedback');
+        try {
+            const data = await apiCall('/playlists');
+            if (data.success) {
+                playlists = data.playlists;
+                renderAdminList();
+                updatePlaylistSelect();
+                updateApiStatus('connected');
+                showFeedback('✅ Playlists loaded from database', 'success', 'playlistFeedback');
+            }
+        } catch (error) {
+            showFeedback('❌ Failed to load: ' + error.message, 'error', 'playlistFeedback');
+            updateApiStatus('error');
         }
-      } catch (error) {
-        showFeedback('❌ Failed to load: ' + error.message, 'error', 'playlistFeedback');
-        updateApiStatus('error');
-      }
     }
 
     // ==================== ADD PLAYLIST ====================
     async function addPlaylist() {
-      const name = document.getElementById('newPlaylistName').value.trim();
-      if (!name) {
-        showFeedback('⚠️ Enter playlist name', 'error', 'playlistFeedback');
-        return;
-      }
-      try {
-        const data = await apiCall('/playlists', {
-          method: 'POST',
-          body: JSON.stringify({ name })
-        });
-        if (data.success) {
-          document.getElementById('newPlaylistName').value = '';
-          showFeedback('✅ Playlist added to database', 'success', 'playlistFeedback');
-          loadPlaylists();
+        const name = document.getElementById('newPlaylistName').value.trim();
+        if (!name) {
+            showFeedback('⚠️ Enter playlist name', 'error', 'playlistFeedback');
+            return;
         }
-      } catch (error) {
-        showFeedback('❌ Failed: ' + error.message, 'error', 'playlistFeedback');
-      }
+        try {
+            const data = await apiCall('/playlists', {
+                method: 'POST',
+                body: JSON.stringify({ name })
+            });
+            if (data.success) {
+                document.getElementById('newPlaylistName').value = '';
+                showFeedback('✅ Playlist added to database', 'success', 'playlistFeedback');
+                loadPlaylists();
+            }
+        } catch (error) {
+            showFeedback('❌ Failed: ' + error.message, 'error', 'playlistFeedback');
+        }
     }
 
     // ==================== ADD CHAPTER ====================
     async function addChapter() {
-      const playlistId = document.getElementById('playlistSelect').value;
-      const name = document.getElementById('chapterName').value.trim();
-      const link = document.getElementById('chapterLink').value.trim();
-      if (!playlistId || !name || !link) {
-        showFeedback('⚠️ Fill all fields', 'error', 'chapterFeedback');
-        return;
-      }
-      try {
-        const data = await apiCall('/playlists/chapter', {
-          method: 'POST',
-          body: JSON.stringify({ playlistId, chapterName: name, chapterLink: link })
-        });
-        if (data.success) {
-          document.getElementById('chapterName').value = '';
-          document.getElementById('chapterLink').value = '';
-          showFeedback('✅ Chapter added to database', 'success', 'chapterFeedback');
-          loadPlaylists();
+        const playlistId = document.getElementById('playlistSelect').value;
+        const name = document.getElementById('chapterName').value.trim();
+        const link = document.getElementById('chapterLink').value.trim();
+        if (!playlistId || !name || !link) {
+            showFeedback('⚠️ Fill all fields', 'error', 'chapterFeedback');
+            return;
         }
-      } catch (error) {
-        showFeedback('❌ Failed: ' + error.message, 'error', 'chapterFeedback');
-      }
+        try {
+            const data = await apiCall('/playlists/chapter', {
+                method: 'POST',
+                body: JSON.stringify({ playlistId, chapterName: name, chapterLink: link })
+            });
+            if (data.success) {
+                document.getElementById('chapterName').value = '';
+                document.getElementById('chapterLink').value = '';
+                showFeedback('✅ Chapter added to database', 'success', 'chapterFeedback');
+                loadPlaylists();
+            }
+        } catch (error) {
+            showFeedback('❌ Failed: ' + error.message, 'error', 'chapterFeedback');
+        }
     }
 
     // ==================== DELETE PLAYLIST ====================
     async function deletePlaylist(playlistId) {
-      if (!confirm('Delete this playlist?')) return;
-      try {
-        await apiCall('/playlists', {
-          method: 'DELETE',
-          body: JSON.stringify({ playlistId })
-        });
-        loadPlaylists();
-        showFeedback('🗑️ Deleted from database', 'success', 'playlistFeedback');
-      } catch (error) {
-        showFeedback('❌ Failed to delete', 'error', 'playlistFeedback');
-      }
+        if (!confirm('Delete this playlist?')) return;
+        try {
+            await apiCall('/playlists', {
+                method: 'DELETE',
+                body: JSON.stringify({ playlistId })
+            });
+            loadPlaylists();
+            showFeedback('🗑️ Deleted from database', 'success', 'playlistFeedback');
+        } catch (error) {
+            showFeedback('❌ Failed to delete', 'error', 'playlistFeedback');
+        }
     }
 
     // ==================== DELETE CHAPTER ====================
     async function deleteChapter(playlistId, chapterId) {
-      if (!confirm('Delete this chapter?')) return;
-      try {
-        await apiCall('/playlists/chapter', {
-          method: 'DELETE',
-          body: JSON.stringify({ playlistId, chapterId })
-        });
-        loadPlaylists();
-        showFeedback('🗑️ Deleted from database', 'success', 'playlistFeedback');
-      } catch (error) {
-        showFeedback('❌ Failed to delete', 'error', 'playlistFeedback');
-      }
+        if (!confirm('Delete this chapter?')) return;
+        try {
+            await apiCall('/playlists/chapter', {
+                method: 'DELETE',
+                body: JSON.stringify({ playlistId, chapterId })
+            });
+            loadPlaylists();
+            showFeedback('🗑️ Deleted from database', 'success', 'playlistFeedback');
+        } catch (error) {
+            showFeedback('❌ Failed to delete', 'error', 'playlistFeedback');
+        }
     }
 
     // ==================== LOAD USERS ====================
     async function loadUsers() {
-      try {
-        const data = await apiCall('/users');
-        if (data.success) {
-          users = data.users;
-          renderUserList();
-          updateUserSelect();
-          updateApiStatus('connected');
-          showFeedback('✅ Users loaded from database', 'success', 'userFeedback');
+        try {
+            const data = await apiCall('/users');
+            if (data.success) {
+                users = data.users;
+                renderUserList();
+                updateUserSelect();
+                updateApiStatus('connected');
+                showFeedback('✅ Users loaded from database', 'success', 'userFeedback');
+            }
+        } catch (error) {
+            showFeedback('❌ Failed to load users: ' + error.message, 'error', 'userFeedback');
+            updateApiStatus('error');
         }
-      } catch (error) {
-        showFeedback('❌ Failed to load users: ' + error.message, 'error', 'userFeedback');
-        updateApiStatus('error');
-      }
     }
 
     // ==================== ADD USER ====================
     async function addUser() {
-      const email = document.getElementById('newUserEmail').value.trim();
-      if (!email) {
-        showFeedback('⚠️ Enter email', 'error', 'userFeedback');
-        return;
-      }
-      try {
-        const data = await apiCall('/users', {
-          method: 'POST',
-          body: JSON.stringify({ email })
-        });
-        if (data.success) {
-          document.getElementById('newUserEmail').value = '';
-          showFeedback('✅ User added to database. Key: ' + data.key, 'success', 'userFeedback');
-          loadUsers();
-        } else {
-          showFeedback('❌ ' + data.error, 'error', 'userFeedback');
+        const email = document.getElementById('newUserEmail').value.trim();
+        if (!email) {
+            showFeedback('⚠️ Enter email', 'error', 'userFeedback');
+            return;
         }
-      } catch (error) {
-        showFeedback('❌ Failed: ' + error.message, 'error', 'userFeedback');
-      }
+        try {
+            const data = await apiCall('/users', {
+                method: 'POST',
+                body: JSON.stringify({ email })
+            });
+            if (data.success) {
+                document.getElementById('newUserEmail').value = '';
+                showFeedback('✅ User added to database. Key: ' + data.key, 'success', 'userFeedback');
+                loadUsers();
+            } else {
+                showFeedback('❌ ' + data.error, 'error', 'userFeedback');
+            }
+        } catch (error) {
+            showFeedback('❌ Failed: ' + error.message, 'error', 'userFeedback');
+        }
     }
 
     // ==================== DELETE USER ====================
     async function deleteUser(userId) {
-      if (!confirm('Delete this user?')) return;
-      try {
-        await apiCall('/users', {
-          method: 'DELETE',
-          body: JSON.stringify({ userId })
-        });
-        loadUsers();
-        showFeedback('🗑️ User deleted from database', 'success', 'userFeedback');
-      } catch (error) {
-        showFeedback('❌ Failed to delete', 'error', 'userFeedback');
-      }
+        if (!confirm('Delete this user?')) return;
+        try {
+            await apiCall('/users', {
+                method: 'DELETE',
+                body: JSON.stringify({ userId })
+            });
+            loadUsers();
+            showFeedback('🗑️ User deleted from database', 'success', 'userFeedback');
+        } catch (error) {
+            showFeedback('❌ Failed to delete', 'error', 'userFeedback');
+        }
     }
 
     // ==================== RESET USER ====================
     window.resetUser = async function(userId) {
-      if (!confirm('⚠️ Are you sure you want to reset this user?')) return;
-      
-      try {
-        const response = await fetch(API_BASE + '/admin/reset-user', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId })
-        });
+        if (!confirm('⚠️ Are you sure you want to reset this user?')) return;
         
-        const data = await response.json();
-        
-        if (data.success) {
-          showFeedback('✅ User reset successfully!', 'success', 'userFeedback');
-          loadUsers();
-        } else {
-          showFeedback('❌ Failed to reset', 'error', 'userFeedback');
+        try {
+            const response = await fetch(API_BASE + '/admin/reset-user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showFeedback('✅ User reset successfully!', 'success', 'userFeedback');
+                loadUsers();
+            } else {
+                showFeedback('❌ Failed to reset', 'error', 'userFeedback');
+            }
+        } catch (error) {
+            showFeedback('❌ Network error', 'error', 'userFeedback');
         }
-      } catch (error) {
-        showFeedback('❌ Network error', 'error', 'userFeedback');
-      }
     };
 
     // ==================== GENERATE KEY ====================
     async function generateKey() {
-      const userId = document.getElementById('userSelect').value;
-      if (!userId) {
-        showFeedback('⚠️ Select a user', 'error', 'keyFeedback');
-        return;
-      }
-      try {
-        const data = await apiCall('/keys/generate', {
-          method: 'POST',
-          body: JSON.stringify({ userId })
-        });
-        if (data.success) {
-          const display = document.getElementById('keyDisplay');
-          const keyText = document.getElementById('keyText');
-          display.style.display = 'flex';
-          keyText.textContent = data.key;
-          showFeedback('✅ Key generated!', 'success', 'keyFeedback');
-          loadUsers();
+        const userId = document.getElementById('userSelect').value;
+        if (!userId) {
+            showFeedback('⚠️ Select a user', 'error', 'keyFeedback');
+            return;
         }
-      } catch (error) {
-        showFeedback('❌ Failed: ' + error.message, 'error', 'keyFeedback');
-      }
+        try {
+            const data = await apiCall('/keys/generate', {
+                method: 'POST',
+                body: JSON.stringify({ userId })
+            });
+            if (data.success) {
+                const display = document.getElementById('keyDisplay');
+                const keyText = document.getElementById('keyText');
+                display.style.display = 'flex';
+                keyText.textContent = data.key;
+                showFeedback('✅ Key generated!', 'success', 'keyFeedback');
+                loadUsers();
+            }
+        } catch (error) {
+            showFeedback('❌ Failed: ' + error.message, 'error', 'keyFeedback');
+        }
     }
 
     // ==================== COPY KEY ====================
     window.copyKey = function() {
-      const keyText = document.getElementById('keyText').textContent;
-      if (!keyText) {
-        showFeedback('⚠️ No key to copy', 'error', 'keyFeedback');
-        return;
-      }
-      
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(keyText)
-          .then(() => {
-            showFeedback('✅ Key copied to clipboard!', 'success', 'keyFeedback');
-            document.getElementById('copyKeyBtn').textContent = '✅ Copied!';
-            setTimeout(() => {
-              document.getElementById('copyKeyBtn').textContent = '📋 Copy';
-            }, 2000);
-          })
-          .catch(() => fallbackCopy(keyText));
-      } else {
-        fallbackCopy(keyText);
-      }
+        const keyText = document.getElementById('keyText').textContent;
+        if (!keyText) {
+            showFeedback('⚠️ No key to copy', 'error', 'keyFeedback');
+            return;
+        }
+        
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(keyText)
+                .then(() => {
+                    showFeedback('✅ Key copied to clipboard!', 'success', 'keyFeedback');
+                    document.getElementById('copyKeyBtn').textContent = '✅ Copied!';
+                    setTimeout(() => {
+                        document.getElementById('copyKeyBtn').textContent = '📋 Copy';
+                    }, 2000);
+                })
+                .catch(() => fallbackCopy(keyText));
+        } else {
+            fallbackCopy(keyText);
+        }
     };
 
     function fallbackCopy(text) {
-      const textarea = document.createElement('textarea');
-      textarea.value = text;
-      textarea.style.position = 'fixed';
-      textarea.style.opacity = '0';
-      document.body.appendChild(textarea);
-      textarea.select();
-      try {
-        document.execCommand('copy');
-        showFeedback('✅ Key copied!', 'success', 'keyFeedback');
-        document.getElementById('copyKeyBtn').textContent = '✅ Copied!';
-        setTimeout(() => {
-          document.getElementById('copyKeyBtn').textContent = '📋 Copy';
-        }, 2000);
-      } catch (err) {
-        showFeedback('❌ Failed to copy', 'error', 'keyFeedback');
-      }
-      document.body.removeChild(textarea);
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+            document.execCommand('copy');
+            showFeedback('✅ Key copied!', 'success', 'keyFeedback');
+            document.getElementById('copyKeyBtn').textContent = '✅ Copied!';
+            setTimeout(() => {
+                document.getElementById('copyKeyBtn').textContent = '📋 Copy';
+            }, 2000);
+        } catch (err) {
+            showFeedback('❌ Failed to copy', 'error', 'keyFeedback');
+        }
+        document.body.removeChild(textarea);
     }
 
     // ==================== VIEW KEYS ====================
     window.viewKeys = async function(userId) {
-      try {
-        const data = await apiCall('/keys?userId=' + userId);
-        if (data.success) {
-          let msg = '🔑 Keys for this user:\n\n';
-          if (data.keys.length === 0) {
-            msg += 'No keys generated yet.';
-          } else {
-            data.keys.forEach(k => {
-              const status = k.is_used ? '✅ Used' : '❌ Not used';
-              const expires = new Date(k.expires_at).toLocaleString();
-              msg += `Key: ${k.key_value}\nStatus: ${status}\nExpires: ${expires}\n\n`;
-            });
-          }
-          alert(msg);
+        try {
+            const data = await apiCall('/keys?userId=' + userId);
+            if (data.success) {
+                let msg = '🔑 Keys for this user:\n\n';
+                if (data.keys.length === 0) {
+                    msg += 'No keys generated yet.';
+                } else {
+                    data.keys.forEach(k => {
+                        const status = k.is_used ? '✅ Used' : '❌ Not used';
+                        const expires = new Date(k.expires_at).toLocaleString();
+                        msg += `Key: ${k.key_value}\nStatus: ${status}\nExpires: ${expires}\n\n`;
+                    });
+                }
+                alert(msg);
+            }
+        } catch (error) {
+            alert('Failed to load keys');
         }
-      } catch (error) {
-        alert('Failed to load keys');
-      }
     };
 
     // ==================== RENDER FUNCTIONS ====================
     function renderAdminList() {
-      const list = document.getElementById('adminList');
-      if (!playlists.length) {
-        list.innerHTML = `<div class="empty-state">No playlists</div>`;
-        return;
-      }
-      let html = '';
-      playlists.forEach(playlist => {
-        html += `
-          <div class="playlist-header">
-            📁 ${playlist.name}
-            <button class="del-btn" onclick="window.deletePlaylist('${playlist.id}')">✕</button>
-          </div>
-        `;
-        if (playlist.chapters?.length) {
-          playlist.chapters.forEach(chapter => {
-            html += `
-              <div class="entry-item" style="padding-left:32px;">
-                <div class="info">
-                  <span class="name">${chapter.name}</span>
-                  <span class="sub">${chapter.link}</span>
-                </div>
-                <button class="del-btn" onclick="window.deleteChapter('${playlist.id}', '${chapter.id}')">✕</button>
-              </div>
-            `;
-          });
-        } else {
-          html += `<div class="entry-item" style="padding-left:32px; color:#6a7c94; font-style:italic;">No chapters</div>`;
+        const list = document.getElementById('adminList');
+        if (!playlists.length) {
+            list.innerHTML = `<div class="empty-state">No playlists</div>`;
+            return;
         }
-      });
-      list.innerHTML = html;
+        let html = '';
+        playlists.forEach(playlist => {
+            html += `
+                <div class="playlist-header">
+                    📁 ${playlist.name}
+                    <button class="del-btn" onclick="window.deletePlaylist('${playlist.id}')">✕</button>
+                </div>
+            `;
+            if (playlist.chapters?.length) {
+                playlist.chapters.forEach(chapter => {
+                    html += `
+                        <div class="entry-item" style="padding-left:32px;">
+                            <div class="info">
+                                <span class="name">${chapter.name}</span>
+                                <span class="sub">${chapter.link}</span>
+                            </div>
+                            <button class="del-btn" onclick="window.deleteChapter('${playlist.id}', '${chapter.id}')">✕</button>
+                        </div>
+                    `;
+                });
+            } else {
+                html += `<div class="entry-item" style="padding-left:32px; color:#6a7c94; font-style:italic;">No chapters</div>`;
+            }
+        });
+        list.innerHTML = html;
     }
 
     function renderUserList() {
-      const list = document.getElementById('userList');
-      if (!users.length) {
-        list.innerHTML = `<div class="empty-state">No users</div>`;
-        return;
-      }
-      let html = '';
-      users.forEach(user => {
-        html += `
-          <div class="entry-item">
-            <div class="info">
-              <span class="name">${user.email}</span>
-              <span class="sub">ID: ${user.id}</span>
-            </div>
-            <div style="display:flex; gap:8px; flex-wrap:wrap;">
-              <button class="key-btn" onclick="window.viewKeys('${user.id}')">🔑 Keys</button>
-              <button class="reset-btn" onclick="window.resetUser('${user.id}')">🔄 Reset</button>
-              <button class="del-btn" onclick="window.deleteUser('${user.id}')">✕</button>
-            </div>
-          </div>
-        `;
-      });
-      list.innerHTML = html;
+        const list = document.getElementById('userList');
+        if (!users.length) {
+            list.innerHTML = `<div class="empty-state">No users</div>`;
+            return;
+        }
+        let html = '';
+        users.forEach(user => {
+            html += `
+                <div class="entry-item">
+                    <div class="info">
+                        <span class="name">${user.email}</span>
+                        <span class="sub">ID: ${user.id}</span>
+                    </div>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <button class="key-btn" onclick="window.viewKeys('${user.id}')">🔑 Keys</button>
+                        <button class="reset-btn" onclick="window.resetUser('${user.id}')">🔄 Reset</button>
+                        <button class="del-btn" onclick="window.deleteUser('${user.id}')">✕</button>
+                    </div>
+                </div>
+            `;
+        });
+        list.innerHTML = html;
     }
 
     function updatePlaylistSelect() {
-      const select = document.getElementById('playlistSelect');
-      select.innerHTML = '<option value="">Select playlist</option>';
-      playlists.forEach(p => {
-        select.innerHTML += `<option value="${p.id}">${p.name}</option>`;
-      });
+        const select = document.getElementById('playlistSelect');
+        select.innerHTML = '<option value="">Select playlist</option>';
+        playlists.forEach(p => {
+            select.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+        });
     }
 
     function updateUserSelect() {
-      const select = document.getElementById('userSelect');
-      select.innerHTML = '<option value="">Select user</option>';
-      users.forEach(u => {
-        select.innerHTML += `<option value="${u.id}">${u.email}</option>`;
-      });
+        const select = document.getElementById('userSelect');
+        select.innerHTML = '<option value="">Select user</option>';
+        users.forEach(u => {
+            select.innerHTML += `<option value="${u.id}">${u.email}</option>`;
+        });
     }
 
     function updateApiStatus(mode) {
-      const el = document.getElementById('apiStatus');
-      if (mode === 'connected') {
-        el.textContent = '✅ D1 Database Connected';
-        el.className = 'api-status status-connected';
-      } else if (mode === 'error') {
-        el.textContent = '❌ Connection Failed';
-        el.className = 'api-status status-error';
-      } else {
-        el.textContent = '🔄 Connecting...';
-        el.className = 'api-status';
-      }
+        const el = document.getElementById('apiStatus');
+        if (mode === 'connected') {
+            el.textContent = '✅ D1 Database Connected';
+            el.className = 'api-status status-connected';
+        } else if (mode === 'error') {
+            el.textContent = '❌ Connection Failed';
+            el.className = 'api-status status-error';
+        } else {
+            el.textContent = '🔄 Connecting...';
+            el.className = 'api-status';
+        }
     }
 
     function showFeedback(msg, type, elId) {
-      const el = document.getElementById(elId);
-      if (!el) return;
-      el.textContent = msg;
-      el.className = 'toast-msg';
-      if (type === 'error') el.classList.add('toast-error');
-      else if (type === 'success') el.classList.add('toast-success');
-      else el.classList.add('toast-info');
-      setTimeout(() => { el.textContent = ''; el.className = 'toast-msg'; }, 5000);
+        const el = document.getElementById(elId);
+        if (!el) return;
+        el.textContent = msg;
+        el.className = 'toast-msg';
+        if (type === 'error') el.classList.add('toast-error');
+        else if (type === 'success') el.classList.add('toast-success');
+        else el.classList.add('toast-info');
+        setTimeout(() => { el.textContent = ''; el.className = 'toast-msg'; }, 5000);
     }
 
     // ==================== AUTH ====================
     function setupAuth() {
-      const unlockBtn = document.getElementById('unlockBtn');
-      const pwdInput = document.getElementById('adminPwdInput');
-      const usernameInput = document.getElementById('adminUsername');
+        const unlockBtn = document.getElementById('unlockBtn');
+        const pwdInput = document.getElementById('adminPwdInput');
+        const usernameInput = document.getElementById('adminUsername');
 
-      unlockBtn.addEventListener('click', adminLogin);
-      
-      pwdInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') adminLogin();
-      });
-      
-      usernameInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-          pwdInput.focus();
-        }
-      });
+        unlockBtn.addEventListener('click', adminLogin);
+        
+        pwdInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') adminLogin();
+        });
+        
+        usernameInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                pwdInput.focus();
+            }
+        });
 
-      document.getElementById('logoutBtn').addEventListener('click', function() {
-        isAuthenticated = false;
-        document.getElementById('passwordGate').style.display = 'block';
-        document.getElementById('adminContent').style.display = 'none';
-        document.getElementById('adminPwdInput').value = '';
-        document.getElementById('adminUsername').value = 'admin';
-        document.getElementById('pwdError').textContent = '';
-      });
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            isAuthenticated = false;
+            document.getElementById('passwordGate').style.display = 'block';
+            document.getElementById('adminContent').style.display = 'none';
+            document.getElementById('adminPwdInput').value = '';
+            document.getElementById('adminUsername').value = 'admin';
+            document.getElementById('pwdError').textContent = '';
+        });
     }
 
     // ==================== GLOBAL FUNCTIONS ====================
@@ -824,25 +731,19 @@
     document.getElementById('addUserBtn').addEventListener('click', addUser);
     document.getElementById('generateKeyBtn').addEventListener('click', generateKey);
     document.getElementById('refreshBtn').addEventListener('click', () => {
-      loadPlaylists();
-      loadUsers();
-      loadLiveStatus();
-      showFeedback('🔄 Refreshed', 'info', 'playlistFeedback');
+        loadPlaylists();
+        loadUsers();
+        showFeedback('🔄 Refreshed', 'info', 'playlistFeedback');
     });
-
-    document.getElementById('saveLiveBtn').addEventListener('click', saveLiveStream);
-    document.getElementById('stopLiveBtn').addEventListener('click', stopLiveStream);
 
     document.getElementById('newPlaylistName').addEventListener('keydown', e => { if (e.key === 'Enter') addPlaylist(); });
     document.getElementById('chapterName').addEventListener('keydown', e => { if (e.key === 'Enter') addChapter(); });
     document.getElementById('chapterLink').addEventListener('keydown', e => { if (e.key === 'Enter') addChapter(); });
     document.getElementById('newUserEmail').addEventListener('keydown', e => { if (e.key === 'Enter') addUser(); });
-    document.getElementById('liveTitle').addEventListener('keydown', e => { if (e.key === 'Enter') saveLiveStream(); });
-    document.getElementById('liveLink').addEventListener('keydown', e => { if (e.key === 'Enter') saveLiveStream(); });
 
     setupAuth();
     console.log('✅ Admin panel loaded');
-  })();
+})();
 </script>
 </body>
 </html>
