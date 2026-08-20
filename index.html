@@ -603,7 +603,7 @@
       return false;
     }
 
-    // ==================== FETCH PLAYLISTS ====================
+    // ==================== FETCH PLAYLISTS (FIXED) ====================
     async function fetchPlaylists() {
       const statusBar = document.getElementById('statusBar');
       try {
@@ -614,7 +614,25 @@
         if (data.success) {
           playlists = data.playlists;
           statusBar.textContent = `✅ ${playlists.length} playlists loaded`;
-          renderPlaylists();
+          
+          // Update dropdown
+          const dropdown = document.getElementById('playlistDropdown');
+          dropdown.innerHTML = '<option value="">Select a playlist...</option>';
+          playlists.forEach(playlist => {
+            const option = document.createElement('option');
+            option.value = playlist.id;
+            option.textContent = playlist.name;
+            dropdown.appendChild(option);
+          });
+          
+          // Auto-select first playlist
+          if (playlists.length > 0) {
+            dropdown.value = playlists[0].id;
+            currentPlaylistId = playlists[0].id;
+            renderPlaylists();
+          } else {
+            document.getElementById('chaptersContainer').innerHTML = `<div class="empty-state">No playlists available</div>`;
+          }
         }
       } catch (error) {
         statusBar.textContent = '❌ Failed to load videos';
@@ -637,16 +655,19 @@
       }
       
       // Update dropdown with filtered playlists
+      const currentValue = dropdown.value;
       dropdown.innerHTML = '<option value="">Select a playlist...</option>';
       filteredPlaylists.forEach(playlist => {
         const option = document.createElement('option');
         option.value = playlist.id;
         option.textContent = playlist.name;
-        if (playlist.id === currentPlaylistId) {
-          option.selected = true;
-        }
         dropdown.appendChild(option);
       });
+      
+      // Restore selected value if it exists in filtered list
+      if (currentValue && filteredPlaylists.some(p => p.id === currentValue)) {
+        dropdown.value = currentValue;
+      }
       
       // Show no results message
       if (filteredPlaylists.length === 0 && searchTerm !== '') {
@@ -703,11 +724,15 @@
 
     // ==================== SEARCH FUNCTIONALITY (Playlist Search) ====================
     function searchPlaylists() {
+      const dropdown = document.getElementById('playlistDropdown');
+      dropdown.value = '';
       renderPlaylists();
     }
 
     function clearSearch() {
       document.getElementById('searchInput').value = '';
+      const dropdown = document.getElementById('playlistDropdown');
+      dropdown.value = '';
       renderPlaylists();
     }
 
@@ -911,8 +936,15 @@
     document.getElementById('genKeyBtn').addEventListener('click', generateKey);
     document.getElementById('genKeyEmail').addEventListener('keydown', (e) => { if (e.key === 'Enter') generateKey(); });
     
+    // FIXED: Playlist dropdown change event
     document.getElementById('playlistDropdown').addEventListener('change', function() {
-      renderPlaylists();
+      const selectedId = this.value;
+      if (selectedId) {
+        currentPlaylistId = selectedId;
+        renderPlaylists();
+      } else {
+        document.getElementById('chaptersContainer').innerHTML = `<div class="empty-state">Select a playlist from the dropdown</div>`;
+      }
     });
     
     document.getElementById('searchBtn').addEventListener('click', searchPlaylists);
@@ -946,7 +978,7 @@
       document.getElementById('videoContent').style.display = 'none';
     }
 
-    console.log('✅ Video Portal loaded - Token removed, Search only playlists');
+    console.log('✅ Video Portal loaded - Playlist selection fixed');
   })();
 </script>
 </body>
