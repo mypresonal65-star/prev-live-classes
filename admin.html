@@ -120,6 +120,7 @@
     <!-- Tabs -->
     <div class="tab-buttons">
       <button class="tab-btn active" data-tab="playlists">📁 Playlists</button>
+      <button class="tab-btn" data-tab="live">🔴 Live Stream</button>
       <button class="tab-btn" data-tab="users">👥 Users</button>
     </div>
 
@@ -138,7 +139,7 @@
       </div>
       <div class="flex-row">
         <input type="text" id="chapterName" placeholder="Chapter name" />
-        <input type="text" id="chapterLink" placeholder="Video URL" />
+        <input type="text" id="chapterLink" placeholder="Video URL (HLS / MP4)" />
       </div>
       <div class="flex-row">
         <button class="btn btn-primary" id="addChapterBtn">➕ Add Chapter</button>
@@ -147,6 +148,29 @@
 
       <div class="section-title">📋 All Playlists & Chapters</div>
       <div class="entry-list" id="adminList"><div class="empty-state">Loading...</div></div>
+    </div>
+
+    <!-- Live Stream Tab -->
+    <div id="tab-live" class="tab-content">
+      <div class="section-title">🔴 Live Stream Configuration</div>
+      <div class="flex-row">
+        <input type="text" id="liveTitle" placeholder="Live Stream Title" value="Live Class" />
+      </div>
+      <div class="flex-row">
+        <input type="text" id="liveLink" placeholder="Live HLS URL (.m3u8)" />
+      </div>
+      <div class="flex-row">
+        <button class="btn btn-success" id="saveLiveBtn">💾 Save Live Stream</button>
+        <button class="btn btn-danger" id="stopLiveBtn">⏹️ Stop Live</button>
+      </div>
+      <div id="liveFeedback" class="toast-msg"></div>
+      
+      <div class="section-title" style="margin-top:16px;">📋 Current Live Stream</div>
+      <div id="liveStatusDisplay" style="background:#f8faff;padding:12px 16px;border-radius:12px;border:1px solid #e6edf6;margin-top:8px;">
+        <div><strong>Title:</strong> <span id="currentLiveTitle">Not set</span></div>
+        <div><strong>URL:</strong> <span id="currentLiveLink">Not set</span></div>
+        <div><strong>Status:</strong> <span id="currentLiveStatus" style="color:#856404;">⏸️ Inactive</span></div>
+      </div>
     </div>
 
     <!-- Users Tab -->
@@ -268,6 +292,7 @@
         document.getElementById('tab-' + this.dataset.tab).classList.add('active');
         if (this.dataset.tab === 'users') loadUsers();
         if (this.dataset.tab === 'playlists') loadPlaylists();
+        if (this.dataset.tab === 'live') loadLiveStatus();
       });
     });
 
@@ -311,6 +336,7 @@
           errorEl.textContent = '';
           loadPlaylists();
           loadUsers();
+          loadLiveStatus();
           showFeedback('✅ Welcome ' + data.admin.username, 'success', 'playlistFeedback');
         } else {
           errorEl.textContent = '❌ ' + (data.error || 'Invalid credentials');
@@ -320,6 +346,74 @@
         }
       } catch (error) {
         errorEl.textContent = '❌ Connection error: ' + error.message;
+      }
+    }
+
+    // ==================== LIVE STREAM ====================
+    async function loadLiveStatus() {
+      try {
+        const data = await apiCall('/live');
+        if (data.success) {
+          document.getElementById('currentLiveTitle').textContent = data.title || 'Not set';
+          document.getElementById('currentLiveLink').textContent = data.link || 'Not set';
+          const statusEl = document.getElementById('currentLiveStatus');
+          if (data.link) {
+            statusEl.textContent = '🔴 Live';
+            statusEl.style.color = '#ff0044';
+          } else {
+            statusEl.textContent = '⏸️ Inactive';
+            statusEl.style.color = '#856404';
+          }
+          document.getElementById('liveTitle').value = data.title || 'Live Class';
+          document.getElementById('liveLink').value = data.link || '';
+        }
+      } catch (error) {
+        console.error('Load live status error:', error);
+      }
+    }
+
+    async function saveLiveStream() {
+      const title = document.getElementById('liveTitle').value.trim();
+      const link = document.getElementById('liveLink').value.trim();
+
+      if (!title || !link) {
+        showFeedback('⚠️ Please fill both title and URL', 'error', 'liveFeedback');
+        return;
+      }
+
+      try {
+        const data = await apiCall('/live', {
+          method: 'POST',
+          body: JSON.stringify({ title, link })
+        });
+
+        if (data.success) {
+          showFeedback('✅ Live stream saved successfully!', 'success', 'liveFeedback');
+          loadLiveStatus();
+        } else {
+          showFeedback('❌ Failed to save: ' + data.error, 'error', 'liveFeedback');
+        }
+      } catch (error) {
+        showFeedback('❌ Error: ' + error.message, 'error', 'liveFeedback');
+      }
+    }
+
+    async function stopLiveStream() {
+      if (!confirm('Are you sure you want to stop the live stream?')) return;
+
+      try {
+        const data = await apiCall('/live', {
+          method: 'DELETE'
+        });
+
+        if (data.success) {
+          showFeedback('✅ Live stream stopped!', 'success', 'liveFeedback');
+          loadLiveStatus();
+        } else {
+          showFeedback('❌ Failed to stop: ' + data.error, 'error', 'liveFeedback');
+        }
+      } catch (error) {
+        showFeedback('❌ Error: ' + error.message, 'error', 'liveFeedback');
       }
     }
 
@@ -473,7 +567,7 @@
       }
     }
 
-    // ==================== RESET USER (Delete all keys) ====================
+    // ==================== RESET USER ====================
     window.resetUser = async function(userId) {
       if (!confirm('⚠️ Are you sure you want to reset this user?\n\nAll their access keys will be deleted.\nThey will need to generate a new key.')) {
         return;
@@ -490,7 +584,7 @@
         
         if (data.success) {
           showFeedback('✅ User reset successfully! All keys deleted.', 'success', 'userFeedback');
-          loadUsers(); // Refresh list
+          loadUsers();
         } else {
           showFeedback('❌ Failed to reset: ' + (data.error || 'Unknown error'), 'error', 'userFeedback');
         }
@@ -733,13 +827,19 @@
     document.getElementById('refreshBtn').addEventListener('click', () => {
       loadPlaylists();
       loadUsers();
+      loadLiveStatus();
       showFeedback('🔄 Refreshed from database', 'info', 'playlistFeedback');
     });
+
+    document.getElementById('saveLiveBtn').addEventListener('click', saveLiveStream);
+    document.getElementById('stopLiveBtn').addEventListener('click', stopLiveStream);
 
     document.getElementById('newPlaylistName').addEventListener('keydown', e => { if (e.key === 'Enter') addPlaylist(); });
     document.getElementById('chapterName').addEventListener('keydown', e => { if (e.key === 'Enter') addChapter(); });
     document.getElementById('chapterLink').addEventListener('keydown', e => { if (e.key === 'Enter') addChapter(); });
     document.getElementById('newUserEmail').addEventListener('keydown', e => { if (e.key === 'Enter') addUser(); });
+    document.getElementById('liveTitle').addEventListener('keydown', e => { if (e.key === 'Enter') saveLiveStream(); });
+    document.getElementById('liveLink').addEventListener('keydown', e => { if (e.key === 'Enter') saveLiveStream(); });
 
     setupAuth();
     console.log('✅ Admin panel loaded - Database connected');
