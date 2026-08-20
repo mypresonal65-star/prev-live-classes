@@ -4,16 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Video Portal</title>
-  <!-- Video.js CSS -->
   <link href="https://vjs.zencdn.net/8.16.1/video-js.css" rel="stylesheet" />
-  <!-- Video.js -->
   <script src="https://vjs.zencdn.net/8.16.1/video.min.js"></script>
-  <!-- HLS.js -->
   <script src="https://cdn.jsdelivr.net/npm/hls.js@0.14.17/dist/hls.min.js"></script>
-  <!-- Google Identity Services -->
   <script src="https://accounts.google.com/gsi/client"></script>
   <style>
-    /* ===== ALL YOUR EXISTING STYLES ===== */
+    /* ============================================================
+       COMPLETE STYLES
+       ============================================================ */
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
     body { background: #f0f4fb; min-height: 100vh; display: flex; justify-content: center; padding: 30px 16px; }
     .app { max-width: 1100px; width: 100%; background: white; border-radius: 36px; box-shadow: 0 20px 50px rgba(0,0,0,0.04); padding: 28px 30px; }
@@ -212,17 +210,17 @@
       <div class="live-container">
         <div class="live-header">
           <div class="live-badge">LIVE</div>
-          <button class="live-refresh-btn" id="liveRefreshBtn">🔄 Live Refresh</button>
+          <button class="live-refresh-btn" id="liveRefreshBtn">🔄 Refresh</button>
         </div>
         
         <div class="live-title" id="liveTitle">Loading live stream...</div>
         
-        <!-- Live Video Player -->
+        <!-- Live Video Player - SAME AS RECORDED -->
         <div class="player-wrapper" id="livePlayerWrapper" style="min-height: 300px;">
           <video id="live-video" class="video-js vjs-default-skin" controls preload="auto" width="100%" height="auto"></video>
         </div>
         
-        <!-- Live Duration -->
+        <!-- Live Duration - ACTUAL TIME -->
         <div class="live-duration">
           <span class="label">⏱️ Lecture Completed:</span>
           <span class="value" id="liveDuration">00:00:00</span>
@@ -258,125 +256,54 @@
 
 <script>
 // ========================================================================
-//  🛡️ ANTI-DEVELOPER TOOLS - EXTRACTED FROM OTHER WEBSITE
+//  ANTI-DEVELOPER TOOLS
 // ========================================================================
 (function antiDevTools() {
-    // Keyboard shortcuts - INSTANT BLOCK (0.1s)
-    document.addEventListener('keydown', function(e) {
-        const key = e.key;
-        const ctrl = e.ctrlKey;
-        const shift = e.shiftKey;
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod|Opera Mini|BlackBerry|IEMobile/i.test(navigator.userAgent) || window.innerWidth < 768;
+    
+    if (!isMobile) {
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F12' || e.keyCode === 123 ||
+                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.keyCode === 73)) ||
+                (e.ctrlKey && e.shiftKey && (e.key === 'J' || e.key === 'j' || e.keyCode === 74)) ||
+                (e.ctrlKey && e.key === 'U') ||
+                (e.ctrlKey && e.shiftKey && e.key === 'C')) {
+                e.preventDefault();
+                e.stopPropagation();
+                window.location.replace('https://www.google.com');
+                return false;
+            }
+        });
 
-        // F12
-        if (key === 'F12' || e.keyCode === 123) {
-            e.preventDefault();
-            e.stopPropagation();
-            window.location.replace('https://www.google.com');
-            return false;
-        }
-        // Ctrl+Shift+I (Inspect)
-        if (ctrl && shift && (key === 'I' || key === 'i' || e.keyCode === 73)) {
-            e.preventDefault();
-            e.stopPropagation();
-            window.location.replace('https://www.google.com');
-            return false;
-        }
-        // Ctrl+Shift+J (Console)
-        if (ctrl && shift && (key === 'J' || key === 'j' || e.keyCode === 74)) {
-            e.preventDefault();
-            e.stopPropagation();
-            window.location.replace('https://www.google.com');
-            return false;
-        }
-        // Ctrl+U (View Source)
-        if (ctrl && (key === 'U' || key === 'u' || e.keyCode === 85)) {
-            e.preventDefault();
-            e.stopPropagation();
-            window.location.replace('https://www.google.com');
-            return false;
-        }
-        // Ctrl+Shift+C (Element picker)
-        if (ctrl && shift && (key === 'C' || key === 'c' || e.keyCode === 67)) {
-            e.preventDefault();
-            e.stopPropagation();
-            window.location.replace('https://www.google.com');
-            return false;
-        }
-    });
-
-    // ✅ RIGHT CLICK: ALLOWED
-
-    // Mobile Detection
-    function isMobile() {
-        return /Mobi|Android|iPhone|iPad|iPod|Opera Mini|BlackBerry|IEMobile/i.test(navigator.userAgent);
-    }
-
-    // Desktop: INSTANT DEVTOOLS DETECTION (0.1s)
-    if (!isMobile()) {
-        let detectionCount = 0;
-
-        function detectDevTools() {
-            // Window size difference
+        setInterval(function() {
             const widthDiff = window.outerWidth - window.innerWidth;
             const heightDiff = window.outerHeight - window.innerHeight;
-
-            // console.log timing
-            const start = performance.now();
-            console.log('%c', {});
-            const end = performance.now();
-
-            // Firebug check
-            if (window.Firebug && window.Firebug.chrome && window.Firebug.chrome.isInitialized) {
-                detectionCount++;
-                if (detectionCount >= 1) {
-                    window.location.replace('https://www.google.com');
+            if (widthDiff > 100 || heightDiff > 100) {
+                console.clear();
+                if (window.performance && performance.clearResourceTimings) {
+                    performance.clearResourceTimings();
                 }
-                return;
+                window.location.replace('https://www.google.com');
             }
+        }, 100);
 
-            // INSTANT REDIRECT - 1 detection par hi redirect
-            if (widthDiff > 100 || heightDiff > 100 || (end - start > 10)) {
-                detectionCount++;
-                if (detectionCount >= 1) {
-                    window.location.replace('https://www.google.com');
-                }
-            } else {
-                detectionCount = 0;
-            }
-        }
-
-        // HAR 100ms (0.1 SECOND) ME CHECK
-        setInterval(detectDevTools, 100);
-    }
-
-    // NETWORK TAB CLEAR - HAR 100ms (0.1s)
-    setInterval(function() {
-        try {
+        setInterval(function() {
             if (window.performance && performance.clearResourceTimings) {
                 performance.clearResourceTimings();
             }
-        } catch(e) { /* ignore */ }
-    }, 100);
+        }, 100);
 
-    // CONSOLE CLEAR - HAR 50ms
-    setInterval(function() {
-        console.clear();
-    }, 50);
+        setInterval(function() { console.clear(); }, 50);
 
-    // Console methods ko silent karein
-    const noop = function() {};
-    console.log = noop;
-    console.warn = noop;
-    console.error = noop;
-    console.info = noop;
-    console.debug = noop;
-    console.table = noop;
-    console.dir = noop;
-
-    console.log('✅ Anti-DevTools: INSTANT MODE (0.1s) ACTIVE');
-    console.log('🟢 RIGHT CLICK: ALLOWED');
-    console.log('🚫 F12, Ctrl+Shift+I, Ctrl+Shift+J: INSTANT REDIRECT');
-    console.log('📱 Mobile users: SAFE, no redirects');
+        const noop = function() {};
+        console.log = noop;
+        console.warn = noop;
+        console.error = noop;
+        console.info = noop;
+        console.debug = noop;
+        console.table = noop;
+        console.dir = noop;
+    }
 })();
 
 // ========================================================================
@@ -400,7 +327,7 @@
     let liveStartTime = null;
     let liveHls = null;
 
-    // ==================== UNIQUE SESSION MANAGEMENT ====================
+    // ==================== SESSION MANAGEMENT ====================
     function generateSessionId() {
         return 'sid_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 8);
     }
@@ -491,7 +418,6 @@
                 statusEl.innerHTML = `✅ Key generated: <strong>${data.key}</strong><br>
                                      <span style="font-size:0.8rem;color:#4c637f;">Valid for 3 days. One key per user.</span>`;
                 statusEl.className = 'key-gen-status success';
-                
                 if (navigator.clipboard) {
                     navigator.clipboard.writeText(data.key);
                 }
@@ -575,7 +501,6 @@
                 const hours = Math.floor(timeLeft / (1000 * 60 * 60));
                 const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
                 const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-                
                 timerEl.textContent = `⏰ ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
                 
                 if (timeLeft < 60 * 60 * 1000) {
@@ -714,7 +639,6 @@
                 document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
                 this.classList.add('active');
                 document.getElementById('tab-' + this.dataset.tab).classList.add('active');
-                
                 if (this.dataset.tab === 'live') {
                     loadLiveStream();
                 }
@@ -791,7 +715,9 @@
         startResetTimer();
     }
 
-    // ==================== FETCH LIVE STREAM ====================
+    // ========================================================================
+    //  LIVE STREAM PLAYER - SAME AS RECORDED PLAYER
+    // ========================================================================
     async function loadLiveStream() {
         try {
             const response = await fetch(API_BASE + '/live');
@@ -831,8 +757,11 @@
                 
                 const newVideoEl = document.getElementById('live-video');
                 
-                // ========== SAME AS RECORDED PLAYER ==========
+                // ============================================================
+                //  SAME AS RECORDED PLAYER - HLS.js + Video.js
+                // ============================================================
                 if (data.link && data.link.includes('.m3u8') && Hls.isSupported()) {
+                    // HLS.js for playback
                     liveHls = new Hls({
                         enableWorker: true,
                         lowLatencyMode: true,
@@ -850,6 +779,7 @@
                     
                     liveHls.on(Hls.Events.MANIFEST_PARSED, function() {
                         newVideoEl.play().catch(e => console.log('Play error:', e));
+                        // Start duration timer
                         if (!liveStartTime) {
                             liveStartTime = Date.now();
                             updateLiveDuration();
@@ -867,7 +797,7 @@
                         }
                     });
                     
-                    // Video.js for controls overlay
+                    // Video.js for controls overlay (like recorded)
                     livePlayer = videojs(newVideoEl, {
                         controls: true,
                         fluid: true,
@@ -878,6 +808,7 @@
                     });
                     
                 } else if (data.link) {
+                    // Fallback - Video.js only
                     tryFallbackLivePlayer(newVideoEl, data.link);
                 } else {
                     liveStatus.textContent = '⚠️ No live stream available';
@@ -896,7 +827,7 @@
         }
     }
 
-    // ========== FALLBACK LIVE PLAYER ==========
+    // ========== FALLBACK LIVE PLAYER (Same as recorded fallback) ==========
     function tryFallbackLivePlayer(videoEl, link) {
         if (liveHls) {
             try { liveHls.destroy(); } catch(e) {}
@@ -927,6 +858,7 @@
         }
         player.play();
         
+        // Start timer
         if (!liveStartTime) {
             liveStartTime = Date.now();
             updateLiveDuration();
@@ -935,6 +867,7 @@
         }
     }
 
+    // ========== UPDATE LIVE DURATION (Actual time) ==========
     function updateLiveDuration() {
         if (!liveStartTime) return;
         const elapsed = Math.floor((Date.now() - liveStartTime) / 1000);
@@ -1309,9 +1242,12 @@
         if (e.key === 'Escape') clearSearch();
     });
     
+    // ========== LIVE REFRESH BUTTON - RESETS TIMER AND RELOADS ==========
     document.getElementById('liveRefreshBtn').addEventListener('click', function() {
+        // Reset duration timer
         liveStartTime = Date.now();
         updateLiveDuration();
+        // Reload stream
         loadLiveStream();
     });
     
@@ -1348,7 +1284,7 @@
         document.getElementById('videoContent').style.display = 'none';
     }
 
-    console.log('✅ Video Portal loaded - With Anti-DevTools + Live Stream');
+    console.log('✅ Video Portal loaded - Live player uses same code as recorded');
 })();
 </script>
 </body>
