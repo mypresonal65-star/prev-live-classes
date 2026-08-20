@@ -46,7 +46,6 @@
     .login-container input { width: 100%; padding: 12px 16px; border: 1px solid #d9e1ec; border-radius: 16px; font-size: 0.95rem; margin-bottom: 12px; }
     .login-container button { width: 100%; padding: 12px; background: #0b1a33; color: white; border: none; border-radius: 16px; font-weight: 600; cursor: pointer; }
     
-    /* Key Generate Section */
     .key-gen-section { margin-top: 20px; padding-top: 20px; border-top: 2px solid #e8edf6; }
     .key-gen-section h3 { font-size: 1rem; color: #0b1a33; margin-bottom: 8px; }
     .key-gen-section .info { font-size: 0.8rem; color: #6a7c94; margin-bottom: 12px; }
@@ -56,15 +55,17 @@
     .playlist-selector select { padding: 10px 20px; border: 2px solid #d9e1ec; border-radius: 40px; background: white; color: #1a2b4c; font-weight: 500; cursor: pointer; flex: 1; min-width: 150px; }
     .playlist-selector select:focus { border-color: #1a2b4c; outline: none; }
     
-    .search-container { display: flex; gap: 12px; flex: 2; min-width: 200px; }
+    .search-container { display: flex; gap: 8px; flex: 2; min-width: 200px; flex-wrap: wrap; }
     .search-container input { padding: 10px 18px; border: 2px solid #d9e1ec; border-radius: 40px; font-size: 0.9rem; flex: 1; min-width: 120px; background: white; }
     .search-container input:focus { border-color: #1a2b4c; outline: none; }
-    .search-container button { padding: 10px 24px; border: none; border-radius: 40px; background: #1a2b4c; color: white; font-weight: 500; cursor: pointer; transition: 0.15s; }
-    .search-container button:hover { background: #2f4370; }
+    .search-container button { padding: 10px 20px; border: none; border-radius: 40px; color: white; font-weight: 500; cursor: pointer; transition: 0.15s; }
+    .search-btn { background: #1a2b4c; }
+    .search-btn:hover { background: #2f4370; }
+    .clear-btn { background: #6a7c94; }
+    .clear-btn:hover { background: #5a6a80; }
     
     .chapter-item { background: #fafdff; border-radius: 20px; padding: 16px 22px; margin-bottom: 14px; border: 1px solid #e6edf6; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
     .chapter-item:hover { border-color: #c8d4e4; }
-    .chapter-item.hidden { display: none; }
     .chapter-number { font-weight: 700; color: #1a2b4c; font-size: 1.1rem; min-width: 80px; }
     .chapter-name { font-weight: 600; font-size: 1.1rem; color: #0b1a33; flex: 1; }
     .play-btn { background: #0b1a33; color: white; border: none; border-radius: 40px; padding: 8px 24px; font-weight: 500; font-size: 0.9rem; cursor: pointer; transition: 0.15s; }
@@ -136,8 +137,8 @@
     
     <div class="separator">OR</div>
     
-    <!-- Google Sign-In Option -->
-    <div style="margin-top:8px;">
+    <!-- Google Sign-In Option (Token Removed) -->
+    <div style="margin-top:20px;padding-top:20px;border-top:1px solid #e8edf6;">
       <p style="color:#6a7c94;font-size:0.85rem;margin-bottom:8px;">
         🎬 <strong>YouTube Private Videos</strong>
       </p>
@@ -150,13 +151,6 @@
          style="display:inline-block;background:#1a2b4c;color:white;padding:12px 28px;border-radius:40px;text-decoration:none;font-weight:500;margin:8px 0;width:100%;text-align:center;">
         🔑 Sign in with Google
       </a>
-      
-      <input type="text" id="googleTokenInput" placeholder="Or paste token here" 
-             style="width:100%;padding:10px 14px;border:1px solid #d9e1ec;border-radius:16px;font-size:0.85rem;margin-bottom:8px;" />
-      <button onclick="manualGoogleLogin()" 
-              style="padding:10px 20px;background:#2d7a9b;color:white;border:none;border-radius:40px;cursor:pointer;font-size:0.85rem;width:100%;">
-        ✅ Verify & Login
-      </button>
     </div>
   </div>
 
@@ -167,15 +161,17 @@
       <div id="sessionTimer" class="session-timer">⏰ 72:00:00</div>
     </div>
     
-    <!-- Playlist Selector with Dropdown + Search -->
+    <!-- Playlist Selector with Dropdown + Search (Search only playlists) -->
     <div id="playlistSelector" class="playlist-selector">
-      <select id="playlistDropdown">
-        <option value="">Select a playlist...</option>
-      </select>
-      <div class="search-container">
-        <input type="text" id="searchInput" placeholder="🔍 Search chapters..." />
-        <button id="searchBtn">Search</button>
-        <button id="clearSearchBtn" style="background:#6a7c94;">Clear</button>
+      <div style="display:flex; gap:12px; flex-wrap:wrap; width:100%; align-items:center;">
+        <select id="playlistDropdown" style="flex:2; min-width:150px; padding:10px 20px; border:2px solid #d9e1ec; border-radius:40px; background:white; color:#1a2b4c; font-weight:500; cursor:pointer;">
+          <option value="">Select a playlist...</option>
+        </select>
+        <div class="search-container">
+          <input type="text" id="searchInput" placeholder="🔍 Search playlists..." />
+          <button class="search-btn" id="searchBtn">Search</button>
+          <button class="clear-btn" id="clearSearchBtn">Clear</button>
+        </div>
       </div>
     </div>
     
@@ -274,7 +270,6 @@
       if (!session) return false;
       
       try {
-        // Check if this session is still valid on server
         const response = await fetch(API_BASE + '/session/validate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -287,7 +282,6 @@
         const data = await response.json();
         
         if (!data.valid) {
-          // Session invalid - someone else logged in
           clearSession();
           logout();
           alert('⚠️ You have been logged out. Another device logged in with this account.');
@@ -295,17 +289,15 @@
         }
         return true;
       } catch (error) {
-        // If server fails, allow session
         return true;
       }
     }
 
-    // Check session validity periodically
     setInterval(function() {
       if (document.getElementById('videoContent').style.display !== 'none') {
         validateSession();
       }
-    }, 30000); // Every 30 seconds
+    }, 30000);
 
     // ==================== KEY GENERATION (3 Day Cooldown) ====================
     async function generateKey() {
@@ -335,7 +327,6 @@
                                <span style="font-size:0.8rem;color:#4c637f;">Valid for 3 days. One key per user.</span>`;
           statusEl.className = 'key-gen-status success';
           
-          // Copy key to clipboard automatically
           if (navigator.clipboard) {
             navigator.clipboard.writeText(data.key);
           }
@@ -356,50 +347,36 @@
         const params = new URLSearchParams(hash.substring(1));
         const token = params.get('access_token');
         if (token) {
-          document.getElementById('googleTokenInput').value = token;
-          setTimeout(function() {
-            manualGoogleLogin();
-          }, 500);
+          try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            googleUser = {
+              email: payload.email,
+              name: payload.name,
+              picture: payload.picture,
+              id: payload.sub
+            };
+            googleAccessToken = token;
+            
+            localStorage.setItem(GOOGLE_SESSION_KEY, JSON.stringify({
+              user: googleUser,
+              accessToken: googleAccessToken,
+              loginTime: Date.now()
+            }));
+            
+            document.getElementById('loginSuccess').textContent = '✅ Google Sign-In successful!';
+            showVideoContent();
+            fetchPlaylists();
+          } catch(e) {
+            console.error('Token decode error:', e);
+          }
         }
       }
     })();
 
-    // ==================== MANUAL GOOGLE LOGIN ====================
+    // ==================== MANUAL GOOGLE LOGIN (Direct) ====================
     window.manualGoogleLogin = function() {
-      const token = document.getElementById('googleTokenInput').value.trim();
-      if (!token) {
-        document.getElementById('loginError').textContent = '⚠️ Please paste your Google access token';
-        return;
-      }
-      
-      document.getElementById('loginSuccess').textContent = '⏳ Verifying token...';
-      
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        googleUser = {
-          email: payload.email,
-          name: payload.name,
-          picture: payload.picture,
-          id: payload.sub
-        };
-        googleAccessToken = token;
-        
-        localStorage.setItem(GOOGLE_SESSION_KEY, JSON.stringify({
-          user: googleUser,
-          accessToken: googleAccessToken,
-          loginTime: Date.now()
-        }));
-        
-        document.getElementById('loginError').textContent = '';
-        document.getElementById('loginSuccess').textContent = '✅ Google Sign-In successful!';
-        document.getElementById('googleTokenInput').value = '';
-        
-        showVideoContent();
-        fetchPlaylists();
-      } catch(e) {
-        document.getElementById('loginError').textContent = '❌ Invalid token: ' + e.message;
-        document.getElementById('loginSuccess').textContent = '';
-      }
+      // Direct Google login - token auto-detected from URL
+      // This function is kept for compatibility
     };
 
     function checkGoogleSession() {
@@ -493,7 +470,6 @@
           currentUser = data.user;
           successEl.textContent = '✅ Login successful! Loading videos...';
           
-          // Save session with unique ID
           const sessionId = data.sessionId || generateSessionId();
           saveSession(data.user, key, sessionId);
           
@@ -536,7 +512,7 @@
       }
     };
 
-    // ==================== SHOW VIDEO CONTENT (Updated) ====================
+    // ==================== SHOW VIDEO CONTENT ====================
     function showVideoContent() {
       const user = currentUser || googleUser;
       if (!user) return;
@@ -546,7 +522,6 @@
       
       const isGoogleLoggedIn = !!googleUser;
       
-      // Google Status Badge
       let googleStatus = '';
       if (isGoogleLoggedIn) {
         googleStatus = `
@@ -579,7 +554,6 @@
         </div>
       `;
       
-      // Status bar update
       const statusBar = document.getElementById('statusBar');
       if (statusBar) {
         if (isGoogleLoggedIn) {
@@ -613,14 +587,12 @@
         localStorage.setItem('timer_start', Date.now().toString());
       }
       
-      // Check for Google session first
       if (checkGoogleSession()) {
         showVideoContent();
         fetchPlaylists();
         return true;
       }
 
-      // Check for regular session
       const session = getSession();
       if (session && session.user) {
         currentUser = session.user;
@@ -642,7 +614,6 @@
         if (data.success) {
           playlists = data.playlists;
           statusBar.textContent = `✅ ${playlists.length} playlists loaded`;
-          updatePlaylistDropdown();
           renderPlaylists();
         }
       } catch (error) {
@@ -651,11 +622,23 @@
       }
     }
 
-    // ==================== UPDATE PLAYLIST DROPDOWN ====================
-    function updatePlaylistDropdown() {
+    // ==================== RENDER PLAYLISTS (With Search Filter) ====================
+    function renderPlaylists() {
+      const container = document.getElementById('chaptersContainer');
       const dropdown = document.getElementById('playlistDropdown');
+      const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
+      
+      // Filter playlists based on search
+      let filteredPlaylists = playlists;
+      if (searchTerm !== '') {
+        filteredPlaylists = playlists.filter(p => 
+          p.name.toLowerCase().includes(searchTerm)
+        );
+      }
+      
+      // Update dropdown with filtered playlists
       dropdown.innerHTML = '<option value="">Select a playlist...</option>';
-      playlists.forEach(playlist => {
+      filteredPlaylists.forEach(playlist => {
         const option = document.createElement('option');
         option.value = playlist.id;
         option.textContent = playlist.name;
@@ -664,12 +647,12 @@
         }
         dropdown.appendChild(option);
       });
-    }
-
-    // ==================== RENDER PLAYLISTS ====================
-    function renderPlaylists() {
-      const container = document.getElementById('chaptersContainer');
-      const dropdown = document.getElementById('playlistDropdown');
+      
+      // Show no results message
+      if (filteredPlaylists.length === 0 && searchTerm !== '') {
+        container.innerHTML = `<div class="empty-state">🔍 No playlists found matching "${searchTerm}"</div>`;
+        return;
+      }
       
       // Get selected playlist from dropdown
       const selectedId = dropdown.value;
@@ -679,7 +662,7 @@
       }
       
       currentPlaylistId = selectedId;
-      const playlist = playlists.find(p => p.id === selectedId);
+      const playlist = filteredPlaylists.find(p => p.id === selectedId);
       
       if (!playlist) {
         container.innerHTML = `<div class="empty-state">Playlist not found</div>`;
@@ -704,7 +687,7 @@
         }
         
         html += `
-          <div class="chapter-item" data-chapter-name="${chapter.name.toLowerCase()}">
+          <div class="chapter-item">
             <span class="chapter-number">Chapter ${index + 1}</span>
             <span class="chapter-name">${chapter.name}</span>
             ${badge}
@@ -715,44 +698,17 @@
       });
       container.innerHTML = html;
 
-      // Attach play button events
       attachPlayEvents();
     }
 
-    // ==================== SEARCH FUNCTIONALITY ====================
-    function searchChapters() {
-      const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
-      const items = document.querySelectorAll('.chapter-item');
-      let found = 0;
-      
-      items.forEach(item => {
-        const name = item.dataset.chapterName || '';
-        if (searchTerm === '' || name.includes(searchTerm)) {
-          item.classList.remove('hidden');
-          found++;
-        } else {
-          item.classList.add('hidden');
-        }
-      });
-      
-      // Show message if no results
-      const container = document.getElementById('chaptersContainer');
-      const existingMsg = container.querySelector('.search-no-results');
-      if (found === 0 && searchTerm !== '') {
-        if (!existingMsg) {
-          const msg = document.createElement('div');
-          msg.className = 'empty-state search-no-results';
-          msg.textContent = `🔍 No chapters found matching "${searchTerm}"`;
-          container.appendChild(msg);
-        }
-      } else if (existingMsg) {
-        existingMsg.remove();
-      }
+    // ==================== SEARCH FUNCTIONALITY (Playlist Search) ====================
+    function searchPlaylists() {
+      renderPlaylists();
     }
 
     function clearSearch() {
       document.getElementById('searchInput').value = '';
-      searchChapters();
+      renderPlaylists();
     }
 
     // ==================== ATTACH PLAY EVENTS ====================
@@ -959,10 +915,10 @@
       renderPlaylists();
     });
     
-    document.getElementById('searchBtn').addEventListener('click', searchChapters);
+    document.getElementById('searchBtn').addEventListener('click', searchPlaylists);
     document.getElementById('clearSearchBtn').addEventListener('click', clearSearch);
     document.getElementById('searchInput').addEventListener('keyup', (e) => {
-      if (e.key === 'Enter') searchChapters();
+      if (e.key === 'Enter') searchPlaylists();
       if (e.key === 'Escape') clearSearch();
     });
 
@@ -990,7 +946,7 @@
       document.getElementById('videoContent').style.display = 'none';
     }
 
-    console.log('✅ Video Portal loaded - All features added');
+    console.log('✅ Video Portal loaded - Token removed, Search only playlists');
   })();
 </script>
 </body>
