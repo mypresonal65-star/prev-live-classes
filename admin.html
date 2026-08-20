@@ -150,25 +150,26 @@
       <div class="entry-list" id="adminList"><div class="empty-state">Loading...</div></div>
     </div>
 
-    <!-- Live Stream Tab -->
+    <!-- Live Stream Tab (Updated - Same as Playlists) -->
     <div id="tab-live" class="tab-content">
       <div class="section-title">🔴 Live Stream Configuration</div>
+      <p style="color:#4c637f;font-size:0.85rem;margin-bottom:12px;">Add class name and video URL for live stream (Same as recorded videos)</p>
       <div class="flex-row">
-        <input type="text" id="liveTitle" placeholder="Live Stream Title" value="Live Class" />
+        <input type="text" id="liveTitle" placeholder="Class Name (e.g. Live Class 1)" />
       </div>
       <div class="flex-row">
-        <input type="text" id="liveLink" placeholder="Live HLS URL (.m3u8)" />
+        <input type="text" id="liveLink" placeholder="Video URL (HLS / MP4)" />
       </div>
       <div class="flex-row">
-        <button class="btn btn-success" id="saveLiveBtn">💾 Save Live Stream</button>
-        <button class="btn btn-danger" id="stopLiveBtn">⏹️ Stop Live</button>
+        <button class="btn btn-success" id="saveLiveBtn">💾 Save Live</button>
+        <button class="btn btn-danger" id="stopLiveBtn">⏹️ Remove Live</button>
       </div>
       <div id="liveFeedback" class="toast-msg"></div>
       
       <div class="section-title" style="margin-top:16px;">📋 Current Live Stream</div>
       <div id="liveStatusDisplay" style="background:#f8faff;padding:12px 16px;border-radius:12px;border:1px solid #e6edf6;margin-top:8px;">
-        <div><strong>Title:</strong> <span id="currentLiveTitle">Not set</span></div>
-        <div><strong>URL:</strong> <span id="currentLiveLink">Not set</span></div>
+        <div><strong>Class Name:</strong> <span id="currentLiveTitle">Not set</span></div>
+        <div><strong>Video URL:</strong> <span id="currentLiveLink">Not set</span></div>
         <div><strong>Status:</strong> <span id="currentLiveStatus" style="color:#856404;">⏸️ Inactive</span></div>
       </div>
     </div>
@@ -204,7 +205,7 @@
 </div>
 
 <script>
-  // ==================== DEVELOPER TOOLS PROTECTION (ADMIN) ====================
+  // ==================== DEVELOPER TOOLS PROTECTION ====================
   (function() {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
     
@@ -212,12 +213,13 @@
       document.addEventListener('keydown', function(e) {
         if (e.key === 'F12' || 
             (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
-            (e.ctrlKey && e.key === 'U') ||
-            (e.ctrlKey && e.shiftKey && e.key === 'C')) {
+            (e.ctrlKey && e.key === 'U')) {
           e.preventDefault();
           window.location.href = 'https://www.google.com';
         }
       });
+
+      let devToolsDetected = false;
 
       function detectDevTools() {
         const threshold = 160;
@@ -225,20 +227,20 @@
         const heightThreshold = window.outerHeight - window.innerHeight > threshold;
         
         if (widthThreshold || heightThreshold) {
-          console.clear();
-          setTimeout(function() {
-            window.location.href = 'https://www.google.com';
-          }, 100);
+          if (!devToolsDetected) {
+            devToolsDetected = true;
+            console.clear();
+            setTimeout(function() {
+              window.location.href = 'https://www.google.com';
+            }, 100);
+          }
+        } else {
+          devToolsDetected = false;
         }
       }
 
-      setInterval(detectDevTools, 200);
-      
-      setInterval(function() {
-        if (window.performance && performance.clearResourceTimings) {
-          performance.clearResourceTimings();
-        }
-      }, 100);
+      setInterval(detectDevTools, 100);
+      setInterval(function() { console.clear(); }, 100);
 
       const noop = function() {};
       console.log = noop;
@@ -363,7 +365,7 @@
             statusEl.textContent = '⏸️ Inactive';
             statusEl.style.color = '#856404';
           }
-          document.getElementById('liveTitle').value = data.title || 'Live Class';
+          document.getElementById('liveTitle').value = data.title || '';
           document.getElementById('liveLink').value = data.link || '';
         }
       } catch (error) {
@@ -376,7 +378,7 @@
       const link = document.getElementById('liveLink').value.trim();
 
       if (!title || !link) {
-        showFeedback('⚠️ Please fill both title and URL', 'error', 'liveFeedback');
+        showFeedback('⚠️ Please fill both Class Name and URL', 'error', 'liveFeedback');
         return;
       }
 
@@ -398,7 +400,7 @@
     }
 
     async function stopLiveStream() {
-      if (!confirm('Are you sure you want to stop the live stream?')) return;
+      if (!confirm('Are you sure you want to remove the live stream?')) return;
 
       try {
         const data = await apiCall('/live', {
@@ -406,10 +408,10 @@
         });
 
         if (data.success) {
-          showFeedback('✅ Live stream stopped!', 'success', 'liveFeedback');
+          showFeedback('✅ Live stream removed!', 'success', 'liveFeedback');
           loadLiveStatus();
         } else {
-          showFeedback('❌ Failed to stop: ' + data.error, 'error', 'liveFeedback');
+          showFeedback('❌ Failed to remove: ' + data.error, 'error', 'liveFeedback');
         }
       } catch (error) {
         showFeedback('❌ Error: ' + error.message, 'error', 'liveFeedback');
@@ -568,9 +570,7 @@
 
     // ==================== RESET USER ====================
     window.resetUser = async function(userId) {
-      if (!confirm('⚠️ Are you sure you want to reset this user?\n\nAll their access keys will be deleted.\nThey will need to generate a new key.')) {
-        return;
-      }
+      if (!confirm('⚠️ Are you sure you want to reset this user?')) return;
       
       try {
         const response = await fetch(API_BASE + '/admin/reset-user', {
@@ -582,13 +582,13 @@
         const data = await response.json();
         
         if (data.success) {
-          showFeedback('✅ User reset successfully! All keys deleted.', 'success', 'userFeedback');
+          showFeedback('✅ User reset successfully!', 'success', 'userFeedback');
           loadUsers();
         } else {
-          showFeedback('❌ Failed to reset: ' + (data.error || 'Unknown error'), 'error', 'userFeedback');
+          showFeedback('❌ Failed to reset', 'error', 'userFeedback');
         }
       } catch (error) {
-        showFeedback('❌ Network error: ' + error.message, 'error', 'userFeedback');
+        showFeedback('❌ Network error', 'error', 'userFeedback');
       }
     };
 
@@ -609,7 +609,7 @@
           const keyText = document.getElementById('keyText');
           display.style.display = 'flex';
           keyText.textContent = data.key;
-          showFeedback('✅ Key generated and saved to database!', 'success', 'keyFeedback');
+          showFeedback('✅ Key generated!', 'success', 'keyFeedback');
           loadUsers();
         }
       } catch (error) {
@@ -649,7 +649,7 @@
       textarea.select();
       try {
         document.execCommand('copy');
-        showFeedback('✅ Key copied to clipboard!', 'success', 'keyFeedback');
+        showFeedback('✅ Key copied!', 'success', 'keyFeedback');
         document.getElementById('copyKeyBtn').textContent = '✅ Copied!';
         setTimeout(() => {
           document.getElementById('copyKeyBtn').textContent = '📋 Copy';
@@ -686,7 +686,7 @@
     function renderAdminList() {
       const list = document.getElementById('adminList');
       if (!playlists.length) {
-        list.innerHTML = `<div class="empty-state">No playlists in database</div>`;
+        list.innerHTML = `<div class="empty-state">No playlists</div>`;
         return;
       }
       let html = '';
@@ -719,7 +719,7 @@
     function renderUserList() {
       const list = document.getElementById('userList');
       if (!users.length) {
-        list.innerHTML = `<div class="empty-state">No users in database</div>`;
+        list.innerHTML = `<div class="empty-state">No users</div>`;
         return;
       }
       let html = '';
@@ -827,7 +827,7 @@
       loadPlaylists();
       loadUsers();
       loadLiveStatus();
-      showFeedback('🔄 Refreshed from database', 'info', 'playlistFeedback');
+      showFeedback('🔄 Refreshed', 'info', 'playlistFeedback');
     });
 
     document.getElementById('saveLiveBtn').addEventListener('click', saveLiveStream);
@@ -841,7 +841,7 @@
     document.getElementById('liveLink').addEventListener('keydown', e => { if (e.key === 'Enter') saveLiveStream(); });
 
     setupAuth();
-    console.log('✅ Admin panel loaded - Database connected');
+    console.log('✅ Admin panel loaded');
   })();
 </script>
 </body>
