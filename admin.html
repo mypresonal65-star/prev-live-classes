@@ -1,1144 +1,908 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - Full Control</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #0a0a12;
-            color: #ffffff;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            background-image: radial-gradient(ellipse at 50% 0%, #1a1a3e 0%, #0a0a12 70%);
-        }
-
-        .container {
-            max-width: 700px;
-            width: 100%;
-            background: rgba(26, 26, 46, 0.85);
-            backdrop-filter: blur(20px);
-            border-radius: 24px;
-            padding: 30px;
-            border: 1px solid rgba(42, 42, 78, 0.6);
-            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8);
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        #loginPage {
-            text-align: center;
-        }
-
-        .lock-icon {
-            font-size: 60px;
-            margin-bottom: 15px;
-        }
-
-        .login-title {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 8px;
-            background: linear-gradient(135deg, #f7971e, #ffd200);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .login-subtitle {
-            color: #a0a0b8;
-            font-size: 14px;
-            margin-bottom: 25px;
-        }
-
-        .login-input {
-            width: 100%;
-            padding: 14px 18px;
-            border-radius: 10px;
-            border: 1px solid #2a2a4e;
-            background: #0f0f23;
-            color: #fff;
-            font-size: 16px;
-            outline: none;
-            transition: 0.3s;
-        }
-
-        .login-input:focus {
-            border-color: #f7971e;
-            box-shadow: 0 0 0 3px rgba(247, 151, 30, 0.15);
-        }
-
-        .login-btn {
-            width: 100%;
-            padding: 14px;
-            margin-top: 15px;
-            border: none;
-            border-radius: 10px;
-            background: linear-gradient(135deg, #f7971e, #ffd200);
-            color: #0a0a12;
-            font-size: 18px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .login-btn:hover {
-            transform: scale(1.02);
-            box-shadow: 0 8px 30px rgba(247, 151, 30, 0.35);
-        }
-
-        .login-error {
-            color: #ff6b6b;
-            font-size: 14px;
-            margin-top: 12px;
-            min-height: 20px;
-        }
-
-        #adminPanel {
-            text-align: center;
-        }
-
-        .admin-icon {
-            font-size: 50px;
-            margin-bottom: 10px;
-        }
-
-        .admin-title {
-            font-size: 22px;
-            font-weight: 700;
-            margin-bottom: 5px;
-            background: linear-gradient(135deg, #f7971e, #ffd200);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .admin-subtitle {
-            color: #a0a0b8;
-            font-size: 13px;
-            margin-bottom: 20px;
-        }
-
-        .config-section {
-            background: rgba(18, 18, 30, 0.6);
-            border-radius: 12px;
-            padding: 18px;
-            border: 1px solid #2a2a4e;
-            margin-bottom: 16px;
-            backdrop-filter: blur(10px);
-            text-align: left;
-        }
-
-        .config-section .label {
-            color: #a0a0b8;
-            font-size: 13px;
-            font-weight: 600;
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        .config-section input {
-            width: 100%;
-            padding: 10px 14px;
-            border-radius: 8px;
-            border: 1px solid #2a2a4e;
-            background: #0f0f23;
-            color: #fff;
-            font-size: 14px;
-            outline: none;
-            transition: 0.3s;
-        }
-
-        .config-section input:focus {
-            border-color: #f7971e;
-        }
-
-        .btn-apply {
-            width: 100%;
-            padding: 10px;
-            margin-top: 8px;
-            border: none;
-            border-radius: 8px;
-            background: linear-gradient(135deg, #00b894, #00cec9);
-            color: #fff;
-            font-weight: 700;
-            font-size: 14px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .btn-apply:hover {
-            transform: scale(1.02);
-            box-shadow: 0 8px 30px rgba(0, 206, 201, 0.3);
-        }
-
-        .btn-refresh-users {
-            width: 100%;
-            padding: 10px;
-            margin-top: 8px;
-            border: none;
-            border-radius: 8px;
-            background: linear-gradient(135deg, #f7971e, #ffd200);
-            color: #0a0a12;
-            font-weight: 700;
-            font-size: 14px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .btn-refresh-users:hover {
-            transform: scale(1.02);
-            box-shadow: 0 8px 30px rgba(247, 151, 30, 0.35);
-        }
-
-        .status-box {
-            background: rgba(18, 18, 30, 0.6);
-            border-radius: 10px;
-            padding: 15px;
-            border: 1px solid #2a2a4e;
-            margin-bottom: 16px;
-        }
-
-        .status-box .label {
-            color: #a0a0b8;
-            font-size: 13px;
-        }
-
-        .status-box .value {
-            font-size: 18px;
-            font-weight: 700;
-            margin-top: 5px;
-        }
-
-        .status-box .value.online {
-            color: #00ff88;
-        }
-
-        .status-box .value.offline {
-            color: #ff6b6b;
-        }
-
-        .keys-container {
-            background: rgba(18, 18, 30, 0.6);
-            border-radius: 12px;
-            padding: 16px;
-            border: 1px solid #2a2a4e;
-            margin-bottom: 16px;
-            backdrop-filter: blur(10px);
-        }
-
-        .keys-title {
-            font-size: 13px;
-            font-weight: 600;
-            color: #a0a0b8;
-            margin-bottom: 12px;
-            text-align: center;
-            letter-spacing: 1px;
-        }
-
-        .keys-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-            gap: 8px;
-        }
-
-        .key-item {
-            background: #0f0f23;
-            border: 1px solid #2a2a4e;
-            border-radius: 8px;
-            padding: 8px 6px;
-            text-align: center;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            font-weight: 700;
-            letter-spacing: 2px;
-            color: #f7971e;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            user-select: none;
-        }
-
-        .key-item:hover {
-            background: #1a1a3e;
-            border-color: #f7971e;
-            transform: scale(1.05);
-            box-shadow: 0 0 20px rgba(247, 151, 30, 0.15);
-        }
-
-        .key-item.copied {
-            background: #00ff88;
-            color: #0a0a12;
-            border-color: #00ff88;
-        }
-
-        .key-item.used {
-            background: #2a2a3e;
-            color: #6a6a8a;
-            border-color: #3a3a5e;
-            cursor: not-allowed;
-            opacity: 0.5;
-            text-decoration: line-through;
-        }
-
-        .btn-generate {
-            width: 100%;
-            padding: 10px;
-            margin-top: 10px;
-            border: none;
-            border-radius: 8px;
-            background: linear-gradient(135deg, #f7971e, #ffd200);
-            color: #0a0a12;
-            font-weight: 700;
-            font-size: 14px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .btn-generate:hover {
-            transform: scale(1.02);
-            box-shadow: 0 8px 30px rgba(247, 151, 30, 0.35);
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 10px;
-            font-weight: 700;
-            font-size: 14px;
-            cursor: pointer;
-            transition: 0.3s;
-            font-family: 'Segoe UI', sans-serif;
-            flex: 1;
-            min-width: 100px;
-        }
-
-        .btn-pause {
-            background: linear-gradient(135deg, #ff0044, #cc0033);
-            color: #fff;
-            box-shadow: 0 4px 20px rgba(255, 0, 68, 0.3);
-        }
-
-        .btn-pause:hover {
-            transform: scale(1.03);
-            box-shadow: 0 8px 30px rgba(255, 0, 68, 0.5);
-        }
-
-        .btn-pause:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-resume {
-            background: linear-gradient(135deg, #00ff88, #00cc66);
-            color: #0a0a12;
-            box-shadow: 0 4px 20px rgba(0, 255, 136, 0.3);
-        }
-
-        .btn-resume:hover {
-            transform: scale(1.03);
-            box-shadow: 0 8px 30px rgba(0, 255, 136, 0.5);
-        }
-
-        .btn-resume:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-blank {
-            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
-            color: #fff;
-            box-shadow: 0 4px 20px rgba(108, 92, 231, 0.3);
-        }
-
-        .btn-blank:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-remove-blank {
-            background: linear-gradient(135deg, #00b894, #00cec9);
-            color: #fff;
-            box-shadow: 0 4px 20px rgba(0, 184, 148, 0.3);
-        }
-
-        .btn-remove-blank:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-refresh {
-            background: #0f0f23;
-            border: 1px solid #2a2a4e;
-            color: #a0a0b8;
-            padding: 12px 16px;
-            flex: 0.5;
-            min-width: 50px;
-        }
-
-        .btn-refresh:hover {
-            border-color: #f7971e;
-            color: #fff;
-        }
-
-        .message {
-            margin-top: 12px;
-            padding: 10px 16px;
-            border-radius: 8px;
-            font-size: 14px;
-            display: none;
-        }
-
-        .message.show {
-            display: block;
-        }
-
-        .message.success {
-            color: #00ff88;
-            background: rgba(0, 255, 136, 0.08);
-            border-left: 3px solid #00ff88;
-        }
-
-        .message.error {
-            color: #ff6b6b;
-            background: rgba(255, 0, 0, 0.08);
-            border-left: 3px solid #ff6b6b;
-        }
-
-        .message.info {
-            color: #f7971e;
-            background: rgba(247, 151, 30, 0.08);
-            border-left: 3px solid #f7971e;
-        }
-
-        .footer {
-            margin-top: 20px;
-            text-align: center;
-            color: #6a6a8a;
-            font-size: 12px;
-            border-top: 1px solid #1a1a3e;
-            padding-top: 18px;
-        }
-
-        .footer .highlight {
-            color: #f7971e;
-        }
-
-        .last-updated {
-            color: #6a6a8a;
-            font-size: 11px;
-            margin-top: 8px;
-        }
-
-        .connection-status {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            font-size: 12px;
-            color: #6a6a8a;
-            margin-top: 10px;
-        }
-
-        .connection-status .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            display: inline-block;
-        }
-
-        .connection-status .dot.online {
-            background: #00ff88;
-        }
-
-        .connection-status .dot.offline {
-            background: #ff6b6b;
-        }
-
-        /* ===== KEY TYPE SECTIONS ===== */
-        .key-type-section {
-            margin-top: 15px;
-            padding: 12px;
-            background: rgba(15, 15, 35, 0.4);
-            border-radius: 10px;
-            border-left: 3px solid #f7971e;
-        }
-
-        .key-type-title {
-            font-size: 14px;
-            font-weight: 700;
-            color: #f7971e;
-            margin-bottom: 10px;
-        }
-
-        .key-type-section .keys-grid {
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-        }
-
-        .key-type-section .key-item {
-            font-size: 12px;
-            padding: 6px 4px;
-        }
-
-        @media (max-width: 480px) {
-            .container {
-                padding: 16px;
-            }
-            .btn {
-                min-width: 80px;
-                padding: 10px 16px;
-                font-size: 13px;
-            }
-            .btn-group {
-                flex-direction: column;
-            }
-            .btn-refresh {
-                flex: 1;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Admin Panel</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+    body { background: #f0f4fb; min-height: 100vh; display: flex; justify-content: center; padding: 30px 16px; }
+    .app { max-width: 900px; width: 100%; background: white; border-radius: 36px; box-shadow: 0 20px 50px rgba(0,0,0,0.04); padding: 28px 30px; }
+    
+    @media (max-width: 768px) {
+      .app { padding: 16px; border-radius: 20px; }
+      .header h1 { font-size: 1.3rem; }
+      .flex-row { flex-direction: column; }
+      .flex-row > * { min-width: auto; width: 100%; }
+      .btn { min-width: auto; padding: 10px 20px; }
+      .tab-btn { padding: 8px 16px; font-size: 0.85rem; }
+      .entry-item { flex-wrap: wrap; gap: 8px; }
+      .key-display { flex-direction: column; align-items: stretch; }
+    }
+
+    @media (max-width: 480px) {
+      .app { padding: 12px; border-radius: 16px; }
+      .header h1 { font-size: 1.1rem; }
+      .tab-buttons { gap: 8px; }
+      .tab-btn { padding: 6px 12px; font-size: 0.75rem; }
+      .section-title { font-size: 0.95rem; }
+    }
+
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e8edf6; padding-bottom: 18px; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+    .header h1 { font-weight: 600; font-size: 1.9rem; color: #0b1a33; }
+    .badge { background: #eef3fa; padding: 6px 16px; border-radius: 40px; font-size: 0.8rem; color: #4c637f; }
+    
+    .section-title { font-weight: 600; color: #0b1a33; margin-top: 24px; margin-bottom: 8px; font-size: 1.1rem; border-bottom: 2px solid #e8edf6; padding-bottom: 8px; }
+    .flex-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .flex-row > * { flex: 1; min-width: 150px; }
+    
+    input, select { width: 100%; padding: 12px 16px; border: 1px solid #d9e1ec; border-radius: 20px; font-size: 0.95rem; background: #fafcff; }
+    input:focus, select:focus { border-color: #1a2b4c; outline: none; background: white; }
+    
+    .btn { padding: 12px 28px; border: none; border-radius: 60px; font-weight: 500; cursor: pointer; transition: 0.15s; flex:1; min-width:120px; }
+    .btn-primary { background: #1a2b4c; color: white; }
+    .btn-primary:hover { background: #2f4370; }
+    .btn-success { background: #1a7a3a; color: white; }
+    .btn-success:hover { background: #1f944a; }
+    .btn-danger { background: #b33a3a; color: white; }
+    .btn-danger:hover { background: #992e2e; }
+    .btn-outline { background: transparent; color: #1a2b4c; border: 1px solid #d0dae8; }
+    .btn-outline:hover { background: #f0f4fe; }
+    .btn-sm { padding: 8px 18px; font-size: 0.85rem; flex: 0; }
+    .btn-copy { background: #2d7a9b; color: white; padding: 6px 16px; border: none; border-radius: 40px; cursor: pointer; font-size: 0.8rem; }
+    .btn-copy:hover { background: #1f5f7a; }
+    .btn-highlight { padding: 4px 14px; border: none; border-radius: 40px; cursor: pointer; font-size: 0.75rem; transition: 0.15s; }
+    .btn-highlight.active { background: #1a7a3a; color: white; }
+    .btn-highlight.active:hover { background: #0f5c28; }
+    .btn-highlight.inactive { background: #6a7c94; color: white; }
+    .btn-highlight.inactive:hover { background: #5a6a80; }
+    
+    .entry-list { background: #f5f8fe; border-radius: 20px; padding: 6px 0; margin: 12px 0 6px; max-height: 350px; overflow-y: auto; }
+    .entry-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; border-bottom: 1px solid #e6edf6; }
+    .entry-item:last-child { border-bottom: none; }
+    .entry-item .info { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+    .entry-item .name { font-weight: 600; color: #0b1a33; }
+    .entry-item .sub { color: #4c637f; font-size: 0.8rem; word-break: break-all; }
+    .entry-item .del-btn { background: none; border: none; color: #b33a3a; font-size: 1.2rem; cursor: pointer; padding: 4px 10px; border-radius: 40px; }
+    .entry-item .del-btn:hover { background: #ffe6e6; }
+    .entry-item .key-btn { background: none; border: 1px solid #d0dae8; border-radius: 40px; padding: 4px 12px; cursor: pointer; font-size: 0.8rem; }
+    .entry-item .key-btn:hover { background: #e6edf6; }
+    .entry-item .reset-btn { background: #fff3cd; border: 1px solid #856404; border-radius: 40px; padding: 4px 12px; cursor: pointer; font-size: 0.8rem; }
+    .entry-item .reset-btn:hover { background: #ffe6b3; }
+    
+    .empty-state { color: #6a7c94; padding: 20px 0; text-align: center; font-style: italic; }
+    .toast-msg { font-size: 0.9rem; margin-top: 12px; padding: 8px 16px; border-radius: 60px; display: inline-block; }
+    .toast-error { background: #fee; color: #b33a3a; }
+    .toast-success { background: #e6f5e6; color: #1a5d3c; }
+    .toast-info { background: #e6f0fa; color: #1a3f5c; }
+    
+    .password-gate { background: #f8faff; border-radius: 20px; padding: 24px; margin-top: 10px; }
+    .password-gate label { font-weight: 500; color: #1a2b4c; display: block; margin-top: 12px; margin-bottom: 5px; font-size: 0.9rem; }
+    .password-gate .pwd-error { color: #b33a3a; font-size: 0.9rem; margin-top: 6px; }
+    .api-status { font-size: 0.8rem; color: #4c637f; padding: 6px 14px; background: #eef3fa; border-radius: 40px; display: inline-block; }
+    .status-connected { background: #e6f5e6; color: #1a5d3c; }
+    .status-error { background: #fee; color: #b33a3a; }
+    
+    .playlist-header { background: #eef3fa; padding: 10px 16px; font-weight: 700; border-radius: 12px; margin: 8px 0 4px; display: flex; justify-content: space-between; align-items: center; }
+    .tab-buttons { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+    .tab-btn { padding: 10px 24px; border: 2px solid #d9e1ec; border-radius: 40px; background: white; cursor: pointer; font-weight: 500; }
+    .tab-btn.active { border-color: #1a2b4c; background: #1a2b4c; color: white; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    
+    .key-display { background: #f0f4fb; padding: 12px 16px; border-radius: 12px; font-family: monospace; word-break: break-all; margin: 8px 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .key-display .key-text { font-size: 1.1rem; color: #0b1a33; }
+    
+    .important-item { background: #fef9e7; border-left: 4px solid #f7971e; }
+    .important-item.hidden { opacity: 0.6; border-left-color: #6a7c94; }
+    
+    .visibility-badge { font-size: 0.7rem; padding: 2px 12px; border-radius: 40px; font-weight: 600; }
+    .visibility-badge.visible { background: #e6f5e6; color: #1a5d3c; }
+    .visibility-badge.hidden { background: #fee; color: #b33a3a; }
+  </style>
 </head>
 <body>
+<div class="app">
+  <div class="header">
+    <h1>⚙️ Admin Panel</h1>
+    <span class="badge">🔐 Protected</span>
+  </div>
 
-    <div class="container">
+  <!-- Password Gate -->
+  <div id="passwordGate" class="password-gate">
+    <label for="adminUsername">👤 Username</label>
+    <input type="text" id="adminUsername" placeholder="Enter username" value="admin" />
+    
+    <label for="adminPwdInput">🔑 Password</label>
+    <input type="password" id="adminPwdInput" placeholder="Enter password" />
+    
+    <div id="pwdError" class="pwd-error"></div>
+    <div class="flex-row">
+      <button class="btn btn-primary" id="unlockBtn">🔓 Login</button>
+    </div>
+  </div>
 
-        <div id="loginPage">
-            <div class="lock-icon">🔐</div>
-            <div class="login-title">Admin Login</div>
-            <div class="login-subtitle">Enter your credentials to control the stream</div>
-            <input type="password" class="login-input" id="passwordInput" placeholder="Enter password" autofocus>
-            <button class="login-btn" onclick="login()">🔓 Login</button>
-            <div id="loginError" class="login-error"></div>
-        </div>
-
-        <div id="adminPanel" class="hidden">
-            <div class="admin-icon">🎬</div>
-            <div class="admin-title">Video Control</div>
-            <div class="admin-subtitle">Control your live stream remotely</div>
-
-            <div class="connection-status">
-                <span class="dot online" id="connDot"></span>
-                <span id="connText">Connected to API</span>
-            </div>
-
-            <div class="config-section">
-                <span class="label">📺 Class Name</span>
-                <input type="text" id="classNameInput" placeholder="Enter class name..." value="ClassPlus Live">
-            </div>
-
-            <div class="config-section">
-                <span class="label">🔗 Stream URL (M3U8)</span>
-                <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                    <input type="text" id="streamUrlInput" placeholder="Enter .m3u8 link..." style="flex:1; min-width:200px;" value="https://vs.classplusapp.com/hls/6a718806e15274f80f0ea83c/720p20.m3u8">
-                    <button class="btn-apply" onclick="applyStreamConfig()" style="flex:0 0 auto; padding:10px 20px; width:auto;">✅ Apply</button>
-                </div>
-            </div>
-
-            <div class="config-section">
-                <button class="btn-refresh-users" onclick="refreshAllUsers()">🔄 Refresh All Users</button>
-                <div style="font-size:11px; color:#6a6a8a; margin-top:5px; text-align:center;">
-                    This will force all users' browsers to reload and get the latest stream config
-                </div>
-            </div>
-
-            <div class="status-box">
-                <div class="label">📊 Current Status</div>
-                <div class="value" id="statusValue">
-                    <span id="statusText">Checking...</span>
-                </div>
-            </div>
-
-            <!-- ===== FREE KEYS SECTION ===== -->
-            <div class="keys-container">
-                <div class="keys-title">🆓 Free Keys (Website par dikhengi)</div>
-                <div class="key-type-section">
-                    <div class="key-type-title">Free Keys <span style="color:#6a6a8a;font-weight:400;">(Click to copy)</span></div>
-                    <div class="keys-grid" id="adminFreeKeyGrid"></div>
-                </div>
-                <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
-                    <button class="btn-generate" onclick="generateFreeKeys()" style="flex:1; background: linear-gradient(135deg, #00b894, #00cec9);">🔄 Generate Free Keys</button>
-                    <button class="btn-generate" onclick="syncFreeKeysToDB()" style="flex:1; background: linear-gradient(135deg, #00b894, #00cec9);">💾 Sync Free Keys</button>
-                </div>
-                <div style="font-size:11px; color:#6a6a8a; margin-top:5px; text-align:center;">
-                    <span id="freeKeySyncStatus">Free keys are synced with database</span>
-                </div>
-            </div>
-
-            <!-- ===== PAID KEYS SECTION ===== -->
-            <div class="keys-container">
-                <div class="keys-title">💰 Paid Keys (Paid user code se dikhengi)</div>
-                <div class="key-type-section">
-                    <div class="key-type-title">Paid Keys <span style="color:#6a6a8a;font-weight:400;">(Click to copy)</span></div>
-                    <div class="keys-grid" id="adminPaidKeyGrid"></div>
-                </div>
-                <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
-                    <button class="btn-generate" onclick="generatePaidKeys()" style="flex:1; background: linear-gradient(135deg, #6c5ce7, #a29bfe);">🔄 Generate Paid Keys</button>
-                    <button class="btn-generate" onclick="syncPaidKeysToDB()" style="flex:1; background: linear-gradient(135deg, #6c5ce7, #a29bfe);">💾 Sync Paid Keys</button>
-                </div>
-                <div style="font-size:11px; color:#6a6a8a; margin-top:5px; text-align:center;">
-                    <span id="paidKeySyncStatus">Paid keys are synced with database</span>
-                </div>
-            </div>
-
-            <div class="btn-group">
-                <button class="btn btn-pause" id="pauseBtn" onclick="pauseVideo()">⏸️ Pause</button>
-                <button class="btn btn-resume" id="resumeBtn" onclick="resumeVideo()">▶️ Play</button>
-                <button class="btn btn-blank" id="blankBtn" onclick="showBlankPage()">📺 Blank</button>
-                <button class="btn btn-remove-blank" id="removeBlankBtn" onclick="removeBlankPage()">🖼️ Remove</button>
-                <button class="btn btn-refresh" onclick="fetchStatus()" title="Refresh">🔄</button>
-            </div>
-
-            <div id="adminMessage" class="message"></div>
-            <div class="last-updated" id="lastUpdated">Last updated: --</div>
-
-            <div class="footer">
-                ⚡ <span class="highlight">Remote Control</span> — Cloudflare D1
-            </div>
-        </div>
-
+  <!-- Admin Content -->
+  <div id="adminContent" style="display: none;">
+    <div class="flex-row" style="margin-bottom:16px;">
+      <span class="api-status" id="apiStatus">🗄️ D1 Database</span>
+      <button class="btn btn-outline btn-sm" id="refreshBtn">📥 Refresh</button>
     </div>
 
-    <script>
-        // ============================================================
-        //  ANTI-DEVELOPER TOOLS
-        // ============================================================
-        (function antiDevTools() {
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'F12' || e.keyCode === 123) {
-                    e.preventDefault();
-                    window.location.replace('https://www.google.com');
-                    return false;
+    <!-- Tabs -->
+    <div class="tab-buttons">
+      <button class="tab-btn active" data-tab="playlists">📁 Playlists</button>
+      <button class="tab-btn" data-tab="important">⭐ Live </button>
+      <button class="tab-btn" data-tab="users">👥 Users</button>
+    </div>
+
+    <!-- Playlists Tab -->
+    <div id="tab-playlists" class="tab-content active">
+      <div class="section-title">📁 Add New Playlist</div>
+      <div class="flex-row">
+        <input type="text" id="newPlaylistName" placeholder="Playlist name" />
+        <button class="btn btn-success" id="addPlaylistBtn">➕ Add</button>
+      </div>
+      <div id="playlistFeedback" class="toast-msg"></div>
+
+      <div class="section-title">📝 Add Chapter</div>
+      <div class="flex-row">
+        <select id="playlistSelect"><option value="">Select playlist</option></select>
+      </div>
+      <div class="flex-row">
+        <input type="text" id="chapterName" placeholder="Chapter name" />
+        <input type="text" id="chapterLink" placeholder="Video URL (HLS / MP4)" />
+      </div>
+      <div class="flex-row">
+        <button class="btn btn-primary" id="addChapterBtn">➕ Add Chapter</button>
+      </div>
+      <div id="chapterFeedback" class="toast-msg"></div>
+
+      <div class="section-title">📋 All Playlists & Chapters</div>
+      <div class="entry-list" id="adminList"><div class="empty-state">Loading...</div></div>
+    </div>
+
+    <!-- Important Tab -->
+    <div id="tab-important" class="tab-content">
+      <div class="section-title">⭐ Live Section</div>
+      <p style="color:#6a7c94;font-size:0.85rem;margin-bottom:12px;">
+        Add important classes. Use Hide/Show to control visibility on user website.
+      </p>
+      
+      <div class="flex-row">
+        <input type="text" id="importantTitle" placeholder="Class Title" />
+      </div>
+      <div class="flex-row">
+        <input type="text" id="importantLink" placeholder="Video URL (HLS / MP4)" />
+      </div>
+      <div class="flex-row">
+        <button class="btn btn-success" id="saveImportantBtn">💾 Save Live Links</button>
+      </div>
+      <div id="importantFeedback" class="toast-msg"></div>
+      
+      <div class="section-title" style="margin-top:16px;">📋 All Live Classes</div>
+      <div id="importantList" class="entry-list">
+        <div class="empty-state">Loading...</div>
+      </div>
+    </div>
+
+    <!-- Users Tab -->
+    <div id="tab-users" class="tab-content">
+      <div class="section-title">👤 Add New User</div>
+      <div class="flex-row">
+        <input type="email" id="newUserEmail" placeholder="User email" />
+        <button class="btn btn-success" id="addUserBtn">➕ Add User</button>
+      </div>
+      <div id="userFeedback" class="toast-msg"></div>
+
+      <div class="section-title">🔑 Generate New Key</div>
+      <div class="flex-row">
+        <select id="userSelect"><option value="">Select user</option></select>
+        <button class="btn btn-primary" id="generateKeyBtn">🔄 Generate Key</button>
+      </div>
+      <div id="keyDisplay" class="key-display" style="display:none;">
+        <span class="key-text" id="keyText"></span>
+        <button class="btn-copy" id="copyKeyBtn" onclick="copyKey()">📋 Copy</button>
+      </div>
+      <div id="keyFeedback" class="toast-msg"></div>
+
+      <div class="section-title">👥 All Users & Keys</div>
+      <div class="entry-list" id="userList"><div class="empty-state">Loading...</div></div>
+    </div>
+    
+    <div style="margin-top:20px; border-top:1px solid #e8edf6; padding-top:18px;">
+      <button class="btn btn-danger" id="logoutBtn" style="flex:0; padding:8px 24px;">🚪 Logout</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ========================================================================
+//  ANTI-DEVELOPER TOOLS
+// ========================================================================
+(function antiDevTools() {
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+    
+    if (!isMobile) {
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F12' || 
+                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J')) ||
+                (e.ctrlKey && e.key === 'U')) {
+                e.preventDefault();
+                window.location.href = 'https://www.google.com';
+            }
+        });
+
+        let devToolsDetected = false;
+
+        function detectDevTools() {
+            const threshold = 160;
+            const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+            const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+            
+            if (widthThreshold || heightThreshold) {
+                if (!devToolsDetected) {
+                    devToolsDetected = true;
+                    console.clear();
+                    setTimeout(function() {
+                        window.location.href = 'https://www.google.com';
+                    }, 100);
                 }
-                if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.keyCode === 73)) {
-                    e.preventDefault();
-                    window.location.replace('https://www.google.com');
-                    return false;
-                }
-                if (e.ctrlKey && e.shiftKey && (e.key === 'J' || e.key === 'j' || e.keyCode === 74)) {
-                    e.preventDefault();
-                    window.location.replace('https://www.google.com');
-                    return false;
-                }
-                if (e.ctrlKey && (e.key === 'U' || e.key === 'u' || e.keyCode === 85)) {
-                    e.preventDefault();
-                    window.location.replace('https://www.google.com');
-                    return false;
-                }
-            });
-
-            function isMobile() {
-                return /Mobi|Android|iPhone|iPad|iPod|Opera Mini|BlackBerry|IEMobile/i.test(navigator.userAgent);
-            }
-
-            if (!isMobile()) {
-                let detectionCount = 0;
-                setInterval(function() {
-                    const widthDiff = window.outerWidth - window.innerWidth;
-                    const heightDiff = window.outerHeight - window.innerHeight;
-                    if (widthDiff > 100 || heightDiff > 100) {
-                        detectionCount++;
-                        if (detectionCount >= 2) {
-                            window.location.replace('https://www.google.com');
-                        }
-                    } else {
-                        detectionCount = 0;
-                    }
-                }, 100);
-            }
-
-            setInterval(function() {
-                console.clear();
-                try {
-                    if (window.performance && performance.clearResourceTimings) {
-                        performance.clearResourceTimings();
-                    }
-                } catch (e) {}
-            }, 100);
-
-            console.log = function() {};
-            console.warn = function() {};
-            console.error = function() {};
-            console.info = function() {};
-            console.debug = function() {};
-            console.table = function() {};
-            console.dir = function() {};
-        })();
-
-        // ============================================================
-        //  CONFIGURATION
-        // ============================================================
-
-        const ADMIN_PASSWORD = "@rohit83077";
-        const WORKER_URL = "https://hls-d1-api.bbro75574-4c4.workers.dev";
-
-        // Default Keys
-        let FREE_KEYS = [];
-        let PAID_KEYS = [];
-        let USED_KEYS = [];
-
-        const FREE_KEY_COUNT = 10;
-        const PAID_KEY_COUNT = 20;
-
-        // ============================================================
-        //  DOM REFS
-        // ============================================================
-        const loginPage = document.getElementById('loginPage');
-        const adminPanel = document.getElementById('adminPanel');
-        const passwordInput = document.getElementById('passwordInput');
-        const loginError = document.getElementById('loginError');
-
-        const statusText = document.getElementById('statusText');
-        const pauseBtn = document.getElementById('pauseBtn');
-        const resumeBtn = document.getElementById('resumeBtn');
-        const blankBtn = document.getElementById('blankBtn');
-        const removeBlankBtn = document.getElementById('removeBlankBtn');
-        const adminMessage = document.getElementById('adminMessage');
-        const lastUpdated = document.getElementById('lastUpdated');
-        const connDot = document.getElementById('connDot');
-        const connText = document.getElementById('connText');
-
-        const adminFreeKeyGrid = document.getElementById('adminFreeKeyGrid');
-        const adminPaidKeyGrid = document.getElementById('adminPaidKeyGrid');
-        const freeKeySyncStatus = document.getElementById('freeKeySyncStatus');
-        const paidKeySyncStatus = document.getElementById('paidKeySyncStatus');
-
-        const classNameInput = document.getElementById('classNameInput');
-        const streamUrlInput = document.getElementById('streamUrlInput');
-
-        // ============================================================
-        //  KEY GENERATION
-        // ============================================================
-
-        function generateRandomKey() {
-            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-            let key = '';
-            for (let i = 0; i < 8; i++) {
-                key += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            return key;
-        }
-
-        function generateKeys(count) {
-            const keys = [];
-            for (let i = 0; i < count; i++) {
-                keys.push(generateRandomKey());
-            }
-            return keys;
-        }
-
-        function generateFreeKeys() {
-            FREE_KEYS = generateKeys(FREE_KEY_COUNT);
-            localStorage.setItem('freeKeys', JSON.stringify(FREE_KEYS));
-            renderAdminKeys();
-            showAdminMessage(`✅ ${FREE_KEY_COUNT} Free keys generated!`, 'success');
-            freeKeySyncStatus.textContent = '⚠️ Free keys not synced! Click "Sync Free Keys"';
-            freeKeySyncStatus.style.color = '#f7971e';
-        }
-
-        function generatePaidKeys() {
-            PAID_KEYS = generateKeys(PAID_KEY_COUNT);
-            localStorage.setItem('paidKeys', JSON.stringify(PAID_KEYS));
-            renderAdminKeys();
-            showAdminMessage(`✅ ${PAID_KEY_COUNT} Paid keys generated!`, 'success');
-            paidKeySyncStatus.textContent = '⚠️ Paid keys not synced! Click "Sync Paid Keys"';
-            paidKeySyncStatus.style.color = '#f7971e';
-        }
-
-        // ============================================================
-        //  SYNC KEYS TO DATABASE
-        // ============================================================
-
-        async function syncFreeKeysToDB() {
-            showAdminMessage('⏳ Syncing free keys to database...', 'info');
-            try {
-                const response = await fetch(`${WORKER_URL}/sync-free-keys`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ keys: FREE_KEYS })
-                });
-                if (!response.ok) throw new Error('Failed to sync free keys');
-                const data = await response.json();
-                if (data.success) {
-                    showAdminMessage('✅ Free keys synced to database!', 'success');
-                    freeKeySyncStatus.textContent = '✅ Free keys are synced with database';
-                    freeKeySyncStatus.style.color = '#00ff88';
-                }
-            } catch (error) {
-                showAdminMessage(`❌ Failed to sync free keys: ${error.message}`, 'error');
-            }
-        }
-
-        async function syncPaidKeysToDB() {
-            showAdminMessage('⏳ Syncing paid keys to database...', 'info');
-            try {
-                const response = await fetch(`${WORKER_URL}/sync-paid-keys`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ keys: PAID_KEYS })
-                });
-                if (!response.ok) throw new Error('Failed to sync paid keys');
-                const data = await response.json();
-                if (data.success) {
-                    showAdminMessage('✅ Paid keys synced to database!', 'success');
-                    paidKeySyncStatus.textContent = '✅ Paid keys are synced with database';
-                    paidKeySyncStatus.style.color = '#00ff88';
-                }
-            } catch (error) {
-                showAdminMessage(`❌ Failed to sync paid keys: ${error.message}`, 'error');
-            }
-        }
-
-        // ============================================================
-        //  RENDER ADMIN KEYS
-        // ============================================================
-
-        function renderAdminKeys() {
-            // Free Keys
-            adminFreeKeyGrid.innerHTML = '';
-            FREE_KEYS.forEach(key => {
-                const el = document.createElement('div');
-                el.className = 'key-item';
-                if (USED_KEYS.includes(key)) {
-                    el.classList.add('used');
-                }
-                el.textContent = key;
-                el.title = USED_KEYS.includes(key) ? '❌ Already used!' : 'Click to copy';
-                el.addEventListener('click', function() {
-                    if (USED_KEYS.includes(key)) {
-                        showAdminMessage('❌ This key has already been used!', 'error');
-                        return;
-                    }
-                    navigator.clipboard.writeText(key).then(() => {
-                        el.classList.add('copied');
-                        setTimeout(() => { el.classList.remove('copied'); }, 800);
-                        showAdminMessage(`✅ Key copied: ${key}`, 'success');
-                    }).catch(() => {
-                        const textArea = document.createElement('textarea');
-                        textArea.value = key;
-                        document.body.appendChild(textArea);
-                        textArea.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(textArea);
-                        el.classList.add('copied');
-                        setTimeout(() => { el.classList.remove('copied'); }, 800);
-                        showAdminMessage(`✅ Key copied: ${key}`, 'success');
-                    });
-                });
-                adminFreeKeyGrid.appendChild(el);
-            });
-
-            // Paid Keys
-            adminPaidKeyGrid.innerHTML = '';
-            PAID_KEYS.forEach(key => {
-                const el = document.createElement('div');
-                el.className = 'key-item';
-                if (USED_KEYS.includes(key)) {
-                    el.classList.add('used');
-                }
-                el.textContent = key;
-                el.title = USED_KEYS.includes(key) ? '❌ Already used!' : 'Click to copy';
-                el.addEventListener('click', function() {
-                    if (USED_KEYS.includes(key)) {
-                        showAdminMessage('❌ This key has already been used!', 'error');
-                        return;
-                    }
-                    navigator.clipboard.writeText(key).then(() => {
-                        el.classList.add('copied');
-                        setTimeout(() => { el.classList.remove('copied'); }, 800);
-                        showAdminMessage(`✅ Key copied: ${key}`, 'success');
-                    }).catch(() => {
-                        const textArea = document.createElement('textarea');
-                        textArea.value = key;
-                        document.body.appendChild(textArea);
-                        textArea.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(textArea);
-                        el.classList.add('copied');
-                        setTimeout(() => { el.classList.remove('copied'); }, 800);
-                        showAdminMessage(`✅ Key copied: ${key}`, 'success');
-                    });
-                });
-                adminPaidKeyGrid.appendChild(el);
-            });
-        }
-
-        // ============================================================
-        //  LOAD KEYS FROM STORAGE
-        // ============================================================
-
-        function loadKeysFromStorage() {
-            const savedFreeKeys = localStorage.getItem('freeKeys');
-            if (savedFreeKeys) {
-                try {
-                    FREE_KEYS = JSON.parse(savedFreeKeys);
-                } catch (e) {}
-            }
-            if (FREE_KEYS.length === 0) {
-                FREE_KEYS = generateKeys(FREE_KEY_COUNT);
-                localStorage.setItem('freeKeys', JSON.stringify(FREE_KEYS));
-            }
-
-            const savedPaidKeys = localStorage.getItem('paidKeys');
-            if (savedPaidKeys) {
-                try {
-                    PAID_KEYS = JSON.parse(savedPaidKeys);
-                } catch (e) {}
-            }
-            if (PAID_KEYS.length === 0) {
-                PAID_KEYS = generateKeys(PAID_KEY_COUNT);
-                localStorage.setItem('paidKeys', JSON.stringify(PAID_KEYS));
-            }
-
-            const savedUsedKeys = localStorage.getItem('usedKeys');
-            if (savedUsedKeys) {
-                try {
-                    USED_KEYS = JSON.parse(savedUsedKeys);
-                } catch (e) {}
-            }
-        }
-
-        // ============================================================
-        //  LOGIN
-        // ============================================================
-
-        function login() {
-            const password = passwordInput.value.trim();
-            if (password === ADMIN_PASSWORD) {
-                loginPage.classList.add('hidden');
-                adminPanel.classList.remove('hidden');
-                loginError.textContent = '';
-                loadKeysFromStorage();
-                renderAdminKeys();
-                fetchStatus();
-                setInterval(fetchStatus, 3000);
             } else {
-                loginError.textContent = '❌ Invalid password!';
-                passwordInput.value = '';
-                passwordInput.focus();
+                devToolsDetected = false;
             }
         }
 
-        passwordInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') login();
+        setInterval(detectDevTools, 100);
+        setInterval(function() { console.clear(); }, 100);
+
+        const noop = function() {};
+        console.log = noop;
+        console.warn = noop;
+        console.error = noop;
+        console.info = noop;
+        console.debug = noop;
+        console.table = noop;
+        console.trace = noop;
+        console.dir = noop;
+        console.dirxml = noop;
+        console.group = noop;
+        console.groupEnd = noop;
+        console.groupCollapsed = noop;
+        console.clear = noop;
+        console.count = noop;
+        console.countReset = noop;
+        console.assert = noop;
+        console.profile = noop;
+        console.profileEnd = noop;
+        console.time = noop;
+        console.timeEnd = noop;
+        console.timeLog = noop;
+
+        window.open = function() {
+            window.location.href = 'https://www.google.com';
+            return null;
+        };
+
+        window.eval = function() {
+            window.location.href = 'https://www.google.com';
+            return null;
+        };
+    }
+})();
+
+// ==================== MAIN ADMIN APP ====================
+(function() {
+    const API_BASE = 'https://video-play-api.newstreamcp.workers.dev/api';
+    let playlists = [];
+    let users = [];
+    let importantItems = [];
+    let isAuthenticated = false;
+
+    // ----- Tabs -----
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+            if (this.dataset.tab === 'users') loadUsers();
+            if (this.dataset.tab === 'playlists') loadPlaylists();
+            if (this.dataset.tab === 'important') loadImportant();
         });
+    });
 
-        // ============================================================
-        //  FETCH STATUS
-        // ============================================================
-
-        async function fetchStatus() {
-            try {
-                const response = await fetch(`${WORKER_URL}/status`);
-                if (!response.ok) throw new Error('Failed to fetch');
-                const data = await response.json();
-                const status = data.value || 'playing';
-
-                if (status === 'playing') {
-                    statusText.textContent = '▶️ Playing';
-                    statusText.className = 'value online';
-                    pauseBtn.disabled = false;
-                    resumeBtn.disabled = true;
-                    blankBtn.disabled = false;
-                    removeBlankBtn.disabled = true;
-                } else if (status === 'paused') {
-                    statusText.textContent = '⏸️ Paused';
-                    statusText.className = 'value offline';
-                    pauseBtn.disabled = true;
-                    resumeBtn.disabled = false;
-                    blankBtn.disabled = true;
-                    removeBlankBtn.disabled = true;
-                } else if (status === 'blank') {
-                    statusText.textContent = '📺 Blank Page';
-                    statusText.className = 'value offline';
-                    pauseBtn.disabled = true;
-                    resumeBtn.disabled = true;
-                    blankBtn.disabled = true;
-                    removeBlankBtn.disabled = false;
-                } else {
-                    statusText.textContent = '⚠️ Unknown';
-                    statusText.className = 'value';
-                    pauseBtn.disabled = true;
-                    resumeBtn.disabled = true;
-                    blankBtn.disabled = true;
-                    removeBlankBtn.disabled = true;
-                }
-
-                connDot.className = 'dot online';
-                connText.textContent = '✅ Connected to API';
-                lastUpdated.textContent = 'Last updated: ' + new Date().toLocaleTimeString();
-                hideAdminMessage();
-
-            } catch (error) {
-                console.error('❌ Fetch error:', error);
-                connDot.className = 'dot offline';
-                connText.textContent = '❌ Disconnected';
-                statusText.textContent = '❌ Error';
-                statusText.className = 'value offline';
-                pauseBtn.disabled = true;
-                resumeBtn.disabled = true;
-                blankBtn.disabled = true;
-                removeBlankBtn.disabled = true;
-                showAdminMessage('❌ Failed to fetch status', 'error');
-            }
-        }
-
-        // ============================================================
-        //  UPDATE STATUS
-        // ============================================================
-
-        async function updateStatus(newStatus, actionName) {
-            const btn = document.querySelector(`.btn-${actionName === 'pause' ? 'pause' : actionName === 'resume' ? 'resume' : actionName === 'blank' ? 'blank' : 'remove-blank'}`);
-            if (btn) {
-                btn.disabled = true;
-                btn.textContent = '⏳...';
-            }
-
-            if (newStatus === 'playing') {
-                statusText.textContent = '▶️ Playing';
-                statusText.className = 'value online';
-                pauseBtn.disabled = false;
-                resumeBtn.disabled = true;
-                blankBtn.disabled = false;
-                removeBlankBtn.disabled = true;
-            } else if (newStatus === 'paused') {
-                statusText.textContent = '⏸️ Paused';
-                statusText.className = 'value offline';
-                pauseBtn.disabled = true;
-                resumeBtn.disabled = false;
-                blankBtn.disabled = true;
-                removeBlankBtn.disabled = true;
-            } else if (newStatus === 'blank') {
-                statusText.textContent = '📺 Blank Page';
-                statusText.className = 'value offline';
-                pauseBtn.disabled = true;
-                resumeBtn.disabled = true;
-                blankBtn.disabled = true;
-                removeBlankBtn.disabled = false;
-            }
-
-            showAdminMessage(`⏳ ${actionName}ing...`, 'info');
-
-            try {
-                const response = await fetch(`${WORKER_URL}/update`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ status: newStatus })
-                });
-                if (!response.ok) throw new Error('Update failed');
-                const data = await response.json();
-                if (data.success) {
-                    showAdminMessage(`✅ Video ${actionName}d!`, 'success');
-                }
-            } catch (error) {
-                showAdminMessage(`❌ Failed to ${actionName}`, 'error');
-                setTimeout(fetchStatus, 500);
-            }
-
-            if (btn) {
-                setTimeout(() => {
-                    btn.disabled = false;
-                    btn.textContent = actionName === 'pause' ? '⏸️ Pause' :
-                                     actionName === 'resume' ? '▶️ Play' :
-                                     actionName === 'blank' ? '📺 Blank' :
-                                     '🖼️ Remove';
-                }, 300);
-            }
-        }
-
-        function pauseVideo() { if (pauseBtn.disabled) return; updateStatus('paused', 'pause'); }
-        function resumeVideo() { if (resumeBtn.disabled) return; updateStatus('playing', 'resume'); }
-        function showBlankPage() { if (blankBtn.disabled) return; updateStatus('blank', 'blank'); }
-        function removeBlankPage() { if (removeBlankBtn.disabled) return; updateStatus('playing', 'remove-blank'); }
-
-        function refreshAllUsers() {
-            showAdminMessage('⏳ Sending refresh signal to all users...', 'info');
-            fetch(`${WORKER_URL}/set-refresh`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ refresh: true })
-            }).then(() => {
-                showAdminMessage('✅ Refresh signal sent!', 'success');
-                setTimeout(() => {
-                    fetch(`${WORKER_URL}/set-refresh`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ refresh: false })
-                    });
-                }, 2000);
-            }).catch(() => {
-                showAdminMessage('❌ Failed to send refresh signal', 'error');
+    // ----- API Call -----
+    async function apiCall(endpoint, options = {}) {
+        try {
+            const url = API_BASE + endpoint;
+            const response = await fetch(url, {
+                ...options,
+                headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }
             });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return await response.json();
+        } catch (error) {
+            console.error('API Error:', error);
+            throw error;
+        }
+    }
+
+    // ==================== ADMIN LOGIN ====================
+    async function adminLogin() {
+        const username = document.getElementById('adminUsername').value.trim();
+        const password = document.getElementById('adminPwdInput').value.trim();
+        const errorEl = document.getElementById('pwdError');
+
+        if (!username || !password) {
+            errorEl.textContent = '❌ Please enter username and password';
+            return;
         }
 
-        async function applyStreamConfig() {
-            const className = classNameInput.value.trim() || "ClassPlus Live";
-            const streamUrl = streamUrlInput.value.trim();
-            if (!streamUrl) {
-                showAdminMessage('❌ Please enter a valid stream URL!', 'error');
-                return;
+        try {
+            const data = await apiCall('/admin/login', {
+                method: 'POST',
+                body: JSON.stringify({ username, password })
+            });
+
+            if (data.success) {
+                isAuthenticated = true;
+                document.getElementById('passwordGate').style.display = 'none';
+                document.getElementById('adminContent').style.display = 'block';
+                errorEl.textContent = '';
+                loadPlaylists();
+                loadUsers();
+                loadImportant();
+                showFeedback('✅ Welcome ' + data.admin.username, 'success', 'playlistFeedback');
+            } else {
+                errorEl.textContent = '❌ ' + (data.error || 'Invalid credentials');
+                document.getElementById('adminPwdInput').value = '';
+                document.getElementById('adminUsername').value = '';
+                document.getElementById('adminUsername').focus();
             }
-            showAdminMessage('⏳ Saving config to database...', 'info');
-            try {
-                const response = await fetch(`${WORKER_URL}/update-config`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ className, streamUrl })
-                });
-                if (!response.ok) throw new Error('Failed to save config');
-                const data = await response.json();
-                if (data.success) {
-                    showAdminMessage(`✅ Config saved! Class: ${className}`, 'success');
-                    localStorage.setItem('adminClassName', className);
-                    localStorage.setItem('adminStreamUrl', streamUrl);
+        } catch (error) {
+            errorEl.textContent = '❌ Connection error: ' + error.message;
+        }
+    }
+
+    // ==================== IMPORTANT SECTION ====================
+    async function loadImportant() {
+        try {
+            const data = await apiCall('/important/all');
+            if (data.success) {
+                importantItems = data.items || [];
+                renderImportantList();
+                showFeedback('✅ Important items loaded', 'success', 'importantFeedback');
+            }
+        } catch (error) {
+            showFeedback('❌ Failed to load: ' + error.message, 'error', 'importantFeedback');
+        }
+    }
+
+    async function saveImportant() {
+        const title = document.getElementById('importantTitle').value.trim();
+        const link = document.getElementById('importantLink').value.trim();
+
+        if (!title || !link) {
+            showFeedback('⚠️ Please fill both Title and URL', 'error', 'importantFeedback');
+            return;
+        }
+
+        try {
+            const data = await apiCall('/important', {
+                method: 'POST',
+                body: JSON.stringify({ title, link })
+            });
+
+            if (data.success) {
+                document.getElementById('importantTitle').value = '';
+                document.getElementById('importantLink').value = '';
+                showFeedback('✅ Important class saved!', 'success', 'importantFeedback');
+                loadImportant();
+            } else {
+                showFeedback('❌ Failed to save: ' + data.error, 'error', 'importantFeedback');
+            }
+        } catch (error) {
+            showFeedback('❌ Error: ' + error.message, 'error', 'importantFeedback');
+        }
+    }
+
+    async function toggleImportantVisibility(id) {
+        try {
+            const data = await apiCall('/important/toggle', {
+                method: 'POST',
+                body: JSON.stringify({ id })
+            });
+
+            if (data.success) {
+                showFeedback(data.message, 'success', 'importantFeedback');
+                loadImportant();
+            } else {
+                showFeedback('❌ Failed to toggle: ' + data.error, 'error', 'importantFeedback');
+            }
+        } catch (error) {
+            showFeedback('❌ Error: ' + error.message, 'error', 'importantFeedback');
+        }
+    }
+
+    async function deleteImportant(id) {
+        if (!confirm('Delete this important class?')) return;
+        try {
+            const data = await apiCall('/important', {
+                method: 'DELETE',
+                body: JSON.stringify({ id })
+            });
+            if (data.success) {
+                showFeedback('🗑️ Deleted', 'success', 'importantFeedback');
+                loadImportant();
+            } else {
+                showFeedback('❌ Failed to delete', 'error', 'importantFeedback');
+            }
+        } catch (error) {
+            showFeedback('❌ Error: ' + error.message, 'error', 'importantFeedback');
+        }
+    }
+
+    function renderImportantList() {
+        const list = document.getElementById('importantList');
+        if (!importantItems.length) {
+            list.innerHTML = `<div class="empty-state">No important classes added yet</div>`;
+            return;
+        }
+        let html = '';
+        importantItems.forEach(item => {
+            const isVisible = item.is_visible === 1;
+            const itemClass = isVisible ? '' : 'hidden';
+            html += `
+                <div class="entry-item important-item ${itemClass}">
+                    <div class="info">
+                        <span class="name">
+                            ${isVisible ? '👁️' : '🚫'} ${item.title}
+                            <span class="visibility-badge ${isVisible ? 'visible' : 'hidden'}" style="margin-left:8px;">
+                                ${isVisible ? 'Visible' : 'Hidden'}
+                            </span>
+                        </span>
+                        <span class="sub">${item.link}</span>
+                    </div>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        <button class="btn-highlight ${isVisible ? 'active' : 'inactive'}" 
+                                onclick="window.toggleImportantVisibility('${item.id}')">
+                            ${isVisible ? '👁️ Hide' : '🚫 Show'}
+                        </button>
+                        <button class="del-btn" onclick="window.deleteImportant('${item.id}')">✕</button>
+                    </div>
+                </div>
+            `;
+        });
+        list.innerHTML = html;
+        window.toggleImportantVisibility = toggleImportantVisibility;
+        window.deleteImportant = deleteImportant;
+    }
+
+    // ==================== LOAD PLAYLISTS ====================
+    async function loadPlaylists() {
+        try {
+            const data = await apiCall('/playlists');
+            if (data.success) {
+                playlists = data.playlists;
+                renderAdminList();
+                updatePlaylistSelect();
+                updateApiStatus('connected');
+                showFeedback('✅ Playlists loaded', 'success', 'playlistFeedback');
+            }
+        } catch (error) {
+            showFeedback('❌ Failed to load: ' + error.message, 'error', 'playlistFeedback');
+            updateApiStatus('error');
+        }
+    }
+
+    // ==================== ADD PLAYLIST ====================
+    async function addPlaylist() {
+        const name = document.getElementById('newPlaylistName').value.trim();
+        if (!name) {
+            showFeedback('⚠️ Enter playlist name', 'error', 'playlistFeedback');
+            return;
+        }
+        try {
+            const data = await apiCall('/playlists', {
+                method: 'POST',
+                body: JSON.stringify({ name })
+            });
+            if (data.success) {
+                document.getElementById('newPlaylistName').value = '';
+                showFeedback('✅ Playlist added', 'success', 'playlistFeedback');
+                loadPlaylists();
+            }
+        } catch (error) {
+            showFeedback('❌ Failed: ' + error.message, 'error', 'playlistFeedback');
+        }
+    }
+
+    // ==================== ADD CHAPTER ====================
+    async function addChapter() {
+        const playlistId = document.getElementById('playlistSelect').value;
+        const name = document.getElementById('chapterName').value.trim();
+        const link = document.getElementById('chapterLink').value.trim();
+        if (!playlistId || !name || !link) {
+            showFeedback('⚠️ Fill all fields', 'error', 'chapterFeedback');
+            return;
+        }
+        try {
+            const data = await apiCall('/playlists/chapter', {
+                method: 'POST',
+                body: JSON.stringify({ playlistId, chapterName: name, chapterLink: link })
+            });
+            if (data.success) {
+                document.getElementById('chapterName').value = '';
+                document.getElementById('chapterLink').value = '';
+                showFeedback('✅ Chapter added', 'success', 'chapterFeedback');
+                loadPlaylists();
+            }
+        } catch (error) {
+            showFeedback('❌ Failed: ' + error.message, 'error', 'chapterFeedback');
+        }
+    }
+
+    // ==================== DELETE PLAYLIST ====================
+    async function deletePlaylist(playlistId) {
+        if (!confirm('Delete this playlist?')) return;
+        try {
+            await apiCall('/playlists', {
+                method: 'DELETE',
+                body: JSON.stringify({ playlistId })
+            });
+            loadPlaylists();
+            showFeedback('🗑️ Deleted', 'success', 'playlistFeedback');
+        } catch (error) {
+            showFeedback('❌ Failed to delete', 'error', 'playlistFeedback');
+        }
+    }
+
+    // ==================== DELETE CHAPTER ====================
+    async function deleteChapter(playlistId, chapterId) {
+        if (!confirm('Delete this chapter?')) return;
+        try {
+            await apiCall('/playlists/chapter', {
+                method: 'DELETE',
+                body: JSON.stringify({ playlistId, chapterId })
+            });
+            loadPlaylists();
+            showFeedback('🗑️ Deleted', 'success', 'playlistFeedback');
+        } catch (error) {
+            showFeedback('❌ Failed to delete', 'error', 'playlistFeedback');
+        }
+    }
+
+    // ==================== LOAD USERS ====================
+    async function loadUsers() {
+        try {
+            const data = await apiCall('/users');
+            if (data.success) {
+                users = data.users;
+                renderUserList();
+                updateUserSelect();
+                updateApiStatus('connected');
+                showFeedback('✅ Users loaded', 'success', 'userFeedback');
+            }
+        } catch (error) {
+            showFeedback('❌ Failed to load users: ' + error.message, 'error', 'userFeedback');
+            updateApiStatus('error');
+        }
+    }
+
+    // ==================== ADD USER ====================
+    async function addUser() {
+        const email = document.getElementById('newUserEmail').value.trim();
+        if (!email) {
+            showFeedback('⚠️ Enter email', 'error', 'userFeedback');
+            return;
+        }
+        try {
+            const data = await apiCall('/users', {
+                method: 'POST',
+                body: JSON.stringify({ email })
+            });
+            if (data.success) {
+                document.getElementById('newUserEmail').value = '';
+                showFeedback('✅ User added. Key: ' + data.key, 'success', 'userFeedback');
+                loadUsers();
+            } else {
+                showFeedback('❌ ' + data.error, 'error', 'userFeedback');
+            }
+        } catch (error) {
+            showFeedback('❌ Failed: ' + error.message, 'error', 'userFeedback');
+        }
+    }
+
+    // ==================== DELETE USER ====================
+    async function deleteUser(userId) {
+        if (!confirm('Delete this user?')) return;
+        try {
+            await apiCall('/users', {
+                method: 'DELETE',
+                body: JSON.stringify({ userId })
+            });
+            loadUsers();
+            showFeedback('🗑️ User deleted', 'success', 'userFeedback');
+        } catch (error) {
+            showFeedback('❌ Failed to delete', 'error', 'userFeedback');
+        }
+    }
+
+    // ==================== RESET USER ====================
+    window.resetUser = async function(userId) {
+        if (!confirm('⚠️ Are you sure you want to reset this user?')) return;
+        try {
+            const data = await apiCall('/admin/reset-user', {
+                method: 'POST',
+                body: JSON.stringify({ userId })
+            });
+            if (data.success) {
+                showFeedback('✅ User reset!', 'success', 'userFeedback');
+                loadUsers();
+            } else {
+                showFeedback('❌ Failed to reset', 'error', 'userFeedback');
+            }
+        } catch (error) {
+            showFeedback('❌ Network error', 'error', 'userFeedback');
+        }
+    };
+
+    // ==================== GENERATE KEY ====================
+    async function generateKey() {
+        const userId = document.getElementById('userSelect').value;
+        if (!userId) {
+            showFeedback('⚠️ Select a user', 'error', 'keyFeedback');
+            return;
+        }
+        try {
+            const data = await apiCall('/keys/generate', {
+                method: 'POST',
+                body: JSON.stringify({ userId })
+            });
+            if (data.success) {
+                const display = document.getElementById('keyDisplay');
+                const keyText = document.getElementById('keyText');
+                display.style.display = 'flex';
+                keyText.textContent = data.key;
+                showFeedback('✅ Key generated!', 'success', 'keyFeedback');
+                loadUsers();
+            }
+        } catch (error) {
+            showFeedback('❌ Failed: ' + error.message, 'error', 'keyFeedback');
+        }
+    }
+
+    // ==================== COPY KEY ====================
+    window.copyKey = function() {
+        const keyText = document.getElementById('keyText').textContent;
+        if (!keyText) {
+            showFeedback('⚠️ No key to copy', 'error', 'keyFeedback');
+            return;
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(keyText)
+                .then(() => {
+                    showFeedback('✅ Key copied!', 'success', 'keyFeedback');
+                    document.getElementById('copyKeyBtn').textContent = '✅ Copied!';
+                    setTimeout(() => {
+                        document.getElementById('copyKeyBtn').textContent = '📋 Copy';
+                    }, 2000);
+                })
+                .catch(() => fallbackCopy(keyText));
+        } else {
+            fallbackCopy(keyText);
+        }
+    };
+
+    function fallbackCopy(text) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+            document.execCommand('copy');
+            showFeedback('✅ Key copied!', 'success', 'keyFeedback');
+            document.getElementById('copyKeyBtn').textContent = '✅ Copied!';
+            setTimeout(() => {
+                document.getElementById('copyKeyBtn').textContent = '📋 Copy';
+            }, 2000);
+        } catch (err) {
+            showFeedback('❌ Failed to copy', 'error', 'keyFeedback');
+        }
+        document.body.removeChild(textarea);
+    }
+
+    // ==================== VIEW KEYS ====================
+    window.viewKeys = async function(userId) {
+        try {
+            const data = await apiCall('/keys?userId=' + userId);
+            if (data.success) {
+                let msg = '🔑 Keys for this user:\n\n';
+                if (data.keys.length === 0) {
+                    msg += 'No keys generated yet.';
+                } else {
+                    data.keys.forEach(k => {
+                        const status = k.is_used ? '✅ Used' : '❌ Not used';
+                        const expires = new Date(k.expires_at).toLocaleString();
+                        msg += `Key: ${k.key_value}\nStatus: ${status}\nExpires: ${expires}\n\n`;
+                    });
                 }
-            } catch (error) {
-                showAdminMessage(`⚠️ Error: ${error.message}`, 'error');
+                alert(msg);
             }
+        } catch (error) {
+            alert('Failed to load keys');
         }
+    };
 
-        function showAdminMessage(msg, type) {
-            adminMessage.textContent = msg;
-            adminMessage.className = 'message show ' + type;
+    // ==================== RENDER FUNCTIONS ====================
+    function renderAdminList() {
+        const list = document.getElementById('adminList');
+        if (!playlists.length) {
+            list.innerHTML = `<div class="empty-state">No playlists</div>`;
+            return;
         }
+        let html = '';
+        playlists.forEach(playlist => {
+            html += `
+                <div class="playlist-header">
+                    📁 ${playlist.name}
+                    <button class="del-btn" onclick="window.deletePlaylist('${playlist.id}')">✕</button>
+                </div>
+            `;
+            if (playlist.chapters?.length) {
+                playlist.chapters.forEach(chapter => {
+                    html += `
+                        <div class="entry-item" style="padding-left:32px;">
+                            <div class="info">
+                                <span class="name">${chapter.name}</span>
+                                <span class="sub">${chapter.link}</span>
+                            </div>
+                            <button class="del-btn" onclick="window.deleteChapter('${playlist.id}', '${chapter.id}')">✕</button>
+                        </div>
+                    `;
+                });
+            } else {
+                html += `<div class="entry-item" style="padding-left:32px; color:#6a7c94; font-style:italic;">No chapters</div>`;
+            }
+        });
+        list.innerHTML = html;
+        window.deletePlaylist = deletePlaylist;
+        window.deleteChapter = deleteChapter;
+    }
 
-        function hideAdminMessage() {
-            adminMessage.className = 'message';
-            adminMessage.textContent = '';
+    function renderUserList() {
+        const list = document.getElementById('userList');
+        if (!users.length) {
+            list.innerHTML = `<div class="empty-state">No users</div>`;
+            return;
         }
+        let html = '';
+        users.forEach(user => {
+            html += `
+                <div class="entry-item">
+                    <div class="info">
+                        <span class="name">${user.email}</span>
+                        <span class="sub">ID: ${user.id}</span>
+                    </div>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <button class="key-btn" onclick="window.viewKeys('${user.id}')">🔑 Keys</button>
+                        <button class="reset-btn" onclick="window.resetUser('${user.id}')">🔄 Reset</button>
+                        <button class="del-btn" onclick="window.deleteUser('${user.id}')">✕</button>
+                    </div>
+                </div>
+            `;
+        });
+        list.innerHTML = html;
+        window.deleteUser = deleteUser;
+        window.viewKeys = viewKeys;
+        window.resetUser = resetUser;
+    }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const savedClassName = localStorage.getItem('adminClassName');
-            const savedStreamUrl = localStorage.getItem('adminStreamUrl');
-            if (savedClassName) classNameInput.value = savedClassName;
-            if (savedStreamUrl) streamUrlInput.value = savedStreamUrl;
-            loadKeysFromStorage();
-            renderAdminKeys();
+    function updatePlaylistSelect() {
+        const select = document.getElementById('playlistSelect');
+        select.innerHTML = '<option value="">Select playlist</option>';
+        playlists.forEach(p => {
+            select.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+        });
+    }
+
+    function updateUserSelect() {
+        const select = document.getElementById('userSelect');
+        select.innerHTML = '<option value="">Select user</option>';
+        users.forEach(u => {
+            select.innerHTML += `<option value="${u.id}">${u.email}</option>`;
+        });
+    }
+
+    function updateApiStatus(mode) {
+        const el = document.getElementById('apiStatus');
+        if (mode === 'connected') {
+            el.textContent = '✅ D1 Database Connected';
+            el.className = 'api-status status-connected';
+        } else if (mode === 'error') {
+            el.textContent = '❌ Connection Failed';
+            el.className = 'api-status status-error';
+        } else {
+            el.textContent = '🔄 Connecting...';
+            el.className = 'api-status';
+        }
+    }
+
+    function showFeedback(msg, type, elId) {
+        const el = document.getElementById(elId);
+        if (!el) return;
+        el.textContent = msg;
+        el.className = 'toast-msg';
+        if (type === 'error') el.classList.add('toast-error');
+        else if (type === 'success') el.classList.add('toast-success');
+        else el.classList.add('toast-info');
+        setTimeout(() => { el.textContent = ''; el.className = 'toast-msg'; }, 5000);
+    }
+
+    // ==================== AUTH ====================
+    function setupAuth() {
+        const unlockBtn = document.getElementById('unlockBtn');
+        const pwdInput = document.getElementById('adminPwdInput');
+        const usernameInput = document.getElementById('adminUsername');
+
+        unlockBtn.addEventListener('click', adminLogin);
+        pwdInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') adminLogin();
+        });
+        usernameInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                pwdInput.focus();
+            }
         });
 
-        console.log('✅ Admin Panel loaded!');
-        console.log('🔑 Free Keys:', FREE_KEY_COUNT);
-        console.log('💰 Paid Keys:', PAID_KEY_COUNT);
-    </script>
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            isAuthenticated = false;
+            document.getElementById('passwordGate').style.display = 'block';
+            document.getElementById('adminContent').style.display = 'none';
+            document.getElementById('adminPwdInput').value = '';
+            document.getElementById('adminUsername').value = 'admin';
+            document.getElementById('pwdError').textContent = '';
+        });
+    }
 
+    // ==================== GLOBAL FUNCTIONS ====================
+    // Make all functions globally accessible for onclick
+    window.deletePlaylist = deletePlaylist;
+    window.deleteChapter = deleteChapter;
+    window.deleteUser = deleteUser;
+    window.resetUser = resetUser;
+    window.copyKey = copyKey;
+    window.viewKeys = viewKeys;
+    window.toggleImportantVisibility = toggleImportantVisibility;
+    window.deleteImportant = deleteImportant;
+
+    // ==================== EVENT LISTENERS ====================
+    document.getElementById('addPlaylistBtn').addEventListener('click', addPlaylist);
+    document.getElementById('addChapterBtn').addEventListener('click', addChapter);
+    document.getElementById('addUserBtn').addEventListener('click', addUser);
+    document.getElementById('generateKeyBtn').addEventListener('click', generateKey);
+    document.getElementById('refreshBtn').addEventListener('click', () => {
+        loadPlaylists();
+        loadUsers();
+        loadImportant();
+        showFeedback('🔄 Refreshed', 'info', 'playlistFeedback');
+    });
+
+    document.getElementById('saveImportantBtn').addEventListener('click', saveImportant);
+    document.getElementById('importantTitle').addEventListener('keydown', e => { if (e.key === 'Enter') saveImportant(); });
+    document.getElementById('importantLink').addEventListener('keydown', e => { if (e.key === 'Enter') saveImportant(); });
+
+    document.getElementById('newPlaylistName').addEventListener('keydown', e => { if (e.key === 'Enter') addPlaylist(); });
+    document.getElementById('chapterName').addEventListener('keydown', e => { if (e.key === 'Enter') addChapter(); });
+    document.getElementById('chapterLink').addEventListener('keydown', e => { if (e.key === 'Enter') addChapter(); });
+    document.getElementById('newUserEmail').addEventListener('keydown', e => { if (e.key === 'Enter') addUser(); });
+
+    setupAuth();
+    console.log('✅ Admin panel loaded');
+})();
+</script>
 </body>
 </html>
