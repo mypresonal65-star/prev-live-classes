@@ -8,7 +8,6 @@
   <script src="https://vjs.zencdn.net/8.16.1/video.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@0.14.17/dist/hls.min.js"></script>
   <style>
-    /* ===== ALL YOUR EXISTING STYLES HERE ===== */
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
     body { background: #f0f4fb; min-height: 100vh; display: flex; justify-content: center; padding: 30px 16px; }
     .app { max-width: 1100px; width: 100%; background: white; border-radius: 36px; box-shadow: 0 20px 50px rgba(0,0,0,0.04); padding: 28px 30px; }
@@ -58,7 +57,6 @@
     .key-gen-section h3 { font-size: 1rem; color: #0b1a33; margin-bottom: 8px; }
     .key-gen-section .info { font-size: 0.8rem; color: #6a7c94; margin-bottom: 12px; }
     
-    /* ===== IMPORTANT SECTION ===== */
     .important-section {
       background: linear-gradient(135deg, #0d1117, #161b22);
       border: 2px solid #f7971e;
@@ -153,7 +151,6 @@
       font-style: italic;
     }
 
-    /* ===== DURATION BAR ===== */
     .duration-bar {
       display: flex;
       justify-content: center;
@@ -194,7 +191,6 @@
       100% { opacity: 1; }
     }
 
-    /* ===== PLAYER CONTROLS (NEW) ===== */
     .player-controls {
       display: flex;
       flex-wrap: wrap;
@@ -338,7 +334,6 @@
       background: rgba(11, 26, 51, 1) !important;
     }
     
-    /* Hijack notification */
     .hijack-notification {
       position: fixed;
       top: 20px;
@@ -364,7 +359,6 @@
       to { opacity: 1; transform: translateX(-50%) translateY(0); }
     }
 
-    /* Important player wrapper */
     .important-item .player-wrapper {
       width: 100%;
       margin-top: 12px;
@@ -394,7 +388,6 @@
 </head>
 <body>
 
-<!-- Hijack Notification -->
 <div id="hijackNotification" class="hijack-notification">
   ⚠️ You have been logged out because you logged in from another device.
 </div>
@@ -460,7 +453,7 @@
         <div class="empty-important">Loading Live classes...</div>
       </div>
       
-      <!-- ===== DURATION BAR ===== -->
+      <!-- DURATION BAR -->
       <div class="duration-bar" id="durationBar">
         <span class="live-icon">●</span>
         <span class="label">⏱️ Lecture Completed:</span>
@@ -530,7 +523,7 @@
 })();
 
 // ========================================================================
-//  MAIN APP WITH PLAYER CONTROLS (10s Skip + Speed)
+//  MAIN APP WITH ALLOWED EMAILS SUPPORT
 // ========================================================================
 (function() {
     const API_BASE = 'https://video-play-api.newstreamcp.workers.dev/api';
@@ -549,9 +542,6 @@
     let isHijacked = false;
     let isImportantHidden = false;
     
-    // ============================================================
-    // 🔥 PLAYER CONTROLS - GLOBAL VARIABLES
-    // ============================================================
     let currentPlayer = null;
     let currentPlayerId = null;
     let currentSpeed = 1.0;
@@ -792,7 +782,7 @@
         }, 1000);
     }
 
-    // ==================== LOGIN ====================
+    // ==================== 🔥 LOGIN (UPDATED - Key Optional) ====================
     async function login() {
         const email = document.getElementById('loginEmail').value.trim();
         const key = document.getElementById('loginKey').value.trim();
@@ -802,8 +792,9 @@
         errorEl.textContent = '';
         successEl.textContent = '';
 
-        if (!email || !key) {
-            errorEl.textContent = '⚠️ Please enter both email and key';
+        // ✅ SIRF EMAIL CHECK (Key optional hai)
+        if (!email) {
+            errorEl.textContent = '⚠️ Please enter your email';
             return;
         }
 
@@ -811,12 +802,13 @@
             const sessionId = generateSessionId();
             const device = getDeviceInfo();
             
+            // ✅ Key bhejo (optional - empty bhi ho sakta hai)
             const response = await fetch(API_BASE + '/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     email, 
-                    key, 
+                    key: key || '',  // Key empty bhi ho sakti hai
                     sessionId: sessionId,
                     device: device
                 })
@@ -885,7 +877,6 @@
             resetCheckInterval = null;
         }
         document.getElementById('durationDisplay').textContent = '00:00:00';
-        // Dispose players
         for (let key in window) {
             if (key.startsWith('player_') && window[key] && typeof window[key].dispose === 'function') {
                 try { window[key].dispose(); } catch(e) {}
@@ -963,10 +954,9 @@
     }
 
     // ============================================================
-    // 🔥 PLAYER CONTROLS FUNCTIONS (NEW)
+    // 🔥 PLAYER CONTROLS FUNCTIONS
     // ============================================================
     
-    // Create player controls HTML
     function createPlayerControls(playerId) {
         return `
             <div class="player-controls" id="controls-${playerId}">
@@ -987,12 +977,8 @@
         `;
     }
 
-    // Skip video forward/backward
     window.skipVideo = function(playerId, seconds) {
-        // Try to find player from window
         let player = window[`player_${playerId}`];
-        
-        // If not found, try HLS player
         if (!player) {
             const hls = window[`hls_${playerId}`];
             if (hls && hls.media) {
@@ -1006,8 +992,6 @@
             showToast('⚠️ No video playing', 'error');
             return;
         }
-
-        // Video.js player
         const currentTime = player.currentTime() || 0;
         const duration = player.duration() || 0;
         const newTime = Math.max(0, Math.min(duration, currentTime + seconds));
@@ -1015,11 +999,8 @@
         showToast(`⏭️ ${seconds > 0 ? '+' : ''}${seconds}s`, 'info');
     };
 
-    // Set playback speed
     window.setSpeed = function(playerId, speed) {
         let player = window[`player_${playerId}`];
-        
-        // Update UI
         const controls = document.getElementById(`controls-${playerId}`);
         if (controls) {
             controls.querySelectorAll('.speed-btn').forEach(btn => {
@@ -1029,26 +1010,19 @@
                 }
             });
         }
-
-        // Try video.js player
         if (player && player.playbackRate) {
             player.playbackRate(speed);
             currentSpeed = speed;
             showToast(`⚡ Speed: ${speed}x`, 'success');
             return;
         }
-
-        // Try HLS player
         const hls = window[`hls_${playerId}`];
         if (hls && hls.media) {
-            const video = hls.media;
-            video.playbackRate = speed;
+            hls.media.playbackRate = speed;
             currentSpeed = speed;
             showToast(`⚡ Speed: ${speed}x`, 'success');
             return;
         }
-
-        // Try direct video element
         const videoEl = document.getElementById(playerId);
         if (videoEl && videoEl.playbackRate !== undefined) {
             videoEl.playbackRate = speed;
@@ -1056,26 +1030,19 @@
             showToast(`⚡ Speed: ${speed}x`, 'success');
             return;
         }
-
         showToast('⚠️ Cannot change speed', 'error');
     };
 
-    // ============================================================
-    // 🔥 LECTURE DURATION - SETUP FUNCTION (UPDATED)
-    // ============================================================
     function setupDurationTracking(player, playerId) {
         if (currentPlayer && currentPlayer !== player) {
             try { currentPlayer.off('timeupdate'); } catch(e) {}
             try { currentPlayer.off('ended'); } catch(e) {}
             try { currentPlayer.off('loadstart'); } catch(e) {}
         }
-        
         currentPlayer = player;
         currentPlayerId = playerId;
         const durationDisplay = document.getElementById('durationDisplay');
         currentSpeed = 1.0;
-
-        // Update duration on timeupdate
         player.on('timeupdate', function() {
             const currentTime = player.currentTime();
             if (currentTime && !isNaN(currentTime) && currentTime > 0) {
@@ -1088,15 +1055,12 @@
                     String(seconds).padStart(2, '0');
             }
         });
-
         player.on('ended', function() {
             durationDisplay.textContent = '00:00:00';
         });
-
         player.on('loadstart', function() {
             durationDisplay.textContent = '00:00:00';
         });
-        
         player.on('dispose', function() {
             durationDisplay.textContent = '00:00:00';
             if (currentPlayer === player) {
@@ -1145,7 +1109,6 @@
                             <div class="player-wrapper" id="wrapper-${playerId}" style="display: none;">
                                 <video id="${playerId}" class="video-js vjs-default-skin" controls preload="auto" width="100%" height="auto"></video>
                             </div>
-                            <!-- ===== PLAYER CONTROLS (Added Here) ===== -->
                             <div id="controls-container-${playerId}" style="display:none; width:100%;">
                                 ${createPlayerControls(playerId)}
                             </div>
@@ -1153,7 +1116,6 @@
                     `;
                 });
                 container.innerHTML = html;
-                
                 const section = document.getElementById('importantSection');
                 if (isImportantHidden) {
                     section.classList.add('hidden-section');
@@ -1162,7 +1124,6 @@
                     section.classList.remove('hidden-section');
                     document.getElementById('durationBar').classList.remove('hidden');
                 }
-                
                 attachImportantPlayEvents();
             } else {
                 container.innerHTML = `<div class="empty-important">No Live classes available</div>`;
@@ -1174,7 +1135,7 @@
         }
     }
 
-    // ==================== ATTACH IMPORTANT PLAY EVENTS (UPDATED) ====================
+    // ==================== ATTACH IMPORTANT PLAY EVENTS ====================
     function attachImportantPlayEvents() {
         document.querySelectorAll('.important-play-btn').forEach(btn => {
             btn.addEventListener('click', function() {
@@ -1183,15 +1144,12 @@
                 const wrapper = document.getElementById(`wrapper-${playerId}`);
                 const controlsContainer = document.getElementById(`controls-container-${playerId}`);
                 if (!wrapper) return;
-                
                 const parentItem = this.closest('.important-item');
                 const isVisible = parentItem?.dataset?.visible === 'true';
-                
                 if (!isVisible) {
                     showToast('⛔ This class is currently hidden by admin', 'error');
                     return;
                 }
-                
                 if (wrapper.style.display === 'block') {
                     wrapper.style.display = 'none';
                     controlsContainer.style.display = 'none';
@@ -1214,10 +1172,8 @@
                     currentPlayerId = null;
                     return;
                 }
-                
                 wrapper.style.display = 'block';
                 controlsContainer.style.display = 'block';
-                
                 if (window[`hls_${playerId}`]) {
                     try { window[`hls_${playerId}`].destroy(); } catch(e) {}
                     delete window[`hls_${playerId}`];
@@ -1231,14 +1187,10 @@
                     } catch(e) {}
                     delete window[`player_${playerId}`];
                 }
-
                 const videoEl = document.getElementById(playerId);
                 if (!videoEl) return;
-
                 document.getElementById('durationDisplay').textContent = '00:00:00';
                 currentSpeed = 1.0;
-
-                // YouTube Support
                 if (link && (link.includes('youtube.com') || link.includes('youtu.be'))) {
                     const videoId = extractYouTubeId(link);
                     if (videoId) {
@@ -1256,14 +1208,11 @@
                             ></iframe>
                         `;
                         wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        // For YouTube, show controls but they won't work with iframe
                         controlsContainer.style.display = 'none';
                         showToast('🎬 YouTube video loaded (controls limited)', 'info');
                         return;
                     }
                 }
-
-                // HLS Support
                 if (link && link.includes('.m3u8') && Hls.isSupported()) {
                     const videoEl2 = document.createElement('video');
                     videoEl2.id = playerId;
@@ -1275,7 +1224,6 @@
                     videoEl2.style.aspectRatio = '16/9';
                     wrapper.innerHTML = '';
                     wrapper.appendChild(videoEl2);
-                    
                     const hls = new Hls({
                         enableWorker: true,
                         lowLatencyMode: true,
@@ -1287,22 +1235,17 @@
                             xhr.withCredentials = true;
                         }
                     });
-                    
                     hls.loadSource(link);
                     hls.attachMedia(videoEl2);
-                    
                     hls.on(Hls.Events.MANIFEST_PARSED, function() {
                         videoEl2.play().catch(e => console.log('Play error:', e));
                     });
-                    
                     hls.on(Hls.Events.ERROR, function(event, data) {
                         if (data.fatal) {
                             tryFallbackHLSPlayer(videoEl2, link, playerId);
                         }
                     });
-                    
                     window[`hls_${playerId}`] = hls;
-                    
                     const player = videojs(videoEl2, {
                         controls: true,
                         fluid: true,
@@ -1312,18 +1255,11 @@
                         }
                     });
                     window[`player_${playerId}`] = player;
-                    
-                    // ===== SETUP DURATION TRACKING =====
                     setupDurationTracking(player, playerId);
-                    
-                    // ===== Make player accessible for skip/speed =====
                     window[`player_${playerId}`] = player;
-                    
                     wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     return;
                 }
-
-                // MP4 Support
                 if (link && (link.includes('.mp4') || link.includes('.webm'))) {
                     const videoEl2 = document.createElement('video');
                     videoEl2.id = playerId;
@@ -1335,7 +1271,6 @@
                     videoEl2.style.aspectRatio = '16/9';
                     wrapper.innerHTML = '';
                     wrapper.appendChild(videoEl2);
-                    
                     const player = videojs(videoEl2, {
                         autoplay: true,
                         controls: true,
@@ -1348,14 +1283,10 @@
                     window[`player_${playerId}`] = player;
                     player.src({ src: link, type: 'video/mp4' });
                     player.play();
-                    
-                    // ===== SETUP DURATION TRACKING =====
                     setupDurationTracking(player, playerId);
-                    
                     wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     return;
                 }
-
                 wrapper.innerHTML = `
                     <div style="padding:40px;text-align:center;color:#b33a3a;background:#0d1117;border-radius:12px;">
                         ⚠️ Unsupported video format.<br>
@@ -1406,12 +1337,9 @@
         const container = document.getElementById('chaptersContainer');
         const dropdown = document.getElementById('playlistDropdown');
         const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
-        
         let filteredPlaylists = playlists;
         if (searchTerm !== '') {
-            filteredPlaylists = playlists.filter(p => 
-                p.name.toLowerCase().includes(searchTerm)
-            );
+            filteredPlaylists = playlists.filter(p => p.name.toLowerCase().includes(searchTerm));
         }
         const currentValue = dropdown.value;
         dropdown.innerHTML = '<option value="">Select a playlist...</option>';
@@ -1732,7 +1660,7 @@
         document.getElementById('loginContainer').style.display = 'block';
         document.getElementById('videoContent').style.display = 'none';
     }
-    console.log('✅ Video Portal loaded - 10s Skip + Speed Controls added!');
+    console.log('✅ Video Portal loaded - Allowed Emails (No Key Login)');
 })();
 </script>
 </body>
