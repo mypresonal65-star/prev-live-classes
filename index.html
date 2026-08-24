@@ -384,6 +384,16 @@
     .duration-bar.hidden {
       display: none !important;
     }
+
+    /* Key limit info */
+    .key-limit-info {
+      font-size: 0.75rem;
+      color: #6a7c94;
+      margin-top: 6px;
+    }
+    .key-limit-info strong {
+      color: #0b1a33;
+    }
   </style>
 </head>
 <body>
@@ -413,7 +423,10 @@
     <!-- Key Generate Section -->
     <div class="key-gen-section">
       <h3>🔑 Generate New Access Key</h3>
-      <p class="info">Enter your registered email to generate a new key (Valid for 3 days, one key per user)</p>
+      <p class="info">Enter your registered email to generate a new key</p>
+      <div style="background: #f0f4fb; padding: 8px 12px; border-radius: 8px; margin-bottom: 10px; font-size: 0.75rem; color: #4c637f;">
+        ⏱️ Valid for <strong>1 hour</strong> only · 📊 <strong>4 keys</strong> per day limit
+      </div>
       <input type="email" id="genKeyEmail" placeholder="Enter your registered email" style="margin-bottom:8px;" />
       <button id="genKeyBtn" style="background:#2d7a9b;width:100%;">🔄 Generate Key</button>
       <div id="genKeyStatus" class="key-gen-status"></div>
@@ -523,7 +536,7 @@
 })();
 
 // ========================================================================
-//  MAIN APP WITH ALLOWED EMAILS SUPPORT
+//  MAIN APP WITH ALLOWED EMAILS + KEY GENERATION LIMIT
 // ========================================================================
 (function() {
     const API_BASE = 'https://video-play-api.newstreamcp.workers.dev/api';
@@ -658,33 +671,61 @@
         }, 8000);
     }
 
-    // ==================== KEY GENERATION ====================
+    // ==================== KEY GENERATION (UPDATED - 1 hour, 4 per day) ====================
     async function generateKey() {
         const email = document.getElementById('genKeyEmail').value.trim();
         const statusEl = document.getElementById('genKeyStatus');
+
         if (!email) {
             statusEl.textContent = '⚠️ Please enter your email.';
             statusEl.className = 'key-gen-status error';
             return;
         }
+
         statusEl.textContent = '⏳ Checking...';
         statusEl.className = 'key-gen-status info';
+
         try {
             const response = await fetch(API_BASE + '/key/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email })
             });
+
             const data = await response.json();
+
             if (data.success) {
-                statusEl.innerHTML = `✅ Key generated: <strong>${data.key}</strong><br>
-                                     <span style="font-size:0.8rem;color:#4c637f;">Valid for 3 days. One key per user.</span>`;
+                statusEl.innerHTML = `
+                    ✅ Key generated: <strong>${data.key}</strong><br>
+                    <span style="font-size:0.8rem;color:#1a7a3a;">
+                        ⏱️ Valid for <strong>1 hour</strong> only<br>
+                        📊 <strong>${data.remaining_today || '3'}</strong> more key(s) left today
+                    </span>
+                `;
                 statusEl.className = 'key-gen-status success';
+
                 if (navigator.clipboard) {
                     navigator.clipboard.writeText(data.key);
                 }
             } else {
-                statusEl.textContent = '❌ ' + (data.error || 'Failed to generate key');
+                // Check if it's a limit error
+                if (data.limit_reached) {
+                    statusEl.innerHTML = `
+                        ❌ ${data.error}<br>
+                        <span style="font-size:0.8rem;color:#856404;">
+                            ⏳ Wait until tomorrow to generate more keys.
+                        </span>
+                    `;
+                } else if (data.wait_time) {
+                    statusEl.innerHTML = `
+                        ⏳ ${data.error}<br>
+                        <span style="font-size:0.8rem;color:#856404;">
+                            Please wait <strong>${data.wait_time}</strong> more minute(s).
+                        </span>
+                    `;
+                } else {
+                    statusEl.textContent = '❌ ' + (data.error || 'Failed to generate key');
+                }
                 statusEl.className = 'key-gen-status error';
             }
         } catch (error) {
@@ -782,7 +823,7 @@
         }, 1000);
     }
 
-    // ==================== 🔥 LOGIN (UPDATED - Key Optional) ====================
+    // ==================== 🔥 LOGIN (Key Optional) ====================
     async function login() {
         const email = document.getElementById('loginEmail').value.trim();
         const key = document.getElementById('loginKey').value.trim();
@@ -792,7 +833,6 @@
         errorEl.textContent = '';
         successEl.textContent = '';
 
-        // ✅ SIRF EMAIL CHECK (Key optional hai)
         if (!email) {
             errorEl.textContent = '⚠️ Please enter your email';
             return;
@@ -802,13 +842,12 @@
             const sessionId = generateSessionId();
             const device = getDeviceInfo();
             
-            // ✅ Key bhejo (optional - empty bhi ho sakta hai)
             const response = await fetch(API_BASE + '/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     email, 
-                    key: key || '',  // Key empty bhi ho sakti hai
+                    key: key || '',
                     sessionId: sessionId,
                     device: device
                 })
@@ -1384,7 +1423,7 @@
             }
             html += `
                 <div class="chapter-item">
-                    <span class="chapter-number">Lacture ${index + 1}</span>
+                    <span class="chapter-number">Lecture ${index + 1}</span>
                     <span class="chapter-name">${chapter.name}</span>
                     ${badge}
                     <button class="play-btn" data-player-id="${playerId}" data-link="${chapter.link}">▶ Play</button>
@@ -1660,7 +1699,7 @@
         document.getElementById('loginContainer').style.display = 'block';
         document.getElementById('videoContent').style.display = 'none';
     }
-    console.log('✅ Video Portal loaded - Allowed Emails (No Key Login)');
+    console.log('✅ Video Portal loaded - Key Generation Limit (1 hour, 4 per day)');
 })();
 </script>
 </body>
