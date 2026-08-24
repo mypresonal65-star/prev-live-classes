@@ -30,9 +30,23 @@
       .search-container input { width: 100%; }
       .duration-bar { flex-wrap: wrap; gap: 6px; }
       .duration-bar .value { font-size: 14px; min-width: 80px; }
-      .video-js .vjs-control-bar { height: 44px !important; padding: 0 10px !important; margin: 0 6px 10px 6px !important; }
-      .video-js .vjs-current-time, .video-js .vjs-duration { font-size: 0.7rem !important; }
-      .speed-select-wrap select { font-size: 0.65rem; padding: 3px 20px 3px 8px; min-width: 50px; height: 24px !important; }
+      /* 🔥 MOBILE CONTROLS FIX */
+      .video-js .vjs-control-bar { 
+        height: 44px !important; 
+        padding: 0 8px !important; 
+        margin: 0 4px 8px 4px !important;
+        border-radius: 30px !important;
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+      }
+      .video-js .vjs-current-time, .video-js .vjs-duration { font-size: 0.65rem !important; }
+      .speed-select-wrap select { font-size: 0.6rem; padding: 3px 18px 3px 8px; min-width: 48px; height: 22px !important; }
+      .video-js .vjs-play-control { font-size: 1.2em !important; width: 32px !important; }
+      .video-js .vjs-fullscreen-control { font-size: 1.2em !important; width: 32px !important; }
+      .video-js .vjs-mute-control { width: 28px !important; font-size: 1em !important; }
+      .video-js .vjs-progress-control { min-width: 50px !important; }
+      .video-js .vjs-volume-panel { display: none !important; }
     }
 
     @media (max-width: 480px) {
@@ -42,11 +56,34 @@
       .chapter-number { min-width: auto; }
       .play-btn { width: 100%; text-align: center; }
       .duration-bar .value { font-size: 12px; min-width: 70px; }
-      .video-js .vjs-control-bar { height: 38px !important; padding: 0 6px !important; margin: 0 4px 6px 4px !important; }
-      .video-js .vjs-current-time, .video-js .vjs-duration { font-size: 0.55rem !important; }
-      .speed-select-wrap select { font-size: 0.5rem; padding: 2px 16px 2px 6px; min-width: 40px; height: 20px !important; }
-      .video-js .vjs-play-control { font-size: 1em !important; width: 24px !important; }
-      .video-js .vjs-fullscreen-control { font-size: 1em !important; width: 24px !important; }
+      .video-js .vjs-control-bar { 
+        height: 38px !important; 
+        padding: 0 6px !important; 
+        margin: 0 2px 6px 2px !important;
+        border-radius: 20px !important;
+      }
+      .video-js .vjs-current-time, .video-js .vjs-duration { font-size: 0.5rem !important; }
+      .speed-select-wrap select { font-size: 0.45rem; padding: 2px 14px 2px 6px; min-width: 38px; height: 18px !important; }
+      .video-js .vjs-play-control { font-size: 1em !important; width: 26px !important; }
+      .video-js .vjs-fullscreen-control { font-size: 1em !important; width: 26px !important; }
+      .video-js .vjs-progress-control { min-width: 30px !important; }
+    }
+
+    /* 🔥 FIX: Controls always visible on mobile */
+    .video-js .vjs-control-bar {
+      display: flex !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+    .video-js.vjs-user-inactive .vjs-control-bar {
+      visibility: visible !important;
+      opacity: 1 !important;
+    }
+    .video-js .vjs-remaining-time {
+      display: none !important;
+    }
+    .video-js .vjs-time-divider {
+      display: none !important;
     }
 
     .header { border-bottom: 1px solid #e8edf6; padding-bottom: 18px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
@@ -291,7 +328,7 @@
     }
 
     /* ============================================================
-       VIDEO.JS 7.20.3 CUSTOM STYLES (LIVE Button Hidden)
+       VIDEO.JS 7.20.3 CUSTOM STYLES
        ============================================================ */
     .player-wrapper-professional {
       width: 100%;
@@ -381,7 +418,6 @@
       border-radius: 20px !important;
     }
 
-    /* 🔥 LIVE BUTTON HIDDEN */
     .video-js .vjs-live-control {
       display: none !important;
     }
@@ -637,7 +673,7 @@
 })();
 
 // ========================================================================
-//  MAIN APP WITH PROFESSIONAL PLAYER (LIVE Button Hidden + Click Seek)
+//  MAIN APP
 // ========================================================================
 (function() {
     const API_BASE = 'https://video-play-api.newstreamcp.workers.dev/api';
@@ -1028,7 +1064,12 @@
     // ==================== PLAYER FUNCTIONS ====================
     function disposePlayer() {
         if (activePlayer) {
-            try { activePlayer.dispose(); } catch(e) {}
+            try { 
+                activePlayer.off('timeupdate');
+                activePlayer.off('ended');
+                activePlayer.off('loadstart');
+                activePlayer.dispose(); 
+            } catch(e) {}
             activePlayer = null;
             activePlayerId = null;
         }
@@ -1067,7 +1108,7 @@
         return null;
     }
 
-    // ==================== INIT PROFESSIONAL PLAYER ====================
+    // ==================== INIT PROFESSIONAL PLAYER (FIXED - No Auto Pause) ====================
     function initProfessionalPlayer(wrapper, link, playerId) {
         disposePlayer();
         
@@ -1114,7 +1155,7 @@
         const videoElement = document.getElementById(`professional-player-${playerId}`);
         if (!videoElement) return;
 
-        // 🔥 PLAYER WITH CLICK SEEK & NO LIVE BUTTON
+        // 🔥 FIX: Proper player config - No auto pause on speed change
         const player = videojs(videoElement, {
             controls: true,
             autoplay: true,
@@ -1183,7 +1224,7 @@
             document.getElementById('durationDisplay').textContent = '00:00:00';
         });
 
-        // ---- 🔥 CLICK SEEK ON PROGRESS BAR ----
+        // ---- 🔥 CLICK SEEK ----
         player.ready(function() {
             const progressControl = player.controlBar.progressControl;
             if (progressControl) {
@@ -1202,7 +1243,7 @@
                 }
             }
 
-            // ---- Speed Select ----
+            // ---- Speed Select (FIXED - No auto pause) ----
             const speedSelect = document.createElement('select');
             speedSelect.className = 'vjs-speed-select';
             const speeds = [0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0];
@@ -1226,9 +1267,14 @@
                 controlBar.appendChild(wrapper2);
             }
 
+            // 🔥 FIX: Speed change - No pause, just smooth speed change
             speedSelect.addEventListener('change', function() {
                 const val = parseFloat(this.value);
-                if (!isNaN(val)) player.playbackRate(val);
+                if (!isNaN(val) && val > 0) {
+                    // Simply change playback rate - no pause
+                    player.playbackRate(val);
+                    showToast('⚡ Speed: ' + val + 'x', 'success');
+                }
             });
 
             player.playbackRate(1.0);
@@ -1775,7 +1821,7 @@
         document.getElementById('loginContainer').style.display = 'block';
         document.getElementById('videoContent').style.display = 'none';
     }
-    console.log('✅ Video Portal loaded - Professional Player (LIVE Button Hidden + Click Seek)');
+    console.log('✅ Video Portal loaded - Fixed (No auto pause on speed change + Mobile controls visible)');
 })();
 </script>
 </body>
