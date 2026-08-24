@@ -30,7 +30,6 @@
       .search-container input { width: 100%; }
       .duration-bar { flex-wrap: wrap; gap: 6px; }
       .duration-bar .value { font-size: 14px; min-width: 80px; }
-      /* Video.js responsive */
       .video-js .vjs-control-bar { height: 44px !important; padding: 0 10px !important; margin: 0 6px 10px 6px !important; }
       .video-js .vjs-current-time, .video-js .vjs-duration { font-size: 0.7rem !important; }
       .speed-select-wrap select { font-size: 0.65rem; padding: 3px 20px 3px 8px; min-width: 50px; height: 24px !important; }
@@ -64,7 +63,6 @@
     .key-gen-section h3 { font-size: 1rem; color: #0b1a33; margin-bottom: 8px; }
     .key-gen-section .info { font-size: 0.8rem; color: #6a7c94; margin-bottom: 12px; }
     
-    /* ===== IMPORTANT SECTION ===== */
     .important-section {
       background: linear-gradient(135deg, #0d1117, #161b22);
       border: 2px solid #f7971e;
@@ -293,7 +291,7 @@
     }
 
     /* ============================================================
-       VIDEO.JS 7.20.3 CUSTOM STYLES - PROFESSIONAL PLAYER
+       VIDEO.JS 7.20.3 CUSTOM STYLES (LIVE Button Hidden)
        ============================================================ */
     .player-wrapper-professional {
       width: 100%;
@@ -311,7 +309,6 @@
       background: #0b0e14 !important;
     }
 
-    /* Control Bar */
     .video-js .vjs-control-bar {
       background: rgba(10, 14, 22, 0.85) !important;
       backdrop-filter: blur(14px) !important;
@@ -342,13 +339,11 @@
       color: #fff !important;
     }
 
-    /* Play Button */
     .video-js .vjs-play-control {
       font-size: 1.5em !important;
       width: 40px !important;
     }
 
-    /* Time Display */
     .video-js .vjs-time-control {
       font-size: 0.85rem !important;
       padding: 0 4px !important;
@@ -361,7 +356,6 @@
       display: none !important;
     }
 
-    /* Progress Bar */
     .video-js .vjs-progress-control {
       flex: 3 1 auto !important;
       min-width: 80px !important;
@@ -387,40 +381,11 @@
       border-radius: 20px !important;
     }
 
-    /* LIVE Badge */
+    /* 🔥 LIVE BUTTON HIDDEN */
     .video-js .vjs-live-control {
-      display: flex !important;
-      align-items: center !important;
-      height: 100% !important;
-      font-weight: 700 !important;
-      color: #ff4757 !important;
-      padding: 0 8px !important;
-    }
-    .video-js .vjs-live-control .vjs-live-display {
-      background: #ff4757 !important;
-      color: white !important;
-      padding: 2px 12px !important;
-      border-radius: 20px !important;
-      font-size: 0.7rem !important;
-      font-weight: 700 !important;
-      animation: pulse-live 1.5s infinite !important;
-    }
-    @keyframes pulse-live {
-      0% { opacity: 1; }
-      50% { opacity: 0.5; }
-      100% { opacity: 1; }
+      display: none !important;
     }
 
-    /* LIVE mein Progress Bar Disable */
-    .video-js.vjs-live .vjs-progress-control {
-      opacity: 0.4 !important;
-      pointer-events: none !important;
-    }
-    .video-js.vjs-live .vjs-progress-control .vjs-play-progress {
-      background: #ff4757 !important;
-    }
-
-    /* Volume Panel */
     .video-js .vjs-volume-panel {
       display: flex !important;
       align-items: center !important;
@@ -437,7 +402,6 @@
       background: #6c8cff !important;
     }
 
-    /* Speed Select */
     .speed-select-wrap {
       display: flex !important;
       align-items: center !important;
@@ -471,14 +435,12 @@
       color: #eaf0ff;
     }
 
-    /* Fullscreen Button */
     .video-js .vjs-fullscreen-control {
       display: flex !important;
       font-size: 1.4em !important;
       width: 40px !important;
     }
 
-    /* Hide unwanted buttons */
     .video-js .vjs-picture-in-picture-control,
     .video-js .vjs-captions-button,
     .video-js .vjs-seek-button,
@@ -489,7 +451,6 @@
       display: none !important;
     }
 
-    /* Important player wrapper */
     .important-item .player-wrapper-professional {
       width: 100%;
       margin-top: 12px;
@@ -510,6 +471,29 @@
       aspect-ratio: 16/9;
       border: none;
       border-radius: 12px;
+    }
+
+    .loading-spinner-pos {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 5;
+      display: none;
+    }
+    .loading-spinner-pos.show {
+      display: block;
+    }
+    .loading-spinner-pos .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255,255,255,0.08);
+      border-top-color: #f7971e;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
   </style>
 </head>
@@ -653,7 +637,7 @@
 })();
 
 // ========================================================================
-//  MAIN APP WITH PROFESSIONAL PLAYER (Video.js 7.20.3)
+//  MAIN APP WITH PROFESSIONAL PLAYER (LIVE Button Hidden + Click Seek)
 // ========================================================================
 (function() {
     const API_BASE = 'https://video-play-api.newstreamcp.workers.dev/api';
@@ -672,9 +656,6 @@
     let isHijacked = false;
     let isImportantHidden = false;
     
-    // ============================================================
-    // PLAYER STATE
-    // ============================================================
     let activePlayer = null;
     let activePlayerId = null;
 
@@ -1033,7 +1014,6 @@
             resetCheckInterval = null;
         }
         document.getElementById('durationDisplay').textContent = '00:00:00';
-        // Dispose player
         disposePlayer();
         for (let key in window) {
             if (key.startsWith('player_') && window[key] && typeof window[key].dispose === 'function') {
@@ -1054,24 +1034,50 @@
         }
     }
 
-    function initProfessionalPlayer(videoEl, link, playerId) {
-        // Dispose old player
+    function formatTime(seconds) {
+        if (!seconds || isNaN(seconds)) return '0:00';
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = Math.floor(seconds % 60);
+        if (h > 0) {
+            return h + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        }
+        return m + ':' + String(s).padStart(2, '0');
+    }
+
+    function showToast(message, type = 'info') {
+        const statusBar = document.getElementById('statusBar');
+        if (statusBar) {
+            statusBar.textContent = message;
+            statusBar.style.background = type === 'error' ? '#fee' : type === 'success' ? '#e6f5e6' : '#fff3cd';
+            statusBar.style.color = type === 'error' ? '#b33a3a' : type === 'success' ? '#1a5d3c' : '#856404';
+            setTimeout(() => {
+                statusBar.style.background = '#f0f4fb';
+                statusBar.style.color = '#4c637f';
+            }, 2000);
+        }
+    }
+
+    function extractYouTubeId(url) {
+        if (!url) return null;
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const match = url.match(regExp);
+        if (match && match[2] && match[2].length === 11) return match[2];
+        if (url.length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(url)) return url;
+        return null;
+    }
+
+    // ==================== INIT PROFESSIONAL PLAYER ====================
+    function initProfessionalPlayer(wrapper, link, playerId) {
         disposePlayer();
         
-        const wrapper = videoEl.closest('.player-wrapper-professional');
-        if (!wrapper) return;
+        const loadingSpinner = wrapper.querySelector('.loading-spinner-pos');
+        if (loadingSpinner) loadingSpinner.classList.add('show');
 
-        // Show loading
-        const loadingSpinner = document.getElementById(`spinner-${playerId}`);
-        if (loadingSpinner) loadingSpinner.style.display = 'block';
-
-        // Determine video type
         const isYouTube = link && (link.includes('youtube.com') || link.includes('youtu.be'));
-        const isHLS = link && (link.includes('.m3u8'));
-        const isMP4 = link && (link.includes('.mp4') || link.includes('.webm'));
+        const isHLS = link && link.includes('.m3u8');
 
         if (isYouTube) {
-            // YouTube video
             const videoId = extractYouTubeId(link);
             if (videoId) {
                 let embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&controls=0&showinfo=0&iv_load_policy=3`;
@@ -1087,13 +1093,12 @@
                         style="width:100%;height:100%;aspect-ratio:16/9;border:none;border-radius:12px;"
                     ></iframe>
                 `;
-                if (loadingSpinner) loadingSpinner.style.display = 'none';
+                if (loadingSpinner) loadingSpinner.classList.remove('show');
                 showToast('🎬 YouTube video loaded', 'info');
                 return;
             }
         }
 
-        // Clear wrapper and create video element
         wrapper.innerHTML = `
             <video id="professional-player-${playerId}" 
                    class="video-js vjs-default-skin" 
@@ -1109,12 +1114,16 @@
         const videoElement = document.getElementById(`professional-player-${playerId}`);
         if (!videoElement) return;
 
-        // Initialize Video.js 7.20.3 player
+        // 🔥 PLAYER WITH CLICK SEEK & NO LIVE BUTTON
         const player = videojs(videoElement, {
             controls: true,
             autoplay: true,
             responsive: true,
-            liveui: true,
+            liveui: false,
+            userActions: {
+                hotkeys: true,
+                seek: 10
+            },
             html5: {
                 hls: {
                     enableLowInitialPlaylist: true,
@@ -1127,7 +1136,6 @@
                     'currentTimeDisplay',
                     'durationDisplay',
                     'progressControl',
-                    'liveDisplay',
                     'volumePanel',
                     'fullscreenToggle'
                 ]
@@ -1142,12 +1150,10 @@
             const duration = player.duration();
             if (!isFinite(duration) || duration === 0 || duration === Infinity) {
                 player.addClass('vjs-live');
-                console.log('🔴 LIVE Stream detected!');
             } else {
                 player.removeClass('vjs-live');
-                console.log('📹 VOD Stream detected');
             }
-            if (loadingSpinner) loadingSpinner.style.display = 'none';
+            if (loadingSpinner) loadingSpinner.classList.remove('show');
         });
 
         player.on('durationchange', function() {
@@ -1177,8 +1183,26 @@
             document.getElementById('durationDisplay').textContent = '00:00:00';
         });
 
-        // ---- Inject Speed Select ----
+        // ---- 🔥 CLICK SEEK ON PROGRESS BAR ----
         player.ready(function() {
+            const progressControl = player.controlBar.progressControl;
+            if (progressControl) {
+                const progressHolder = progressControl.el().querySelector('.vjs-progress-holder');
+                if (progressHolder) {
+                    progressHolder.addEventListener('click', function(e) {
+                        const rect = this.getBoundingClientRect();
+                        const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                        const duration = player.duration();
+                        if (duration && !isNaN(duration) && isFinite(duration) && duration > 0) {
+                            const seekTime = x * duration;
+                            player.currentTime(seekTime);
+                            showToast('⏩ ' + formatTime(seekTime), 'info');
+                        }
+                    });
+                }
+            }
+
+            // ---- Speed Select ----
             const speedSelect = document.createElement('select');
             speedSelect.className = 'vjs-speed-select';
             const speeds = [0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0];
@@ -1225,13 +1249,16 @@
             if (e.key === 'ArrowRight') {
                 e.preventDefault();
                 const current = player.currentTime() || 0;
-                player.currentTime(current + 10);
-                showToast('+10s', 'info');
+                const duration = player.duration() || 0;
+                const newTime = Math.min(duration, current + 10);
+                player.currentTime(newTime);
+                showToast('⏩ +10s', 'info');
             } else if (e.key === 'ArrowLeft') {
                 e.preventDefault();
                 const current = player.currentTime() || 0;
-                player.currentTime(Math.max(0, current - 10));
-                showToast('-10s', 'info');
+                const newTime = Math.max(0, current - 10);
+                player.currentTime(newTime);
+                showToast('⏪ -10s', 'info');
             } else if (e.code === 'Space') {
                 e.preventDefault();
                 if (player.paused()) player.play();
@@ -1239,29 +1266,13 @@
             }
         });
 
-        // ---- Error Handling ----
         player.on('error', function() {
             showToast('❌ Video error - Please try again', 'error');
-            if (loadingSpinner) loadingSpinner.style.display = 'none';
+            if (loadingSpinner) loadingSpinner.classList.remove('show');
         });
 
         window[`player_${playerId}`] = player;
-        
         wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-
-    // ==================== TOAST ====================
-    function showToast(message, type = 'info') {
-        const statusBar = document.getElementById('statusBar');
-        if (statusBar) {
-            statusBar.textContent = message;
-            statusBar.style.background = type === 'error' ? '#fee' : type === 'success' ? '#e6f5e6' : '#fff3cd';
-            statusBar.style.color = type === 'error' ? '#b33a3a' : type === 'success' ? '#1a5d3c' : '#856404';
-            setTimeout(() => {
-                statusBar.style.background = '#f0f4fb';
-                statusBar.style.color = '#4c637f';
-            }, 2000);
-        }
     }
 
     // ==================== SHOW VIDEO CONTENT ====================
@@ -1351,8 +1362,8 @@
                                 ▶ Play
                             </button>
                             <div class="player-wrapper-professional" id="wrapper-${playerId}" style="display: none;">
-                                <div id="spinner-${playerId}" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:5;display:none;">
-                                    <div style="width:40px;height:40px;border:3px solid rgba(255,255,255,0.08);border-top-color:#f7971e;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+                                <div class="loading-spinner-pos" id="spinner-${playerId}">
+                                    <div class="spinner"></div>
                                 </div>
                             </div>
                         </div>
@@ -1397,7 +1408,6 @@
                 
                 if (!wrapper) return;
                 
-                // Toggle visibility
                 if (wrapper.style.display === 'block' && wrapper.children.length > 0) {
                     wrapper.style.display = 'none';
                     wrapper.innerHTML = '';
@@ -1408,8 +1418,6 @@
                 
                 wrapper.style.display = 'block';
                 document.getElementById('durationDisplay').textContent = '00:00:00';
-                
-                // Initialize professional player
                 initProfessionalPlayer(wrapper, link, playerId);
             });
         });
@@ -1668,16 +1676,6 @@
         });
     }
 
-    // ==================== EXTRACT YOUTUBE ID ====================
-    function extractYouTubeId(url) {
-        if (!url) return null;
-        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-        const match = url.match(regExp);
-        if (match && match[2] && match[2].length === 11) return match[2];
-        if (url.length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(url)) return url;
-        return null;
-    }
-
     // ========== FALLBACK HLS PLAYER ==========
     function tryFallbackHLSPlayer(videoEl, link, playerId) {
         if (window[`hls_${playerId}`]) {
@@ -1777,7 +1775,7 @@
         document.getElementById('loginContainer').style.display = 'block';
         document.getElementById('videoContent').style.display = 'none';
     }
-    console.log('✅ Video Portal loaded - Professional Player (Video.js 7.20.3)');
+    console.log('✅ Video Portal loaded - Professional Player (LIVE Button Hidden + Click Seek)');
 })();
 </script>
 </body>
