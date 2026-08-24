@@ -27,9 +27,6 @@
       .search-container input { width: 100%; }
       .duration-bar { flex-wrap: wrap; gap: 6px; }
       .duration-bar .value { font-size: 14px; min-width: 80px; }
-      .player-controls { flex-wrap: wrap; gap: 6px; }
-      .player-controls .btn-control { padding: 6px 12px; font-size: 12px; }
-      .speed-btn { padding: 4px 10px; font-size: 11px; }
     }
 
     @media (max-width: 480px) {
@@ -39,8 +36,6 @@
       .chapter-number { min-width: auto; }
       .play-btn { width: 100%; text-align: center; }
       .duration-bar .value { font-size: 12px; min-width: 70px; }
-      .player-controls .btn-control { padding: 4px 10px; font-size: 11px; }
-      .speed-btn { padding: 3px 8px; font-size: 10px; }
     }
 
     .header { border-bottom: 1px solid #e8edf6; padding-bottom: 18px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
@@ -57,6 +52,7 @@
     .key-gen-section h3 { font-size: 1rem; color: #0b1a33; margin-bottom: 8px; }
     .key-gen-section .info { font-size: 0.8rem; color: #6a7c94; margin-bottom: 12px; }
     
+    /* ===== IMPORTANT SECTION ===== */
     .important-section {
       background: linear-gradient(135deg, #0d1117, #161b22);
       border: 2px solid #f7971e;
@@ -151,6 +147,7 @@
       font-style: italic;
     }
 
+    /* ===== DURATION BAR ===== */
     .duration-bar {
       display: flex;
       justify-content: center;
@@ -191,69 +188,102 @@
       100% { opacity: 1; }
     }
 
+    /* ===== CUSTOM PLAYER CONTROLS ===== */
+    .custom-player-wrapper {
+      width: 100%;
+      margin-top: 12px;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #000;
+      position: relative;
+    }
+    .custom-player-wrapper video {
+      width: 100%;
+      display: block;
+      aspect-ratio: 16/9;
+      background: #000;
+    }
+    .custom-player-wrapper iframe {
+      width: 100%;
+      height: 100%;
+      aspect-ratio: 16/9;
+      border: none;
+      border-radius: 12px;
+    }
+
+    /* ===== CUSTOM PLAYER CONTROLS BAR ===== */
     .player-controls {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      padding: 10px 12px;
-      background: rgba(18, 18, 30, 0.8);
-      border-radius: 12px;
-      border: 1px solid #2a2a4e;
-      margin-top: 8px;
+      gap: 6px;
+      padding: 8px 12px;
+      background: rgba(18, 18, 30, 0.9);
+      border-top: 1px solid rgba(255,255,255,0.06);
+      backdrop-filter: blur(10px);
     }
     .player-controls .btn-control {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid #3a3a5e;
-      border-radius: 8px;
-      padding: 8px 16px;
-      color: #e0e0e8;
-      font-size: 13px;
-      font-weight: 600;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 6px;
+      padding: 6px 12px;
+      color: #c9d1d9;
+      font-size: 12px;
+      font-weight: 500;
       cursor: pointer;
       transition: 0.2s;
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      min-width: 50px;
+      min-width: 40px;
       justify-content: center;
     }
     .player-controls .btn-control:hover {
-      background: rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.12);
       border-color: #f7971e;
       color: #ffffff;
     }
     .player-controls .btn-control.skip {
-      background: rgba(247, 151, 30, 0.15);
-      border-color: #f7971e;
+      background: rgba(247, 151, 30, 0.12);
+      border-color: rgba(247, 151, 30, 0.2);
       color: #f7971e;
     }
     .player-controls .btn-control.skip:hover {
-      background: rgba(247, 151, 30, 0.25);
+      background: rgba(247, 151, 30, 0.2);
+    }
+    .player-controls .btn-control.play-btn {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.1);
+    }
+    .player-controls .btn-control.play-btn:hover {
+      background: rgba(255,255,255,0.15);
+    }
+    .player-controls .btn-control .icon {
+      font-size: 14px;
     }
     .player-controls .speed-group {
       display: flex;
       align-items: center;
-      gap: 4px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 8px;
-      padding: 3px;
-      border: 1px solid #2a2a4e;
+      gap: 3px;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 6px;
+      padding: 2px;
+      border: 1px solid rgba(255,255,255,0.06);
     }
     .player-controls .speed-btn {
       background: transparent;
       border: none;
-      border-radius: 6px;
-      padding: 5px 12px;
-      color: #a0a0b8;
-      font-size: 12px;
+      border-radius: 4px;
+      padding: 4px 10px;
+      color: #8b949e;
+      font-size: 11px;
       font-weight: 600;
       cursor: pointer;
       transition: 0.2s;
     }
     .player-controls .speed-btn:hover {
-      background: rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.06);
       color: #ffffff;
     }
     .player-controls .speed-btn.active {
@@ -262,12 +292,81 @@
     }
     .player-controls .speed-label {
       color: #6a7c94;
-      font-size: 11px;
+      font-size: 10px;
       padding: 0 4px;
       font-weight: 500;
     }
-    .player-controls .btn-control .icon {
-      font-size: 14px;
+    .player-controls .progress-track {
+      flex: 1;
+      height: 3px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 3px;
+      cursor: pointer;
+      position: relative;
+      min-width: 60px;
+    }
+    .player-controls .progress-track .progress-played {
+      height: 100%;
+      background: linear-gradient(90deg, #f7971e, #f5a623);
+      border-radius: 3px;
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+    .player-controls .time-display {
+      font-size: 11px;
+      color: #8b949e;
+      font-family: 'Courier New', monospace;
+      min-width: 80px;
+      text-align: right;
+    }
+    .player-controls .ctrl-btn .badge {
+      font-size: 10px;
+      font-weight: 600;
+      background: rgba(255,255,255,0.06);
+      padding: 2px 8px;
+      border-radius: 10px;
+      color: #8b949e;
+    }
+    .player-controls .ctrl-btn .badge.active {
+      color: #f7971e;
+      background: rgba(247, 151, 30, 0.12);
+    }
+
+    /* ===== OVERLAY PLAY BUTTON ===== */
+    .overlay-play {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 64px;
+      height: 64px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      backdrop-filter: blur(8px);
+      border: 2px solid rgba(255,255,255,0.1);
+      z-index: 10;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .overlay-play.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .overlay-play:hover {
+      background: rgba(255,255,255,0.15);
+      transform: translate(-50%, -50%) scale(1.12);
+      border-color: rgba(255,255,255,0.2);
+    }
+    .overlay-play .play-icon {
+      font-size: 28px;
+      color: #ffffff;
+      margin-left: 4px;
+      filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
     }
     
     .playlist-selector { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; padding: 16px; background: #f8faff; border-radius: 20px; align-items: center; }
@@ -359,28 +458,6 @@
       to { opacity: 1; transform: translateX(-50%) translateY(0); }
     }
 
-    .important-item .player-wrapper {
-      width: 100%;
-      margin-top: 12px;
-      border-radius: 16px;
-      overflow: hidden;
-      background: #000;
-      min-height: 200px;
-    }
-    .important-item .player-wrapper video {
-      width: 100%;
-      display: block;
-      aspect-ratio: 16/9;
-    }
-    .important-item .player-wrapper iframe {
-      width: 100%;
-      height: 100%;
-      min-height: 200px;
-      aspect-ratio: 16/9;
-      border: none;
-      border-radius: 12px;
-    }
-
     .duration-bar.hidden {
       display: none !important;
     }
@@ -393,6 +470,30 @@
     }
     .key-limit-info strong {
       color: #0b1a33;
+    }
+
+    /* Loading spinner */
+    .loading-spinner {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 5;
+      display: none;
+    }
+    .loading-spinner.show {
+      display: block;
+    }
+    .loading-spinner .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid rgba(255,255,255,0.08);
+      border-top-color: #f7971e;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
   </style>
 </head>
@@ -536,7 +637,7 @@
 })();
 
 // ========================================================================
-//  MAIN APP WITH ALLOWED EMAILS + KEY GENERATION LIMIT
+//  MAIN APP WITH CUSTOM PLAYER IN IMPORTANT SECTION
 // ========================================================================
 (function() {
     const API_BASE = 'https://video-play-api.newstreamcp.workers.dev/api';
@@ -555,10 +656,18 @@
     let isHijacked = false;
     let isImportantHidden = false;
     
-    let currentPlayer = null;
-    let currentPlayerId = null;
-    let currentSpeed = 1.0;
-    let activeSpeedBtn = null;
+    // ============================================================
+    // CUSTOM PLAYER STATE
+    // ============================================================
+    let customPlayer = null;
+    let customHls = null;
+    let isPlaying = false;
+    let isMuted = false;
+    let currentSpeed = 1;
+    let customDuration = 0;
+    let customCurrentTime = 0;
+    let isReady = false;
+    let progressInterval = null;
 
     // ==================== SESSION MANAGEMENT ====================
     function generateSessionId() {
@@ -671,7 +780,7 @@
         }, 8000);
     }
 
-    // ==================== KEY GENERATION (UPDATED - 1 hour, 4 per day) ====================
+    // ==================== KEY GENERATION ====================
     async function generateKey() {
         const email = document.getElementById('genKeyEmail').value.trim();
         const statusEl = document.getElementById('genKeyStatus');
@@ -708,7 +817,6 @@
                     navigator.clipboard.writeText(data.key);
                 }
             } else {
-                // Check if it's a limit error
                 if (data.limit_reached) {
                     statusEl.innerHTML = `
                         ❌ ${data.error}<br>
@@ -823,7 +931,7 @@
         }, 1000);
     }
 
-    // ==================== 🔥 LOGIN (Key Optional) ====================
+    // ==================== LOGIN ====================
     async function login() {
         const email = document.getElementById('loginEmail').value.trim();
         const key = document.getElementById('loginKey').value.trim();
@@ -916,6 +1024,9 @@
             resetCheckInterval = null;
         }
         document.getElementById('durationDisplay').textContent = '00:00:00';
+        // Dispose custom player
+        disposeCustomPlayer();
+        // Dispose videojs players
         for (let key in window) {
             if (key.startsWith('player_') && window[key] && typeof window[key].dispose === 'function') {
                 try { window[key].dispose(); } catch(e) {}
@@ -924,10 +1035,323 @@
                 try { window[key].destroy(); } catch(e) {}
             }
         }
-        currentPlayer = null;
-        currentPlayerId = null;
-        currentSpeed = 1.0;
     };
+
+    // ==================== CUSTOM PLAYER FUNCTIONS ====================
+    function disposeCustomPlayer() {
+        if (customPlayer) {
+            try { customPlayer.dispose(); } catch(e) {}
+            customPlayer = null;
+        }
+        if (customHls) {
+            try { customHls.destroy(); } catch(e) {}
+            customHls = null;
+        }
+        stopProgressUpdate();
+        isReady = false;
+    }
+
+    function initCustomPlayer(videoEl, link, playerId) {
+        // Dispose previous player
+        disposeCustomPlayer();
+        
+        const wrapper = videoEl.closest('.custom-player-wrapper');
+        const controlsContainer = document.getElementById(`custom-controls-${playerId}`);
+        const overlayPlay = document.getElementById(`custom-overlay-${playerId}`);
+        const loadingSpinner = document.getElementById(`custom-spinner-${playerId}`);
+        
+        if (!wrapper) return;
+
+        // Show loading
+        if (loadingSpinner) loadingSpinner.classList.add('show');
+        if (overlayPlay) overlayPlay.classList.remove('show');
+
+        // Determine video type
+        const isYouTube = link && (link.includes('youtube.com') || link.includes('youtu.be'));
+        const isHLS = link && link.includes('.m3u8');
+        const isMP4 = link && (link.includes('.mp4') || link.includes('.webm'));
+
+        if (isYouTube) {
+            // YouTube video
+            const videoId = extractYouTubeId(link);
+            if (videoId) {
+                let embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&controls=0&showinfo=0&iv_load_policy=3`;
+                if (googleUser) {
+                    embedUrl += `&origin=${window.location.origin}`;
+                }
+                wrapper.innerHTML = `
+                    <iframe 
+                        src="${embedUrl}"
+                        frameborder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowfullscreen
+                        style="width:100%;height:100%;aspect-ratio:16/9;border:none;border-radius:12px;"
+                    ></iframe>
+                `;
+                if (loadingSpinner) loadingSpinner.classList.remove('show');
+                if (overlayPlay) overlayPlay.classList.remove('show');
+                if (controlsContainer) controlsContainer.style.display = 'none';
+                showToast('🎬 YouTube video loaded', 'info');
+                return;
+            }
+        }
+
+        // HLS or MP4
+        const videoElement = document.createElement('video');
+        videoElement.id = `custom-video-${playerId}`;
+        videoElement.className = 'video-js vjs-default-skin';
+        videoElement.setAttribute('controls', '');
+        videoElement.setAttribute('preload', 'auto');
+        videoElement.style.width = '100%';
+        videoElement.style.height = '100%';
+        videoElement.style.aspectRatio = '16/9';
+        wrapper.innerHTML = '';
+        wrapper.appendChild(videoElement);
+
+        if (isHLS && Hls.isSupported()) {
+            // HLS
+            customHls = new Hls({
+                enableWorker: true,
+                lowLatencyMode: true,
+                maxBufferLength: 30,
+                maxMaxBufferLength: 60,
+            });
+            customHls.loadSource(link);
+            customHls.attachMedia(videoElement);
+            customHls.on(Hls.Events.MANIFEST_PARSED, function() {
+                if (loadingSpinner) loadingSpinner.classList.remove('show');
+                if (overlayPlay) overlayPlay.classList.add('show');
+                videoElement.play().catch(() => {});
+                setupCustomPlayer(videoElement, playerId);
+            });
+            customHls.on(Hls.Events.ERROR, function(event, data) {
+                if (data.fatal) {
+                    if (loadingSpinner) loadingSpinner.classList.remove('show');
+                    if (overlayPlay) overlayPlay.classList.add('show');
+                    showToast('❌ HLS Error', 'error');
+                }
+            });
+        } else if (isMP4 || !isHLS) {
+            // MP4
+            videoElement.src = link;
+            videoElement.load();
+            videoElement.onloadedmetadata = function() {
+                if (loadingSpinner) loadingSpinner.classList.remove('show');
+                if (overlayPlay) overlayPlay.classList.add('show');
+                videoElement.play().catch(() => {});
+                setupCustomPlayer(videoElement, playerId);
+            };
+            videoElement.onerror = function() {
+                if (loadingSpinner) loadingSpinner.classList.remove('show');
+                if (overlayPlay) overlayPlay.classList.add('show');
+                showToast('❌ Video error', 'error');
+            };
+        } else {
+            wrapper.innerHTML = `
+                <div style="padding:40px;text-align:center;color:#b33a3a;background:#0d1117;border-radius:12px;">
+                    ⚠️ Unsupported video format.<br>
+                    <small style="color:#6a7c94;">Supported: YouTube, HLS (.m3u8), MP4</small>
+                </div>
+            `;
+            if (loadingSpinner) loadingSpinner.classList.remove('show');
+            if (controlsContainer) controlsContainer.style.display = 'none';
+        }
+    }
+
+    function setupCustomPlayer(videoElement, playerId) {
+        const controlsContainer = document.getElementById(`custom-controls-${playerId}`);
+        const overlayPlay = document.getElementById(`custom-overlay-${playerId}`);
+        
+        if (!videoElement) return;
+        
+        // Set up video events
+        videoElement.addEventListener('play', function() {
+            isPlaying = true;
+            if (overlayPlay) overlayPlay.classList.remove('show');
+            updateCustomPlayButton(playerId);
+            startProgressUpdate();
+        });
+        videoElement.addEventListener('pause', function() {
+            isPlaying = false;
+            if (overlayPlay) overlayPlay.classList.add('show');
+            updateCustomPlayButton(playerId);
+            stopProgressUpdate();
+        });
+        videoElement.addEventListener('ended', function() {
+            isPlaying = false;
+            if (overlayPlay) overlayPlay.classList.add('show');
+            updateCustomPlayButton(playerId);
+            stopProgressUpdate();
+            customCurrentTime = customDuration;
+            updateCustomProgress(playerId);
+        });
+        videoElement.addEventListener('loadedmetadata', function() {
+            customDuration = videoElement.duration || 0;
+            updateCustomTimeDisplay(playerId);
+            isReady = true;
+            if (overlayPlay) overlayPlay.classList.add('show');
+        });
+        videoElement.addEventListener('timeupdate', function() {
+            customCurrentTime = videoElement.currentTime || 0;
+            updateCustomProgress(playerId);
+        });
+        videoElement.addEventListener('waiting', function() {
+            // Show loading
+        });
+        videoElement.addEventListener('canplay', function() {
+            // Hide loading
+        });
+        
+        isReady = true;
+    }
+
+    function updateCustomProgress(playerId) {
+        const progressBar = document.getElementById(`custom-progress-${playerId}`);
+        const total = customDuration || 0;
+        const current = customCurrentTime || 0;
+        const percent = total > 0 ? (current / total) * 100 : 0;
+        if (progressBar) progressBar.style.width = percent + '%';
+        updateCustomTimeDisplay(playerId);
+    }
+
+    function updateCustomTimeDisplay(playerId) {
+        const timeDisplay = document.getElementById(`custom-time-${playerId}`);
+        if (timeDisplay) {
+            const current = customCurrentTime || 0;
+            const total = customDuration || 0;
+            timeDisplay.textContent = formatTime(current) + ' / ' + formatTime(total);
+        }
+        // Update main duration display
+        const durationDisplay = document.getElementById('durationDisplay');
+        if (durationDisplay) {
+            const current = customCurrentTime || 0;
+            if (current > 0 && !isNaN(current)) {
+                const hours = Math.floor(current / 3600);
+                const minutes = Math.floor((current % 3600) / 60);
+                const seconds = Math.floor(current % 60);
+                durationDisplay.textContent = 
+                    String(hours).padStart(2, '0') + ':' + 
+                    String(minutes).padStart(2, '0') + ':' + 
+                    String(seconds).padStart(2, '0');
+            }
+        }
+    }
+
+    function formatTime(seconds) {
+        if (!seconds || isNaN(seconds)) return '0:00';
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = Math.floor(seconds % 60);
+        if (h > 0) {
+            return h + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        }
+        return m + ':' + String(s).padStart(2, '0');
+    }
+
+    function updateCustomPlayButton(playerId) {
+        const btn = document.getElementById(`custom-play-${playerId}`);
+        if (btn) {
+            if (isPlaying) {
+                btn.innerHTML = `<span class="icon">⏸</span>`;
+            } else {
+                btn.innerHTML = `<span class="icon">▶</span>`;
+            }
+        }
+    }
+
+    function startProgressUpdate() {
+        stopProgressUpdate();
+        progressInterval = setInterval(function() {
+            const video = document.querySelector('.custom-player-wrapper video');
+            if (video) {
+                customCurrentTime = video.currentTime || 0;
+                customDuration = video.duration || 0;
+                const playerId = video.closest('.important-item')?.dataset?.playerId;
+                if (playerId) {
+                    updateCustomProgress(playerId);
+                }
+            }
+        }, 250);
+    }
+
+    function stopProgressUpdate() {
+        if (progressInterval) {
+            clearInterval(progressInterval);
+            progressInterval = null;
+        }
+    }
+
+    // ==================== CUSTOM PLAYER CONTROLS ====================
+    function toggleCustomPlay(playerId) {
+        const video = document.querySelector(`#custom-video-${playerId}`);
+        if (video) {
+            if (isPlaying) {
+                video.pause();
+            } else {
+                video.play().catch(() => {});
+            }
+        }
+    }
+
+    function customSkip(playerId, seconds) {
+        const video = document.querySelector(`#custom-video-${playerId}`);
+        if (video) {
+            const current = video.currentTime || 0;
+            const total = video.duration || 0;
+            const newTime = Math.max(0, Math.min(total, current + seconds));
+            video.currentTime = newTime;
+            customCurrentTime = newTime;
+            updateCustomProgress(playerId);
+            showToast((seconds > 0 ? '+' : '') + seconds + 's', 'info');
+        }
+    }
+
+    function customSetSpeed(playerId, speed) {
+        const video = document.querySelector(`#custom-video-${playerId}`);
+        if (video) {
+            video.playbackRate = speed;
+        }
+        currentSpeed = speed;
+        
+        // Update UI
+        const container = document.getElementById(`custom-controls-${playerId}`);
+        if (container) {
+            container.querySelectorAll('.speed-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (parseFloat(btn.dataset.speed) === speed) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+        showToast('⚡ Speed: ' + speed + 'x', 'success');
+    }
+
+    function customSeek(playerId, event) {
+        const video = document.querySelector(`#custom-video-${playerId}`);
+        const track = document.getElementById(`custom-progress-track-${playerId}`);
+        if (!video || !track) return;
+        const rect = track.getBoundingClientRect();
+        const x = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+        const total = video.duration || 0;
+        const newTime = x * total;
+        video.currentTime = newTime;
+        customCurrentTime = newTime;
+        updateCustomProgress(playerId);
+    }
+
+    // ==================== TOAST ====================
+    function showToast(message, type = 'info') {
+        const statusBar = document.getElementById('statusBar');
+        if (statusBar) {
+            statusBar.textContent = message;
+            statusBar.style.background = type === 'error' ? '#fee' : type === 'success' ? '#e6f5e6' : '#fff3cd';
+            statusBar.style.color = type === 'error' ? '#b33a3a' : type === 'success' ? '#1a5d3c' : '#856404';
+            setTimeout(() => {
+                statusBar.style.background = '#f0f4fb';
+                statusBar.style.color = '#4c637f';
+            }, 2000);
+        }
+    }
 
     // ==================== SHOW VIDEO CONTENT ====================
     function showVideoContent() {
@@ -992,137 +1416,7 @@
         startResetTimer();
     }
 
-    // ============================================================
-    // 🔥 PLAYER CONTROLS FUNCTIONS
-    // ============================================================
-    
-    function createPlayerControls(playerId) {
-        return `
-            <div class="player-controls" id="controls-${playerId}">
-                <button class="btn-control skip" onclick="skipVideo('${playerId}', -10)" title="10 seconds backward">
-                    <span class="icon">⏪</span> 10s
-                </button>
-                <button class="btn-control skip" onclick="skipVideo('${playerId}', 10)" title="10 seconds forward">
-                    10s <span class="icon">⏩</span>
-                </button>
-                <div class="speed-group">
-                    <span class="speed-label">Speed</span>
-                    <button class="speed-btn" data-speed="0.5" onclick="setSpeed('${playerId}', 0.5)">0.5x</button>
-                    <button class="speed-btn active" data-speed="1.0" onclick="setSpeed('${playerId}', 1.0)">1x</button>
-                    <button class="speed-btn" data-speed="1.5" onclick="setSpeed('${playerId}', 1.5)">1.5x</button>
-                    <button class="speed-btn" data-speed="2.0" onclick="setSpeed('${playerId}', 2.0)">2x</button>
-                </div>
-            </div>
-        `;
-    }
-
-    window.skipVideo = function(playerId, seconds) {
-        let player = window[`player_${playerId}`];
-        if (!player) {
-            const hls = window[`hls_${playerId}`];
-            if (hls && hls.media) {
-                const video = hls.media;
-                const currentTime = video.currentTime || 0;
-                const newTime = Math.max(0, Math.min(video.duration || 0, currentTime + seconds));
-                video.currentTime = newTime;
-                showToast(`⏭️ ${seconds > 0 ? '+' : ''}${seconds}s`, 'info');
-                return;
-            }
-            showToast('⚠️ No video playing', 'error');
-            return;
-        }
-        const currentTime = player.currentTime() || 0;
-        const duration = player.duration() || 0;
-        const newTime = Math.max(0, Math.min(duration, currentTime + seconds));
-        player.currentTime(newTime);
-        showToast(`⏭️ ${seconds > 0 ? '+' : ''}${seconds}s`, 'info');
-    };
-
-    window.setSpeed = function(playerId, speed) {
-        let player = window[`player_${playerId}`];
-        const controls = document.getElementById(`controls-${playerId}`);
-        if (controls) {
-            controls.querySelectorAll('.speed-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (parseFloat(btn.dataset.speed) === speed) {
-                    btn.classList.add('active');
-                }
-            });
-        }
-        if (player && player.playbackRate) {
-            player.playbackRate(speed);
-            currentSpeed = speed;
-            showToast(`⚡ Speed: ${speed}x`, 'success');
-            return;
-        }
-        const hls = window[`hls_${playerId}`];
-        if (hls && hls.media) {
-            hls.media.playbackRate = speed;
-            currentSpeed = speed;
-            showToast(`⚡ Speed: ${speed}x`, 'success');
-            return;
-        }
-        const videoEl = document.getElementById(playerId);
-        if (videoEl && videoEl.playbackRate !== undefined) {
-            videoEl.playbackRate = speed;
-            currentSpeed = speed;
-            showToast(`⚡ Speed: ${speed}x`, 'success');
-            return;
-        }
-        showToast('⚠️ Cannot change speed', 'error');
-    };
-
-    function setupDurationTracking(player, playerId) {
-        if (currentPlayer && currentPlayer !== player) {
-            try { currentPlayer.off('timeupdate'); } catch(e) {}
-            try { currentPlayer.off('ended'); } catch(e) {}
-            try { currentPlayer.off('loadstart'); } catch(e) {}
-        }
-        currentPlayer = player;
-        currentPlayerId = playerId;
-        const durationDisplay = document.getElementById('durationDisplay');
-        currentSpeed = 1.0;
-        player.on('timeupdate', function() {
-            const currentTime = player.currentTime();
-            if (currentTime && !isNaN(currentTime) && currentTime > 0) {
-                const hours = Math.floor(currentTime / 3600);
-                const minutes = Math.floor((currentTime % 3600) / 60);
-                const seconds = Math.floor(currentTime % 60);
-                durationDisplay.textContent = 
-                    String(hours).padStart(2, '0') + ':' + 
-                    String(minutes).padStart(2, '0') + ':' + 
-                    String(seconds).padStart(2, '0');
-            }
-        });
-        player.on('ended', function() {
-            durationDisplay.textContent = '00:00:00';
-        });
-        player.on('loadstart', function() {
-            durationDisplay.textContent = '00:00:00';
-        });
-        player.on('dispose', function() {
-            durationDisplay.textContent = '00:00:00';
-            if (currentPlayer === player) {
-                currentPlayer = null;
-                currentPlayerId = null;
-            }
-        });
-    }
-
-    function showToast(message, type = 'info') {
-        const statusBar = document.getElementById('statusBar');
-        if (statusBar) {
-            statusBar.textContent = message;
-            statusBar.style.background = type === 'error' ? '#fee' : type === 'success' ? '#e6f5e6' : '#fff3cd';
-            statusBar.style.color = type === 'error' ? '#b33a3a' : type === 'success' ? '#1a5d3c' : '#856404';
-            setTimeout(() => {
-                statusBar.style.background = '#f0f4fb';
-                statusBar.style.color = '#4c637f';
-            }, 2000);
-        }
-    }
-
-    // ==================== FETCH IMPORTANT SECTION ====================
+    // ==================== FETCH IMPORTANT SECTION (WITH CUSTOM PLAYER) ====================
     async function fetchImportantSection() {
         const container = document.getElementById('importantItems');
         try {
@@ -1137,7 +1431,7 @@
                         isImportantHidden = true;
                     }
                     html += `
-                        <div class="important-item" data-id="${item.id}" data-visible="${isVisible}">
+                        <div class="important-item" data-id="${item.id}" data-visible="${isVisible}" data-player-id="${playerId}">
                             <span class="name">${item.title}</span>
                             <button class="important-play-btn" 
                                     data-player-id="${playerId}" 
@@ -1145,16 +1439,47 @@
                                     data-title="${item.title}">
                                 ▶ Play
                             </button>
-                            <div class="player-wrapper" id="wrapper-${playerId}" style="display: none;">
-                                <video id="${playerId}" class="video-js vjs-default-skin" controls preload="auto" width="100%" height="auto"></video>
+                            
+                            <!-- ===== CUSTOM PLAYER ===== -->
+                            <div class="custom-player-wrapper" id="custom-wrapper-${playerId}" style="display: none;">
+                                <div class="loading-spinner" id="custom-spinner-${playerId}">
+                                    <div class="spinner"></div>
+                                </div>
+                                <div class="overlay-play show" id="custom-overlay-${playerId}" onclick="toggleCustomPlay('${playerId}')">
+                                    <span class="play-icon">▶</span>
+                                </div>
                             </div>
-                            <div id="controls-container-${playerId}" style="display:none; width:100%;">
-                                ${createPlayerControls(playerId)}
+                            
+                            <!-- ===== CUSTOM PLAYER CONTROLS ===== -->
+                            <div id="custom-controls-${playerId}" style="display:none; width:100%; margin-top:0;">
+                                <div class="player-controls">
+                                    <button class="btn-control play-btn" id="custom-play-${playerId}" onclick="toggleCustomPlay('${playerId}')">
+                                        <span class="icon">▶</span>
+                                    </button>
+                                    <button class="btn-control skip" onclick="customSkip('${playerId}', -10)">
+                                        <span class="icon">⏪</span> 10s
+                                    </button>
+                                    <button class="btn-control skip" onclick="customSkip('${playerId}', 10)">
+                                        10s <span class="icon">⏩</span>
+                                    </button>
+                                    <div class="progress-track" id="custom-progress-track-${playerId}" onclick="customSeek('${playerId}', event)">
+                                        <div class="progress-played" id="custom-progress-${playerId}" style="width:0%;"></div>
+                                    </div>
+                                    <span class="time-display" id="custom-time-${playerId}">0:00 / 0:00</span>
+                                    <div class="speed-group">
+                                        <span class="speed-label">Speed</span>
+                                        <button class="speed-btn" data-speed="0.5" onclick="customSetSpeed('${playerId}', 0.5)">0.5x</button>
+                                        <button class="speed-btn active" data-speed="1.0" onclick="customSetSpeed('${playerId}', 1.0)">1x</button>
+                                        <button class="speed-btn" data-speed="1.5" onclick="customSetSpeed('${playerId}', 1.5)">1.5x</button>
+                                        <button class="speed-btn" data-speed="2.0" onclick="customSetSpeed('${playerId}', 2.0)">2x</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     `;
                 });
                 container.innerHTML = html;
+                
                 const section = document.getElementById('importantSection');
                 if (isImportantHidden) {
                     section.classList.add('hidden-section');
@@ -1163,6 +1488,7 @@
                     section.classList.remove('hidden-section');
                     document.getElementById('durationBar').classList.remove('hidden');
                 }
+                
                 attachImportantPlayEvents();
             } else {
                 container.innerHTML = `<div class="empty-important">No Live classes available</div>`;
@@ -1174,165 +1500,42 @@
         }
     }
 
-    // ==================== ATTACH IMPORTANT PLAY EVENTS ====================
+    // ==================== ATTACH IMPORTANT PLAY EVENTS (CUSTOM PLAYER) ====================
     function attachImportantPlayEvents() {
         document.querySelectorAll('.important-play-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const playerId = this.dataset.playerId;
                 const link = this.dataset.link;
-                const wrapper = document.getElementById(`wrapper-${playerId}`);
-                const controlsContainer = document.getElementById(`controls-container-${playerId}`);
-                if (!wrapper) return;
+                const wrapper = document.getElementById(`custom-wrapper-${playerId}`);
+                const controlsContainer = document.getElementById(`custom-controls-${playerId}`);
                 const parentItem = this.closest('.important-item');
                 const isVisible = parentItem?.dataset?.visible === 'true';
+                
                 if (!isVisible) {
                     showToast('⛔ This class is currently hidden by admin', 'error');
                     return;
                 }
+                
+                if (!wrapper) return;
+                
+                // Toggle visibility
                 if (wrapper.style.display === 'block') {
                     wrapper.style.display = 'none';
-                    controlsContainer.style.display = 'none';
-                    wrapper.innerHTML = '';
-                    if (window[`hls_${playerId}`]) {
-                        try { window[`hls_${playerId}`].destroy(); } catch(e) {}
-                        delete window[`hls_${playerId}`];
-                    }
-                    if (window[`player_${playerId}`]) {
-                        try { 
-                            window[`player_${playerId}`].off('timeupdate');
-                            window[`player_${playerId}`].off('ended');
-                            window[`player_${playerId}`].off('loadstart');
-                            window[`player_${playerId}`].dispose(); 
-                        } catch(e) {}
-                        delete window[`player_${playerId}`];
-                    }
+                    if (controlsContainer) controlsContainer.style.display = 'none';
+                    disposeCustomPlayer();
                     document.getElementById('durationDisplay').textContent = '00:00:00';
-                    currentPlayer = null;
-                    currentPlayerId = null;
                     return;
                 }
+                
                 wrapper.style.display = 'block';
-                controlsContainer.style.display = 'block';
-                if (window[`hls_${playerId}`]) {
-                    try { window[`hls_${playerId}`].destroy(); } catch(e) {}
-                    delete window[`hls_${playerId}`];
-                }
-                if (window[`player_${playerId}`]) {
-                    try { 
-                        window[`player_${playerId}`].off('timeupdate');
-                        window[`player_${playerId}`].off('ended');
-                        window[`player_${playerId}`].off('loadstart');
-                        window[`player_${playerId}`].dispose(); 
-                    } catch(e) {}
-                    delete window[`player_${playerId}`];
-                }
-                const videoEl = document.getElementById(playerId);
-                if (!videoEl) return;
+                if (controlsContainer) controlsContainer.style.display = 'block';
+                
+                // Reset duration
                 document.getElementById('durationDisplay').textContent = '00:00:00';
-                currentSpeed = 1.0;
-                if (link && (link.includes('youtube.com') || link.includes('youtu.be'))) {
-                    const videoId = extractYouTubeId(link);
-                    if (videoId) {
-                        let embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`;
-                        if (googleUser) {
-                            embedUrl += `&origin=${window.location.origin}`;
-                        }
-                        wrapper.innerHTML = `
-                            <iframe 
-                                src="${embedUrl}"
-                                frameborder="0" 
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                allowfullscreen
-                                style="width:100%;height:100%;aspect-ratio:16/9;border:none;border-radius:12px;"
-                            ></iframe>
-                        `;
-                        wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        controlsContainer.style.display = 'none';
-                        showToast('🎬 YouTube video loaded (controls limited)', 'info');
-                        return;
-                    }
-                }
-                if (link && link.includes('.m3u8') && Hls.isSupported()) {
-                    const videoEl2 = document.createElement('video');
-                    videoEl2.id = playerId;
-                    videoEl2.className = 'video-js vjs-default-skin';
-                    videoEl2.setAttribute('controls', '');
-                    videoEl2.setAttribute('preload', 'auto');
-                    videoEl2.style.width = '100%';
-                    videoEl2.style.height = '100%';
-                    videoEl2.style.aspectRatio = '16/9';
-                    wrapper.innerHTML = '';
-                    wrapper.appendChild(videoEl2);
-                    const hls = new Hls({
-                        enableWorker: true,
-                        lowLatencyMode: true,
-                        maxBufferLength: 30,
-                        maxMaxBufferLength: 60,
-                        xhrSetup: function(xhr, url) {
-                            xhr.setRequestHeader('Referer', 'https://classplusapp.com/');
-                            xhr.setRequestHeader('Origin', 'https://classplusapp.com');
-                            xhr.withCredentials = true;
-                        }
-                    });
-                    hls.loadSource(link);
-                    hls.attachMedia(videoEl2);
-                    hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                        videoEl2.play().catch(e => console.log('Play error:', e));
-                    });
-                    hls.on(Hls.Events.ERROR, function(event, data) {
-                        if (data.fatal) {
-                            tryFallbackHLSPlayer(videoEl2, link, playerId);
-                        }
-                    });
-                    window[`hls_${playerId}`] = hls;
-                    const player = videojs(videoEl2, {
-                        controls: true,
-                        fluid: true,
-                        html5: {
-                            nativeAudioTracks: false,
-                            nativeVideoTracks: false,
-                        }
-                    });
-                    window[`player_${playerId}`] = player;
-                    setupDurationTracking(player, playerId);
-                    window[`player_${playerId}`] = player;
-                    wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    return;
-                }
-                if (link && (link.includes('.mp4') || link.includes('.webm'))) {
-                    const videoEl2 = document.createElement('video');
-                    videoEl2.id = playerId;
-                    videoEl2.className = 'video-js vjs-default-skin';
-                    videoEl2.setAttribute('controls', '');
-                    videoEl2.setAttribute('preload', 'auto');
-                    videoEl2.style.width = '100%';
-                    videoEl2.style.height = '100%';
-                    videoEl2.style.aspectRatio = '16/9';
-                    wrapper.innerHTML = '';
-                    wrapper.appendChild(videoEl2);
-                    const player = videojs(videoEl2, {
-                        autoplay: true,
-                        controls: true,
-                        fluid: true,
-                        html5: {
-                            nativeAudioTracks: false,
-                            nativeVideoTracks: false,
-                        }
-                    });
-                    window[`player_${playerId}`] = player;
-                    player.src({ src: link, type: 'video/mp4' });
-                    player.play();
-                    setupDurationTracking(player, playerId);
-                    wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    return;
-                }
-                wrapper.innerHTML = `
-                    <div style="padding:40px;text-align:center;color:#b33a3a;background:#0d1117;border-radius:12px;">
-                        ⚠️ Unsupported video format.<br>
-                        <small style="color:#6a7c94;">Supported: YouTube, HLS (.m3u8), MP4</small>
-                    </div>
-                `;
-                controlsContainer.style.display = 'none';
+                isReady = false;
+                
+                // Init custom player
+                initCustomPlayer(wrapper, link, playerId);
                 wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
             });
         });
@@ -1449,7 +1652,7 @@
         renderPlaylists();
     }
 
-    // ==================== ATTACH PLAY EVENTS ====================
+    // ==================== ATTACH PLAY EVENTS (Recorded Videos) ====================
     function attachPlayEvents() {
         document.querySelectorAll('.play-btn').forEach(btn => {
             btn.addEventListener('click', function() {
@@ -1676,10 +1879,42 @@
         if (e.key === 'Escape') clearSearch();
     });
 
+    // ==================== KEYBOARD SHORTCUTS ====================
+    document.addEventListener('keydown', function(e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        
+        // Find active custom player
+        const activeWrapper = document.querySelector('.custom-player-wrapper[style*="display: block"]');
+        if (!activeWrapper) return;
+        
+        const parentItem = activeWrapper.closest('.important-item');
+        if (!parentItem) return;
+        
+        const playerId = parentItem.dataset.playerId;
+        if (!playerId) return;
+        
+        switch(e.key) {
+            case ' ':
+                e.preventDefault();
+                toggleCustomPlay(playerId);
+                break;
+            case 'ArrowRight':
+                e.preventDefault();
+                customSkip(playerId, 10);
+                break;
+            case 'ArrowLeft':
+                e.preventDefault();
+                customSkip(playerId, -10);
+                break;
+        }
+    });
+
     // ==================== DISPOSE PLAYERS ====================
     window.addEventListener('beforeunload', function() {
         if (resetCheckInterval) clearInterval(resetCheckInterval);
         if (sessionValidationInterval) clearInterval(sessionValidationInterval);
+        stopProgressUpdate();
+        disposeCustomPlayer();
         for (let key in window) {
             if (key.startsWith('player_') && window[key] && typeof window[key].dispose === 'function') {
                 try { window[key].dispose(); } catch(e) {}
@@ -1699,7 +1934,7 @@
         document.getElementById('loginContainer').style.display = 'block';
         document.getElementById('videoContent').style.display = 'none';
     }
-    console.log('✅ Video Portal loaded - Key Generation Limit (1 hour, 4 per day)');
+    console.log('✅ Video Portal loaded - Custom Player in Important Section');
 })();
 </script>
 </body>
