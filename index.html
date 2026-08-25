@@ -13,81 +13,352 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
     body { background: #f0f4fb; min-height: 100vh; display: flex; justify-content: center; padding: 30px 16px; }
-    .app { max-width: 1100px; width: 100%; background: white; border-radius: 36px; box-shadow: 0 20px 50px rgba(0,0,0,0.04); padding: 28px 30px; }
+    .app { max-width: 1100px; width: 100%; background: white; border-radius: 36px; box-shadow: 0 20px 50px rgba(0,0,0,0.04); padding: 28px 30px; position: relative; }
     
+    /* ===== TOP-RIGHT ACTIVE USERS BUTTON ===== */
+    .active-btn-wrapper {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      z-index: 50;
+    }
+    
+    .active-btn-small {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #1a7a3a, #1f944a);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 4px 15px rgba(26, 122, 58, 0.3);
+      position: relative;
+    }
+    .active-btn-small:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 25px rgba(26, 122, 58, 0.4);
+    }
+    .active-btn-small:active {
+      transform: scale(0.95);
+    }
+    .active-btn-small .live-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: #4ade80;
+      border-radius: 50%;
+      animation: live-pulse 1.5s infinite;
+    }
+    @keyframes live-pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.3; transform: scale(0.7); }
+    }
+    .active-btn-small .count-badge {
+      background: rgba(255,255,255,0.2);
+      padding: 1px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      min-width: 20px;
+      text-align: center;
+    }
+    .active-btn-small .icon-arrow {
+      font-size: 0.7rem;
+      transition: transform 0.3s ease;
+    }
+    .active-btn-small .icon-arrow.open {
+      transform: rotate(180deg);
+    }
+
+    /* ===== POPUP ===== */
+    .active-popup {
+      position: absolute;
+      top: 60px;
+      right: 0;
+      width: 360px;
+      max-height: 420px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 0;
+      display: none;
+      overflow: hidden;
+      animation: popupSlide 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 100;
+    }
+    .active-popup.show {
+      display: block;
+    }
+    @keyframes popupSlide {
+      from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    
+    .popup-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 18px 12px;
+      border-bottom: 1px solid #e8edf6;
+    }
+    .popup-header .title {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #0b1a33;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .popup-header .title .count {
+      background: #1a7a3a;
+      color: white;
+      padding: 1px 10px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+    .popup-header .close-btn {
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      color: #6a7c94;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .popup-header .close-btn:hover {
+      background: #fee;
+      color: #b33a3a;
+      transform: scale(1.1);
+    }
+    
+    .popup-divider {
+      height: 2px;
+      background: linear-gradient(90deg, #f7971e, transparent);
+      opacity: 0.3;
+    }
+    
+    .popup-body {
+      padding: 8px 0;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+    .popup-body::-webkit-scrollbar {
+      width: 4px;
+    }
+    .popup-body::-webkit-scrollbar-track {
+      background: #f0f4fb;
+    }
+    .popup-body::-webkit-scrollbar-thumb {
+      background: #c8d4e4;
+      border-radius: 10px;
+    }
+    
+    .user-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 18px;
+      transition: all 0.2s ease;
+      cursor: default;
+      border-left: 3px solid transparent;
+    }
+    .user-item:hover {
+      background: rgba(0, 0, 0, 0.03);
+      border-left-color: #f7971e;
+    }
+    .user-item.current-user {
+      background: #e6f5e6;
+      border-left-color: #1a7a3a;
+    }
+    .user-item .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .user-item .user-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4ade80;
+      flex-shrink: 0;
+      animation: live-pulse 1.5s infinite;
+    }
+    .user-item .user-email {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #0b1a33;
+    }
+    .user-item .user-email.hidden {
+      color: #6a7c94;
+      font-weight: 400;
+    }
+    .user-item .user-time {
+      font-size: 0.75rem;
+      color: #6a7c94;
+      font-weight: 500;
+      font-family: 'Courier New', monospace;
+    }
+    .user-item .current-badge {
+      background: #1a7a3a;
+      color: white;
+      font-size: 0.55rem;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 600;
+      margin-left: 6px;
+    }
+    
+    .popup-footer {
+      padding: 10px 18px 14px;
+      border-top: 1px solid #e8edf6;
+    }
+    .popup-footer .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      color: #6a7c94;
+      margin-bottom: 4px;
+    }
+    .popup-footer .progress-track {
+      height: 4px;
+      background: #e8edf6;
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+    }
+    .popup-footer .progress-track .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #f7971e, #f5a623);
+      border-radius: 10px;
+      width: 0%;
+      transition: width 0.5s ease;
+    }
+    .popup-footer .progress-track .progress-fill.week-reset {
+      background: linear-gradient(90deg, #6c8cff, #4a6cf7);
+    }
+    .popup-footer .progress-time {
+      font-size: 0.65rem;
+      color: #8b949e;
+      text-align: right;
+      margin-top: 2px;
+      font-family: 'Courier New', monospace;
+    }
+    .popup-footer .empty-state {
+      text-align: center;
+      padding: 20px 0;
+      color: #6a7c94;
+      font-style: italic;
+      font-size: 0.85rem;
+    }
+
+    /* ===== RESPONSIVE ===== */
     @media (max-width: 768px) {
-      .app { padding: 16px; border-radius: 20px; }
-      .header h1 { font-size: 1.3rem; }
-      .chapter-item { padding: 12px 16px; gap: 10px; }
-      .chapter-number { font-size: 0.9rem; min-width: 60px; }
-      .chapter-name { font-size: 0.95rem; }
-      .play-btn { padding: 6px 16px; font-size: 0.8rem; }
-      .login-container { padding: 20px; margin: 20px auto; }
-      .user-info { font-size: 0.75rem; gap: 8px; }
-      .session-timer { font-size: 0.65rem; padding: 3px 8px; }
-      .status-bar { font-size: 0.7rem; padding: 6px 12px; }
-      .search-container { flex-direction: column; }
-      .search-container input { width: 100%; }
-      .duration-bar { flex-wrap: wrap; gap: 6px; }
-      .duration-bar .value { font-size: 14px; min-width: 80px; }
-      /* 🔥 MOBILE CONTROLS FIX */
-      .video-js .vjs-control-bar { 
-        height: 44px !important; 
-        padding: 0 8px !important; 
-        margin: 0 4px 8px 4px !important;
-        border-radius: 30px !important;
-        display: flex !important;
-        visibility: visible !important;
-        opacity: 1 !important;
+      .active-btn-wrapper {
+        top: 16px;
+        right: 16px;
       }
-      .video-js .vjs-current-time, .video-js .vjs-duration { font-size: 0.65rem !important; }
-      .speed-select-wrap select { font-size: 0.6rem; padding: 3px 18px 3px 8px; min-width: 48px; height: 22px !important; }
-      .video-js .vjs-play-control { font-size: 1.2em !important; width: 32px !important; }
-      .video-js .vjs-fullscreen-control { font-size: 1.2em !important; width: 32px !important; }
-      .video-js .vjs-mute-control { width: 28px !important; font-size: 1em !important; }
-      .video-js .vjs-progress-control { min-width: 50px !important; }
-      .video-js .vjs-volume-panel { display: none !important; }
+      .active-btn-small {
+        padding: 6px 12px;
+        font-size: 0.75rem;
+        gap: 6px;
+      }
+      .active-btn-small .live-dot {
+        width: 6px;
+        height: 6px;
+      }
+      .active-btn-small .count-badge {
+        font-size: 0.7rem;
+        padding: 1px 8px;
+        min-width: 16px;
+      }
+      .active-popup {
+        width: 300px;
+        right: -10px;
+        top: 50px;
+        max-height: 380px;
+      }
+      .popup-header .title {
+        font-size: 0.85rem;
+      }
+      .user-item {
+        padding: 6px 14px;
+      }
+      .user-item .user-email {
+        font-size: 0.75rem;
+      }
+      .user-item .user-time {
+        font-size: 0.65rem;
+      }
     }
 
     @media (max-width: 480px) {
-      .app { padding: 12px; border-radius: 16px; }
-      .header h1 { font-size: 1.1rem; }
-      .chapter-item { flex-direction: column; align-items: stretch; gap: 8px; }
-      .chapter-number { min-width: auto; }
-      .play-btn { width: 100%; text-align: center; }
-      .duration-bar .value { font-size: 12px; min-width: 70px; }
-      .video-js .vjs-control-bar { 
-        height: 38px !important; 
-        padding: 0 6px !important; 
-        margin: 0 2px 6px 2px !important;
-        border-radius: 20px !important;
+      .active-btn-wrapper {
+        top: 12px;
+        right: 12px;
       }
-      .video-js .vjs-current-time, .video-js .vjs-duration { font-size: 0.5rem !important; }
-      .speed-select-wrap select { font-size: 0.45rem; padding: 2px 14px 2px 6px; min-width: 38px; height: 18px !important; }
-      .video-js .vjs-play-control { font-size: 1em !important; width: 26px !important; }
-      .video-js .vjs-fullscreen-control { font-size: 1em !important; width: 26px !important; }
-      .video-js .vjs-progress-control { min-width: 30px !important; }
+      .active-btn-small {
+        padding: 4px 10px;
+        font-size: 0.65rem;
+        gap: 4px;
+      }
+      .active-btn-small .live-dot {
+        width: 5px;
+        height: 5px;
+      }
+      .active-btn-small .count-badge {
+        font-size: 0.6rem;
+        padding: 1px 6px;
+        min-width: 14px;
+      }
+      .active-popup {
+        width: 260px;
+        right: -5px;
+        top: 42px;
+        max-height: 340px;
+        border-radius: 16px;
+      }
+      .popup-header {
+        padding: 10px 14px 8px;
+      }
+      .popup-header .title {
+        font-size: 0.75rem;
+      }
+      .popup-header .close-btn {
+        font-size: 1rem;
+      }
+      .user-item {
+        padding: 5px 12px;
+      }
+      .user-item .user-email {
+        font-size: 0.65rem;
+      }
+      .user-item .user-time {
+        font-size: 0.55rem;
+      }
+      .popup-footer {
+        padding: 6px 12px 10px;
+      }
+      .popup-footer .progress-label {
+        font-size: 0.6rem;
+      }
     }
 
-    /* 🔥 FIX: Controls always visible on mobile */
-    .video-js .vjs-control-bar {
-      display: flex !important;
-      visibility: visible !important;
-      opacity: 1 !important;
-    }
-    .video-js.vjs-user-inactive .vjs-control-bar {
-      visibility: visible !important;
-      opacity: 1 !important;
-    }
-    .video-js .vjs-remaining-time {
-      display: none !important;
-    }
-    .video-js .vjs-time-divider {
-      display: none !important;
-    }
-
+    /* ===== EXISTING STYLES ===== */
     .header { border-bottom: 1px solid #e8edf6; padding-bottom: 18px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
-    .header h1 { font-weight: 600; font-size: 1.9rem; color: #0b1a33; }
+    .header h1 { font-weight: 600; font-size: 1.9rem; color: #0b1a33; padding-right: 80px; }
     
     .login-container { max-width: 450px; margin: 40px auto; padding: 30px; background: #f8faff; border-radius: 24px; border: 1px solid #e6edf6; text-align: center; }
     .login-container h2 { margin-bottom: 20px; color: #0b1a33; }
@@ -386,12 +657,8 @@
       padding: 0 4px !important;
       color: #bcc8e6 !important;
     }
-    .video-js .vjs-remaining-time {
-      display: none !important;
-    }
-    .video-js .vjs-time-divider {
-      display: none !important;
-    }
+    .video-js .vjs-remaining-time { display: none !important; }
+    .video-js .vjs-time-divider { display: none !important; }
 
     .video-js .vjs-progress-control {
       flex: 3 1 auto !important;
@@ -418,9 +685,7 @@
       border-radius: 20px !important;
     }
 
-    .video-js .vjs-live-control {
-      display: none !important;
-    }
+    .video-js .vjs-live-control { display: none !important; }
 
     .video-js .vjs-volume-panel {
       display: flex !important;
@@ -428,15 +693,9 @@
       height: 100% !important;
       flex-shrink: 0 !important;
     }
-    .video-js .vjs-mute-control {
-      width: 36px !important;
-    }
-    .video-js .vjs-volume-bar {
-      background: rgba(255, 255, 255, 0.2) !important;
-    }
-    .video-js .vjs-volume-level {
-      background: #6c8cff !important;
-    }
+    .video-js .vjs-mute-control { width: 36px !important; }
+    .video-js .vjs-volume-bar { background: rgba(255, 255, 255, 0.2) !important; }
+    .video-js .vjs-volume-level { background: #6c8cff !important; }
 
     .speed-select-wrap {
       display: flex !important;
@@ -483,9 +742,7 @@
     .video-js .vjs-seek-to-live-control {
       display: none !important;
     }
-    .video-js .vjs-big-play-button {
-      display: none !important;
-    }
+    .video-js .vjs-big-play-button { display: none !important; }
 
     .important-item .player-wrapper-professional {
       width: 100%;
@@ -517,9 +774,7 @@
       z-index: 5;
       display: none;
     }
-    .loading-spinner-pos.show {
-      display: block;
-    }
+    .loading-spinner-pos.show { display: block; }
     .loading-spinner-pos .spinner {
       width: 40px;
       height: 40px;
@@ -531,6 +786,14 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+
+    /* Fix header title space */
+    @media (max-width: 768px) {
+      .header h1 { padding-right: 60px; font-size: 1.3rem; }
+    }
+    @media (max-width: 480px) {
+      .header h1 { padding-right: 50px; font-size: 1.1rem; }
+    }
   </style>
 </head>
 <body>
@@ -540,9 +803,43 @@
 </div>
 
 <div class="app">
+
+  <!-- ===== HEADER WITH ACTIVE USERS BUTTON ===== -->
   <div class="header">
     <h1>📽️ Video Portal</h1>
-    <div id="userInfo" class="user-info"></div>
+    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+      <!-- Active Users Button (Top-Right) -->
+      <div class="active-btn-wrapper" id="activeBtnWrapper">
+        <button class="active-btn-small" id="activeUsersBtn" onclick="toggleActivePopup()">
+          <span class="live-dot"></span>
+          <span>Active</span>
+          <span class="count-badge" id="activeCount">0</span>
+          <span class="icon-arrow" id="arrowIcon">▼</span>
+        </button>
+        <!-- Popup -->
+        <div class="active-popup" id="activePopup">
+          <div class="popup-header">
+            <span class="title">👥 Active Users <span class="count" id="popupCount">0 online</span></span>
+            <button class="close-btn" onclick="closeActivePopup()">✕</button>
+          </div>
+          <div class="popup-divider"></div>
+          <div class="popup-body" id="activeUsersList">
+            <div class="empty-state">Loading...</div>
+          </div>
+          <div class="popup-footer">
+            <div class="progress-label">
+              <span>📊 Weekly Activity</span>
+              <span id="weeklyProgressText">0%</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill week-reset" id="weeklyProgressFill" style="width: 0%;"></div>
+            </div>
+            <div class="progress-time" id="weeklyTimeDisplay">0h 0m</div>
+          </div>
+        </div>
+      </div>
+      <div id="userInfo" class="user-info"></div>
+    </div>
   </div>
   
   <div id="resetBanner" class="reset-banner">🔄 Session expired after 3 days. Please login again.</div>
@@ -673,7 +970,7 @@
 })();
 
 // ========================================================================
-//  MAIN APP
+//  MAIN APP WITH ACTIVE USERS
 // ========================================================================
 (function() {
     const API_BASE = 'https://video-play-api.newstreamcp.workers.dev/api';
@@ -694,6 +991,11 @@
     
     let activePlayer = null;
     let activePlayerId = null;
+    
+    // ===== ACTIVE USERS VARIABLES =====
+    let activityInterval = null;
+    let isPopupOpen = false;
+    let currentUserEmail = null;
 
     // ==================== SESSION MANAGEMENT ====================
     function generateSessionId() {
@@ -726,6 +1028,7 @@
             clearInterval(sessionValidationInterval);
             sessionValidationInterval = null;
         }
+        stopActivityTracking();
     }
 
     function getDeviceInfo() {
@@ -806,6 +1109,171 @@
         }, 8000);
     }
 
+    // ==================== ACTIVE USERS FUNCTIONS ====================
+    
+    // 🔥 Hide email function - show only first 5 chars + ****
+    function hideEmail(email) {
+        if (!email) return 'Unknown';
+        if (email === currentUserEmail) return email; // Show full email for current user
+        const atIndex = email.indexOf('@');
+        const username = atIndex > 0 ? email.substring(0, atIndex) : email;
+        if (username.length <= 5) {
+            return username + '****';
+        }
+        return username.substring(0, 5) + '****';
+    }
+
+    async function trackActivity() {
+        const session = getSession();
+        if (!session || !session.user) return;
+        currentUserEmail = session.user.email;
+        
+        try {
+            await fetch(API_BASE + '/activity/track', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: session.user.email,
+                    sessionId: session.sessionId
+                })
+            });
+        } catch (error) {
+            console.log('Activity tracking error:', error);
+        }
+    }
+
+    async function getUserActivityStats() {
+        try {
+            const response = await fetch(API_BASE + '/activity/stats', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await response.json();
+            if (data.success) {
+                updateActiveUsersUI(data);
+            }
+        } catch (error) {
+            console.log('Stats fetch error:', error);
+        }
+    }
+
+    function formatActiveTime(seconds) {
+        if (seconds < 60) return seconds + 's';
+        const mins = Math.floor(seconds / 60);
+        if (mins < 60) return mins + 'm ' + (seconds % 60) + 's';
+        const hrs = Math.floor(mins / 60);
+        const remainingMins = mins % 60;
+        if (hrs < 24) return hrs + 'h ' + remainingMins + 'm';
+        const days = Math.floor(hrs / 24);
+        return days + 'd ' + (hrs % 24) + 'h';
+    }
+
+    function updateActiveUsersUI(data) {
+        const countEl = document.getElementById('activeCount');
+        const popupCount = document.getElementById('popupCount');
+        const listEl = document.getElementById('activeUsersList');
+        const progressFill = document.getElementById('weeklyProgressFill');
+        const progressText = document.getElementById('weeklyProgressText');
+        const timeDisplay = document.getElementById('weeklyTimeDisplay');
+
+        if (countEl) countEl.textContent = data.active_count || 0;
+        if (popupCount) popupCount.textContent = (data.active_count || 0) + ' online';
+
+        if (listEl) {
+            if (data.active_users && data.active_users.length > 0) {
+                let html = '';
+                data.active_users.forEach(user => {
+                    const isCurrentUser = user.email === currentUserEmail;
+                    const displayEmail = isCurrentUser ? user.email : hideEmail(user.email);
+                    const time = formatActiveTime(user.total_active_seconds || 0);
+                    const userClass = isCurrentUser ? 'user-item current-user' : 'user-item';
+                    const badge = isCurrentUser ? ' <span class="current-badge">You</span>' : '';
+                    html += `
+                        <div class="${userClass}">
+                            <div class="user-info">
+                                <span class="user-dot"></span>
+                                <span class="user-email">${displayEmail}${badge}</span>
+                            </div>
+                            <span class="user-time">${time}</span>
+                        </div>
+                    `;
+                });
+                listEl.innerHTML = html;
+            } else {
+                listEl.innerHTML = `<div class="empty-state">No active users right now</div>`;
+            }
+        }
+
+        // Update weekly progress
+        if (data.weekly_stats) {
+            const totalSeconds = data.weekly_stats.total_active_time || 0;
+            const maxSeconds = 7 * 24 * 60 * 60;
+            const percent = Math.min(100, (totalSeconds / maxSeconds) * 100);
+            if (progressFill) progressFill.style.width = percent + '%';
+            if (progressText) progressText.textContent = Math.round(percent) + '%';
+            if (timeDisplay) timeDisplay.textContent = formatActiveTime(totalSeconds);
+        }
+    }
+
+    // ===== TOGGLE POPUP =====
+    window.toggleActivePopup = function() {
+        isPopupOpen = !isPopupOpen;
+        const popup = document.getElementById('activePopup');
+        const arrow = document.getElementById('arrowIcon');
+        if (popup) {
+            popup.classList.toggle('show');
+            if (arrow) arrow.classList.toggle('open');
+            if (isPopupOpen) {
+                getUserActivityStats();
+            }
+        }
+    };
+
+    window.closeActivePopup = function() {
+        isPopupOpen = false;
+        const popup = document.getElementById('activePopup');
+        const arrow = document.getElementById('arrowIcon');
+        if (popup) popup.classList.remove('show');
+        if (arrow) arrow.classList.remove('open');
+    };
+
+    // Close popup on outside click
+    document.addEventListener('click', function(e) {
+        const wrapper = document.getElementById('activeBtnWrapper');
+        if (wrapper && !wrapper.contains(e.target)) {
+            closeActivePopup();
+        }
+    });
+
+    function startActivityTracking() {
+        stopActivityTracking();
+        trackActivity();
+        activityInterval = setInterval(() => {
+            trackActivity();
+            if (isPopupOpen) {
+                getUserActivityStats();
+            }
+        }, 30000);
+        setTimeout(() => {
+            getUserActivityStats();
+        }, 2000);
+    }
+
+    function stopActivityTracking() {
+        if (activityInterval) {
+            clearInterval(activityInterval);
+            activityInterval = null;
+        }
+        const session = getSession();
+        if (session && session.user) {
+            fetch(API_BASE + '/activity/leave', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: session.user.email })
+            }).catch(() => {});
+        }
+    }
+
     // ==================== KEY GENERATION ====================
     async function generateKey() {
         const email = document.getElementById('genKeyEmail').value.trim();
@@ -838,7 +1306,6 @@
                     </span>
                 `;
                 statusEl.className = 'key-gen-status success';
-
                 if (navigator.clipboard) {
                     navigator.clipboard.writeText(data.key);
                 }
@@ -991,6 +1458,7 @@
 
             if (data.success) {
                 currentUser = data.user;
+                currentUserEmail = email;
                 successEl.textContent = '✅ Login successful! Loading videos...';
                 saveSession(data.user, key, sessionId);
                 isHijacked = false;
@@ -998,6 +1466,7 @@
                 fetchPlaylists();
                 fetchImportantSection();
                 startSessionValidation();
+                startActivityTracking();
                 document.getElementById('hijackNotification').classList.remove('show');
             } else {
                 errorEl.textContent = '❌ ' + (data.error || 'Login failed');
@@ -1012,9 +1481,15 @@
 
     // ==================== LOGOUT ====================
     window.logout = async function() {
+        stopActivityTracking();
         const session = getSession();
         if (session && session.user) {
             try {
+                await fetch(API_BASE + '/activity/leave', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: session.user.email })
+                });
                 await fetch(API_BASE + '/auth/logout', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1051,6 +1526,7 @@
         }
         document.getElementById('durationDisplay').textContent = '00:00:00';
         disposePlayer();
+        closeActivePopup();
         for (let key in window) {
             if (key.startsWith('player_') && window[key] && typeof window[key].dispose === 'function') {
                 try { window[key].dispose(); } catch(e) {}
@@ -1108,7 +1584,7 @@
         return null;
     }
 
-    // ==================== INIT PROFESSIONAL PLAYER (FIXED - No Auto Pause) ====================
+    // ==================== INIT PROFESSIONAL PLAYER ====================
     function initProfessionalPlayer(wrapper, link, playerId) {
         disposePlayer();
         
@@ -1155,7 +1631,6 @@
         const videoElement = document.getElementById(`professional-player-${playerId}`);
         if (!videoElement) return;
 
-        // 🔥 FIX: Proper player config - No auto pause on speed change
         const player = videojs(videoElement, {
             controls: true,
             autoplay: true,
@@ -1186,7 +1661,6 @@
         activePlayer = player;
         activePlayerId = playerId;
 
-        // ---- LIVE Detection ----
         player.on('loadedmetadata', function() {
             const duration = player.duration();
             if (!isFinite(duration) || duration === 0 || duration === Infinity) {
@@ -1206,7 +1680,6 @@
             }
         });
 
-        // ---- Duration Tracking ----
         player.on('timeupdate', function() {
             const currentTime = player.currentTime();
             if (currentTime && !isNaN(currentTime) && currentTime > 0) {
@@ -1224,7 +1697,6 @@
             document.getElementById('durationDisplay').textContent = '00:00:00';
         });
 
-        // ---- 🔥 CLICK SEEK ----
         player.ready(function() {
             const progressControl = player.controlBar.progressControl;
             if (progressControl) {
@@ -1243,7 +1715,6 @@
                 }
             }
 
-            // ---- Speed Select (FIXED - No auto pause) ----
             const speedSelect = document.createElement('select');
             speedSelect.className = 'vjs-speed-select';
             const speeds = [0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0];
@@ -1267,11 +1738,9 @@
                 controlBar.appendChild(wrapper2);
             }
 
-            // 🔥 FIX: Speed change - No pause, just smooth speed change
             speedSelect.addEventListener('change', function() {
                 const val = parseFloat(this.value);
                 if (!isNaN(val) && val > 0) {
-                    // Simply change playback rate - no pause
                     player.playbackRate(val);
                     showToast('⚡ Speed: ' + val + 'x', 'success');
                 }
@@ -1280,7 +1749,6 @@
             player.playbackRate(1.0);
         });
 
-        // ---- Keyboard Shortcuts ----
         document.addEventListener('keydown', function(e) {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
             if (e.shiftKey || e.ctrlKey || e.altKey || e.metaKey) return;
@@ -1382,6 +1850,7 @@
             }
         }
         startResetTimer();
+        startActivityTracking();
     }
 
     // ==================== FETCH IMPORTANT SECTION ====================
@@ -1766,6 +2235,7 @@
         const session = getSession();
         if (session && session.user) {
             currentUser = session.user;
+            currentUserEmail = session.user.email;
             showVideoContent();
             fetchPlaylists();
             fetchImportantSection();
@@ -1801,6 +2271,7 @@
     window.addEventListener('beforeunload', function() {
         if (resetCheckInterval) clearInterval(resetCheckInterval);
         if (sessionValidationInterval) clearInterval(sessionValidationInterval);
+        stopActivityTracking();
         disposePlayer();
         for (let key in window) {
             if (key.startsWith('player_') && window[key] && typeof window[key].dispose === 'function') {
@@ -1821,7 +2292,7 @@
         document.getElementById('loginContainer').style.display = 'block';
         document.getElementById('videoContent').style.display = 'none';
     }
-    console.log('✅ Video Portal loaded - Fixed (No auto pause on speed change + Mobile controls visible)');
+    console.log('✅ Video Portal loaded - Active Users Tracking Active');
 })();
 </script>
 </body>
