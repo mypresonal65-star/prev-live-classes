@@ -258,6 +258,18 @@
     
     .empty-state { color: #6a7c94; padding: 40px 0; text-align: center; font-style: italic; }
     .playlist-title { font-size: 1.4rem; font-weight: 600; color: #0b1a33; margin-bottom: 16px; }
+
+    /* 🔥 NEW: Recorded + Subject Sections as TABS */
+    .content-section-title { font-size: 1.25rem; font-weight: 700; color: #0b1a33; margin: 28px 0 12px; padding-bottom: 8px; border-bottom: 2px solid #e8edf6; display: flex; align-items: center; gap: 8px; }
+    .section-tabs { display: flex; gap: 10px; flex-wrap: wrap; margin: 8px 0 20px; }
+    .section-tab-btn { display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 40px; border: 2px solid #d9e1ec; background: #ffffff; color: #1a2b4c; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: 0.15s; }
+    .section-tab-btn:hover { border-color: #1a2b4c; }
+    .section-tab-btn.active { background: #0b1a33; border-color: #0b1a33; color: #ffffff; }
+    .section-tab-btn .tab-count { background: #eef3fa; color: #4c637f; font-size: 0.75rem; font-weight: 700; padding: 2px 9px; border-radius: 40px; min-width: 18px; text-align: center; }
+    .section-tab-btn.active .tab-count { background: rgba(255,255,255,0.18); color: #ffffff; }
+    .section-panel { display: none; }
+    .section-panel.active { display: block; }
+    @media (max-width: 700px) { .section-tabs { gap: 8px; } .section-tab-btn { padding: 8px 14px; font-size: 0.85rem; } }
     .status-bar { font-size: 0.8rem; padding: 8px 16px; border-radius: 40px; display: inline-block; margin-bottom: 16px; background: #f0f4fb; color: #4c637f; }
     .user-info { font-size: 0.85rem; color: #4c637f; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; width: 100%; }
     .user-info .row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
@@ -611,23 +623,112 @@
       </div>
     </div>
     
-    <!-- Recorded Videos -->
-    <div class="playlist-selector">
-      <div style="display:flex; gap:12px; flex-wrap:wrap; width:100%; align-items:center;">
-        <select id="playlistDropdown" style="flex:2; min-width:150px; padding:10px 20px; border:2px solid #d9e1ec; border-radius:40px; background:white; color:#1a2b4c; font-weight:500; cursor:pointer;">
-          <option value="">Select a playlist...</option>
-        </select>
-        <div class="search-container">
-          <input type="text" id="searchInput" placeholder="🔍 Search playlists..." />
-          <button class="search-btn" id="searchBtn">Search</button>
-          <button class="clear-btn" id="clearSearchBtn">Clear</button>
+    <!-- 🔥 NEW: Section Tabs (Recorded, Reasoning, Quant, Computer, English) -->
+    <div class="content-section-title">📚 Classes</div>
+    <div class="section-tabs" id="sectionTabs">
+      <button class="section-tab-btn active" data-section="recorded">📐 Math <span class="tab-count" id="tabCount-recorded">0</span></button>
+      <button class="section-tab-btn" data-section="reasoning">🧠 Reasoning <span class="tab-count" id="tabCount-reasoning">0</span></button>
+      <button class="section-tab-btn" data-section="quant">🔢 Quant <span class="tab-count" id="tabCount-quant">0</span></button>
+      <button class="section-tab-btn" data-section="computer">💻 Computer <span class="tab-count" id="tabCount-computer">0</span></button>
+      <button class="section-tab-btn" data-section="english">📖 English <span class="tab-count" id="tabCount-english">0</span></button>
+    </div>
+
+    <!-- Recorded Panel -->
+    <div class="section-panel active" id="sectionPanel-recorded">
+      <div class="playlist-selector">
+        <div style="display:flex; gap:12px; flex-wrap:wrap; width:100%; align-items:center;">
+          <select id="playlistDropdown-recorded" style="flex:2; min-width:150px; padding:10px 20px; border:2px solid #d9e1ec; border-radius:40px; background:white; color:#1a2b4c; font-weight:500; cursor:pointer;">
+            <option value="">Select a playlist...</option>
+          </select>
+          <div class="search-container">
+            <input type="text" id="searchInput-recorded" placeholder="🔍 Search playlists..." />
+            <button class="search-btn" id="searchBtn-recorded">Search</button>
+            <button class="clear-btn" id="clearSearchBtn-recorded">Clear</button>
+          </div>
         </div>
       </div>
+      <div id="chaptersContainer-recorded">
+        <div class="empty-state">Select a playlist to view chapters</div>
+      </div>
     </div>
-    
-    <div id="chaptersContainer">
-      <div class="empty-state">Select a playlist to view chapters</div>
+
+    <!-- Reasoning Panel -->
+    <div class="section-panel" id="sectionPanel-reasoning">
+      <div class="playlist-selector">
+        <div style="display:flex; gap:12px; flex-wrap:wrap; width:100%; align-items:center;">
+          <select id="playlistDropdown-reasoning" style="flex:2; min-width:150px; padding:10px 20px; border:2px solid #d9e1ec; border-radius:40px; background:white; color:#1a2b4c; font-weight:500; cursor:pointer;">
+            <option value="">Select a playlist...</option>
+          </select>
+          <div class="search-container">
+            <input type="text" id="searchInput-reasoning" placeholder="🔍 Search playlists..." />
+            <button class="search-btn" id="searchBtn-reasoning">Search</button>
+            <button class="clear-btn" id="clearSearchBtn-reasoning">Clear</button>
+          </div>
+        </div>
+      </div>
+      <div id="chaptersContainer-reasoning">
+        <div class="empty-state">Select a playlist to view chapters</div>
+      </div>
     </div>
+
+    <!-- Quant Panel -->
+    <div class="section-panel" id="sectionPanel-quant">
+      <div class="playlist-selector">
+        <div style="display:flex; gap:12px; flex-wrap:wrap; width:100%; align-items:center;">
+          <select id="playlistDropdown-quant" style="flex:2; min-width:150px; padding:10px 20px; border:2px solid #d9e1ec; border-radius:40px; background:white; color:#1a2b4c; font-weight:500; cursor:pointer;">
+            <option value="">Select a playlist...</option>
+          </select>
+          <div class="search-container">
+            <input type="text" id="searchInput-quant" placeholder="🔍 Search playlists..." />
+            <button class="search-btn" id="searchBtn-quant">Search</button>
+            <button class="clear-btn" id="clearSearchBtn-quant">Clear</button>
+          </div>
+        </div>
+      </div>
+      <div id="chaptersContainer-quant">
+        <div class="empty-state">Select a playlist to view chapters</div>
+      </div>
+    </div>
+
+    <!-- Computer Panel -->
+    <div class="section-panel" id="sectionPanel-computer">
+      <div class="playlist-selector">
+        <div style="display:flex; gap:12px; flex-wrap:wrap; width:100%; align-items:center;">
+          <select id="playlistDropdown-computer" style="flex:2; min-width:150px; padding:10px 20px; border:2px solid #d9e1ec; border-radius:40px; background:white; color:#1a2b4c; font-weight:500; cursor:pointer;">
+            <option value="">Select a playlist...</option>
+          </select>
+          <div class="search-container">
+            <input type="text" id="searchInput-computer" placeholder="🔍 Search playlists..." />
+            <button class="search-btn" id="searchBtn-computer">Search</button>
+            <button class="clear-btn" id="clearSearchBtn-computer">Clear</button>
+          </div>
+        </div>
+      </div>
+      <div id="chaptersContainer-computer">
+        <div class="empty-state">Select a playlist to view chapters</div>
+      </div>
+    </div>
+
+    <!-- English Panel -->
+    <div class="section-panel" id="sectionPanel-english">
+      <div class="playlist-selector">
+        <div style="display:flex; gap:12px; flex-wrap:wrap; width:100%; align-items:center;">
+          <select id="playlistDropdown-english" style="flex:2; min-width:150px; padding:10px 20px; border:2px solid #d9e1ec; border-radius:40px; background:white; color:#1a2b4c; font-weight:500; cursor:pointer;">
+            <option value="">Select a playlist...</option>
+          </select>
+          <div class="search-container">
+            <input type="text" id="searchInput-english" placeholder="🔍 Search playlists..." />
+            <button class="search-btn" id="searchBtn-english">Search</button>
+            <button class="clear-btn" id="clearSearchBtn-english">Clear</button>
+          </div>
+        </div>
+      </div>
+      <div id="chaptersContainer-english">
+        <div class="empty-state">Select a playlist to view chapters</div>
+      </div>
+    </div>
+    <!-- END Section Tabs -->
+
   </div>
   
   <div class="footer-note">⬇️ Click Play on any chapter → Supports HLS, MP4, YouTube (Unlisted + Private)</div>
@@ -681,6 +782,11 @@
     const GOOGLE_SESSION_KEY = 'google_session';
     const RESET_DURATION = 3 * 24 * 60 * 60 * 1000;
 
+    // 🔥 NEW: Section-wise state (Recorded, Reasoning, Quant, Computer, English)
+    const SECTIONS = ['recorded', 'reasoning', 'quant', 'computer', 'english'];
+    let sectionPlaylists = { recorded: [], reasoning: [], quant: [], computer: [], english: [] };
+    let sectionCurrentPlaylistId = { recorded: null, reasoning: null, quant: null, computer: null, english: null };
+    // Backward-compatible aliases (some legacy code paths may reference these)
     let playlists = [];
     let currentPlaylistId = null;
     let currentUser = null;
@@ -1469,47 +1575,64 @@
         });
     }
 
-    // ==================== FETCH PLAYLISTS ====================
-    async function fetchPlaylists() {
+    // ==================== FETCH PLAYLISTS (per section) ====================
+    async function fetchSectionPlaylists(sectionKey) {
         const statusBar = document.getElementById('statusBar');
+        const dropdown = document.getElementById('playlistDropdown-' + sectionKey);
+        const container = document.getElementById('chaptersContainer-' + sectionKey);
+        const tabCount = document.getElementById('tabCount-' + sectionKey);
+        if (!dropdown || !container) return;
         try {
-            statusBar.textContent = '🔄 Fetching videos...';
-            const response = await fetch(API_BASE + '/playlists');
+            const response = await fetch(API_BASE + '/playlists?section=' + encodeURIComponent(sectionKey));
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const data = await response.json();
             if (data.success) {
-                playlists = data.playlists;
-                statusBar.textContent = `✅ ${playlists.length} playlists loaded`;
-                const dropdown = document.getElementById('playlistDropdown');
+                sectionPlaylists[sectionKey] = data.playlists;
+                if (tabCount) tabCount.textContent = data.playlists.length;
                 dropdown.innerHTML = '<option value="">Select a playlist...</option>';
-                playlists.forEach(playlist => {
+                data.playlists.forEach(playlist => {
                     const option = document.createElement('option');
                     option.value = playlist.id;
                     option.textContent = playlist.name;
                     dropdown.appendChild(option);
                 });
-                if (playlists.length > 0) {
-                    dropdown.value = playlists[0].id;
-                    currentPlaylistId = playlists[0].id;
-                    renderPlaylists();
+                if (data.playlists.length > 0) {
+                    dropdown.value = data.playlists[0].id;
+                    sectionCurrentPlaylistId[sectionKey] = data.playlists[0].id;
+                    renderSectionPlaylists(sectionKey);
                 } else {
-                    document.getElementById('chaptersContainer').innerHTML = `<div class="empty-state">No playlists available</div>`;
+                    container.innerHTML = `<div class="empty-state">No playlists available</div>`;
                 }
             }
         } catch (error) {
-            statusBar.textContent = '❌ Failed to load videos';
+            container.innerHTML = `<div class="empty-state">❌ Failed to load videos</div>`;
             console.error(error);
         }
     }
 
-    // ==================== RENDER PLAYLISTS ====================
-    function renderPlaylists() {
-        const container = document.getElementById('chaptersContainer');
-        const dropdown = document.getElementById('playlistDropdown');
-        const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
-        let filteredPlaylists = playlists;
+    // Fetches all 5 sections (Recorded, Reasoning, Quant, Computer, English)
+    async function fetchPlaylists() {
+        const statusBar = document.getElementById('statusBar');
+        statusBar.textContent = '🔄 Fetching videos...';
+        await Promise.all(SECTIONS.map(sec => fetchSectionPlaylists(sec)));
+        // Backward-compatible alias (mirrors the 'recorded' section)
+        playlists = sectionPlaylists.recorded;
+        currentPlaylistId = sectionCurrentPlaylistId.recorded;
+        const totalCount = SECTIONS.reduce((sum, sec) => sum + (sectionPlaylists[sec]?.length || 0), 0);
+        statusBar.textContent = `✅ ${totalCount} playlists loaded`;
+    }
+
+    // ==================== RENDER PLAYLISTS (per section) ====================
+    function renderSectionPlaylists(sectionKey) {
+        const container = document.getElementById('chaptersContainer-' + sectionKey);
+        const dropdown = document.getElementById('playlistDropdown-' + sectionKey);
+        const searchInput = document.getElementById('searchInput-' + sectionKey);
+        if (!container || !dropdown || !searchInput) return;
+        const searchTerm = searchInput.value.trim().toLowerCase();
+        const allPlaylists = sectionPlaylists[sectionKey] || [];
+        let filteredPlaylists = allPlaylists;
         if (searchTerm !== '') {
-            filteredPlaylists = playlists.filter(p => p.name.toLowerCase().includes(searchTerm));
+            filteredPlaylists = allPlaylists.filter(p => p.name.toLowerCase().includes(searchTerm));
         }
         const currentValue = dropdown.value;
         dropdown.innerHTML = '<option value="">Select a playlist...</option>';
@@ -1531,7 +1654,8 @@
             container.innerHTML = `<div class="empty-state">Select a playlist from the dropdown</div>`;
             return;
         }
-        currentPlaylistId = selectedId;
+        sectionCurrentPlaylistId[sectionKey] = selectedId;
+        if (sectionKey === 'recorded') currentPlaylistId = selectedId;
         const playlist = filteredPlaylists.find(p => p.id === selectedId);
         if (!playlist) {
             container.innerHTML = `<div class="empty-state">Playlist not found</div>`;
@@ -1543,7 +1667,7 @@
         }
         let html = `<div class="playlist-title">📚 ${playlist.name}</div>`;
         playlist.chapters.forEach((chapter, index) => {
-            const playerId = `player-${chapter.id || 'ch_' + Date.now()}`;
+            const playerId = `player-${sectionKey}-${chapter.id || 'ch_' + Date.now()}`;
             let badge = '';
             if (chapter.link && (chapter.link.includes('youtube.com') || chapter.link.includes('youtu.be'))) {
                 badge = `<span class="video-type-badge youtube">🎬 YouTube</span>`;
@@ -1563,26 +1687,35 @@
             `;
         });
         container.innerHTML = html;
-        attachPlayEvents();
+        attachPlayEvents(container);
     }
 
-    // ==================== SEARCH ====================
-    function searchPlaylists() {
-        const dropdown = document.getElementById('playlistDropdown');
-        dropdown.value = '';
-        renderPlaylists();
+    // Backward-compatible alias for the 'recorded' section (used by any legacy references)
+    function renderPlaylists() {
+        renderSectionPlaylists('recorded');
     }
 
-    function clearSearch() {
-        document.getElementById('searchInput').value = '';
-        const dropdown = document.getElementById('playlistDropdown');
+    // ==================== SEARCH (per section) ====================
+    function searchSectionPlaylists(sectionKey) {
+        const dropdown = document.getElementById('playlistDropdown-' + sectionKey);
+        if (!dropdown) return;
         dropdown.value = '';
-        renderPlaylists();
+        renderSectionPlaylists(sectionKey);
+    }
+
+    function clearSectionSearch(sectionKey) {
+        const searchInput = document.getElementById('searchInput-' + sectionKey);
+        const dropdown = document.getElementById('playlistDropdown-' + sectionKey);
+        if (!searchInput || !dropdown) return;
+        searchInput.value = '';
+        dropdown.value = '';
+        renderSectionPlaylists(sectionKey);
     }
 
     // ==================== ATTACH PLAY EVENTS ====================
-    function attachPlayEvents() {
-        document.querySelectorAll('.play-btn').forEach(btn => {
+    function attachPlayEvents(scope) {
+        const root = scope || document;
+        root.querySelectorAll('.play-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const playerId = this.dataset.playerId;
                 const link = this.dataset.link;
@@ -1781,20 +1914,45 @@
     document.getElementById('loginEmail').addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); });
     document.getElementById('genKeyBtn').addEventListener('click', generateKey);
     document.getElementById('genKeyEmail').addEventListener('keydown', (e) => { if (e.key === 'Enter') generateKey(); });
-    document.getElementById('playlistDropdown').addEventListener('change', function() {
-        const selectedId = this.value;
-        if (selectedId) {
-            currentPlaylistId = selectedId;
-            renderPlaylists();
-        } else {
-            document.getElementById('chaptersContainer').innerHTML = `<div class="empty-state">Select a playlist from the dropdown</div>`;
-        }
+    // 🔥 NEW: Tab switching — click a tab to show that section's playlist + chapters
+    document.querySelectorAll('.section-tab-btn').forEach(tabBtn => {
+        tabBtn.addEventListener('click', function() {
+            const sectionKey = this.dataset.section;
+            document.querySelectorAll('.section-tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('active'));
+            this.classList.add('active');
+            const panel = document.getElementById('sectionPanel-' + sectionKey);
+            if (panel) panel.classList.add('active');
+        });
     });
-    document.getElementById('searchBtn').addEventListener('click', searchPlaylists);
-    document.getElementById('clearSearchBtn').addEventListener('click', clearSearch);
-    document.getElementById('searchInput').addEventListener('keyup', (e) => {
-        if (e.key === 'Enter') searchPlaylists();
-        if (e.key === 'Escape') clearSearch();
+
+    // 🔥 NEW: wire up dropdown/search/clear events for all 5 sections (Recorded, Reasoning, Quant, Computer, English)
+    SECTIONS.forEach(sectionKey => {
+        const dropdown = document.getElementById('playlistDropdown-' + sectionKey);
+        const searchBtn = document.getElementById('searchBtn-' + sectionKey);
+        const clearBtn = document.getElementById('clearSearchBtn-' + sectionKey);
+        const searchInput = document.getElementById('searchInput-' + sectionKey);
+        if (dropdown) {
+            dropdown.addEventListener('change', function() {
+                const selectedId = this.value;
+                if (selectedId) {
+                    sectionCurrentPlaylistId[sectionKey] = selectedId;
+                    if (sectionKey === 'recorded') currentPlaylistId = selectedId;
+                    renderSectionPlaylists(sectionKey);
+                } else {
+                    const container = document.getElementById('chaptersContainer-' + sectionKey);
+                    if (container) container.innerHTML = `<div class="empty-state">Select a playlist from the dropdown</div>`;
+                }
+            });
+        }
+        if (searchBtn) searchBtn.addEventListener('click', () => searchSectionPlaylists(sectionKey));
+        if (clearBtn) clearBtn.addEventListener('click', () => clearSectionSearch(sectionKey));
+        if (searchInput) {
+            searchInput.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') searchSectionPlaylists(sectionKey);
+                if (e.key === 'Escape') clearSectionSearch(sectionKey);
+            });
+        }
     });
 
     // ==================== DISPOSE PLAYERS ====================
