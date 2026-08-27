@@ -131,7 +131,7 @@
 
     <!-- Tabs -->
     <div class="tab-buttons">
-      <button class="tab-btn active" data-tab="playlists">📁 Playlists</button>
+      <button class="tab-btn active" data-tab="playlists">📁 Recorded Classes</button>
       <button class="tab-btn" data-tab="important">⭐ Live</button>
       <button class="tab-btn" data-tab="users">👥 Users</button>
       <button class="tab-btn" data-tab="allowed-emails">📧 Allowed Emails</button>
@@ -140,15 +140,35 @@
     <!-- Playlists Tab -->
     <div id="tab-playlists" class="tab-content active">
       <div class="section-title">📁 Add New Playlist</div>
+      <p style="color:#6a7c94;font-size:0.85rem;margin-bottom:8px;">
+        Pehle Section select karo (Recorded / Reasoning / Quant / Computer / English), fir playlist name daal ke Add karo.
+      </p>
       <div class="flex-row">
-        <input type="text" id="newPlaylistName" placeholder="Playlist name" />
+        <select id="newPlaylistSection" style="flex:1; min-width:150px;">
+          <option value="recorded">📐 Math</option>
+          <option value="reasoning">🧠 Reasoning</option>
+          <option value="quant">🔢 Quant</option>
+          <option value="computer">💻 Computer</option>
+          <option value="english">📖 English</option>
+        </select>
+        <input type="text" id="newPlaylistName" placeholder="Playlist name" style="flex:2;" />
         <button class="btn btn-success" id="addPlaylistBtn">➕ Add</button>
       </div>
       <div id="playlistFeedback" class="toast-msg"></div>
 
       <div class="section-title">📝 Add Chapter</div>
+      <p style="color:#6a7c94;font-size:0.85rem;margin-bottom:8px;">
+        Pehle Section select karo, uske baad us section ki playlist chuno, fir chapter name aur video link daal ke save karo.
+      </p>
       <div class="flex-row">
-        <select id="playlistSelect"><option value="">Select playlist</option></select>
+        <select id="chapterSectionFilter" style="flex:1; min-width:150px;">
+          <option value="recorded">📐 Math</option>
+          <option value="reasoning">🧠 Reasoning</option>
+          <option value="quant">🔢 Quant</option>
+          <option value="computer">💻 Computer</option>
+          <option value="english">📖 English</option>
+        </select>
+        <select id="playlistSelect" style="flex:2;"><option value="">Select playlist</option></select>
       </div>
       <div class="flex-row">
         <input type="text" id="chapterName" placeholder="Chapter name" />
@@ -318,6 +338,16 @@
     let importantItems = [];
     let allowedEmails = [];
     let isAuthenticated = false;
+
+    // 🔥 NEW: Sections (Recorded, Reasoning, Quant, Computer, English)
+    const SECTION_LABELS = {
+        recorded: '📐 Math',
+        reasoning: '🧠 Reasoning',
+        quant: '🔢 Quant',
+        computer: '💻 Computer',
+        english: '📖 English'
+    };
+    const SECTION_ORDER = ['Math', 'reasoning', 'quant', 'computer', 'english'];
 
     // ----- Tabs -----
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -601,6 +631,7 @@
     // ==================== ADD PLAYLIST ====================
     async function addPlaylist() {
         const name = document.getElementById('newPlaylistName').value.trim();
+        const section = document.getElementById('newPlaylistSection').value || 'Math';
         if (!name) {
             showFeedback('⚠️ Enter playlist name', 'error', 'playlistFeedback');
             return;
@@ -608,12 +639,14 @@
         try {
             const data = await apiCall('/playlists', {
                 method: 'POST',
-                body: JSON.stringify({ name })
+                body: JSON.stringify({ name, section })
             });
             if (data.success) {
                 document.getElementById('newPlaylistName').value = '';
-                showFeedback('✅ Playlist added', 'success', 'playlistFeedback');
+                showFeedback('✅ Playlist added to ' + (SECTION_LABELS[section] || section), 'success', 'playlistFeedback');
                 loadPlaylists();
+            } else {
+                showFeedback('❌ ' + (data.error || 'Failed to add playlist'), 'error', 'playlistFeedback');
             }
         } catch (error) {
             showFeedback('❌ Failed: ' + error.message, 'error', 'playlistFeedback');
@@ -626,7 +659,7 @@
         const name = document.getElementById('chapterName').value.trim();
         const link = document.getElementById('chapterLink').value.trim();
         if (!playlistId || !name || !link) {
-            showFeedback('⚠️ Fill all fields', 'error', 'chapterFeedback');
+            showFeedback('⚠️ Section + Playlist select karo aur sab fields bharo', 'error', 'chapterFeedback');
             return;
         }
         try {
@@ -840,6 +873,7 @@
     };
 
     // ==================== RENDER FUNCTIONS ====================
+    // 🔥 UPDATED: playlists are now grouped by Section (Recorded, Reasoning, Quant, Computer, English)
     function renderAdminList() {
         const list = document.getElementById('adminList');
         if (!playlists.length) {
@@ -847,28 +881,33 @@
             return;
         }
         let html = '';
-        playlists.forEach(playlist => {
-            html += `
-                <div class="playlist-header">
-                    📁 ${playlist.name}
-                    <button class="del-btn" onclick="window.deletePlaylist('${playlist.id}')">✕</button>
-                </div>
-            `;
-            if (playlist.chapters?.length) {
-                playlist.chapters.forEach(chapter => {
-                    html += `
-                        <div class="entry-item" style="padding-left:32px;">
-                            <div class="info">
-                                <span class="name">${chapter.name}</span>
-                                <span class="sub">${chapter.link}</span>
+        SECTION_ORDER.forEach(sectionKey => {
+            const sectionPlaylists = playlists.filter(p => (p.section || 'math') === sectionKey);
+            if (!sectionPlaylists.length) return;
+            html += `<div class="section-title" style="margin-top:16px;">${SECTION_LABELS[sectionKey] || sectionKey}</div>`;
+            sectionPlaylists.forEach(playlist => {
+                html += `
+                    <div class="playlist-header">
+                        📁 ${playlist.name}
+                        <button class="del-btn" onclick="window.deletePlaylist('${playlist.id}')">✕</button>
+                    </div>
+                `;
+                if (playlist.chapters?.length) {
+                    playlist.chapters.forEach(chapter => {
+                        html += `
+                            <div class="entry-item" style="padding-left:32px;">
+                                <div class="info">
+                                    <span class="name">${chapter.name}</span>
+                                    <span class="sub">${chapter.link}</span>
+                                </div>
+                                <button class="del-btn" onclick="window.deleteChapter('${playlist.id}', '${chapter.id}')">✕</button>
                             </div>
-                            <button class="del-btn" onclick="window.deleteChapter('${playlist.id}', '${chapter.id}')">✕</button>
-                        </div>
-                    `;
-                });
-            } else {
-                html += `<div class="entry-item" style="padding-left:32px; color:#6a7c94; font-style:italic;">No chapters</div>`;
-            }
+                        `;
+                    });
+                } else {
+                    html += `<div class="entry-item" style="padding-left:32px; color:#6a7c94; font-style:italic;">No chapters</div>`;
+                }
+            });
         });
         list.innerHTML = html;
         window.deletePlaylist = deletePlaylist;
@@ -903,12 +942,17 @@
         window.resetUser = resetUser;
     }
 
+    // 🔥 UPDATED: playlist dropdown (for Add Chapter) is now filtered by the selected Section
     function updatePlaylistSelect() {
         const select = document.getElementById('playlistSelect');
+        const sectionFilterEl = document.getElementById('chapterSectionFilter');
+        const sectionFilter = sectionFilterEl ? sectionFilterEl.value : 'math';
         select.innerHTML = '<option value="">Select playlist</option>';
-        playlists.forEach(p => {
-            select.innerHTML += `<option value="${p.id}">${p.name}</option>`;
-        });
+        playlists
+            .filter(p => (p.section || 'math') === sectionFilter)
+            .forEach(p => {
+                select.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+            });
     }
 
     function updateUserSelect() {
@@ -1003,6 +1047,9 @@
     document.getElementById('chapterName').addEventListener('keydown', e => { if (e.key === 'Enter') addChapter(); });
     document.getElementById('chapterLink').addEventListener('keydown', e => { if (e.key === 'Enter') addChapter(); });
     document.getElementById('newUserEmail').addEventListener('keydown', e => { if (e.key === 'Enter') addUser(); });
+
+    // 🔥 NEW: when Section (for Add Chapter) changes, refresh the playlist dropdown to only show that section's playlists
+    document.getElementById('chapterSectionFilter').addEventListener('change', updatePlaylistSelect);
 
     // Allowed Emails event listeners
     document.getElementById('addAllowedEmailBtn').addEventListener('click', addAllowedEmail);
