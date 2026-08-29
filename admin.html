@@ -339,7 +339,7 @@
     let allowedEmails = [];
     let isAuthenticated = false;
 
-    // 🔥 NEW: Sections (Recorded, Reasoning, Quant, Computer, English)
+    // Sections (Recorded, Reasoning, Quant, Computer, English)
     const SECTION_LABELS = {
         recorded: '📐 Math',
         reasoning: '🧠 Reasoning',
@@ -347,7 +347,13 @@
         computer: '💻 Computer',
         english: '📖 English'
     };
-    const SECTION_ORDER = ['Math', 'reasoning', 'quant', 'computer', 'english'];
+    // FIX: was ['Math', ...] (capital, wrong key) — must match the actual
+    // section values used everywhere else ('recorded', not 'Math').
+    // This was the reason recorded-section playlists never showed up.
+    const SECTION_ORDER = ['recorded', 'reasoning', 'quant', 'computer', 'english'];
+    // Any playlist saved before the "section" column existed has NULL/empty
+    // section in the DB — treat that as the default "recorded" section too.
+    const DEFAULT_SECTION = 'recorded';
 
     // ----- Tabs -----
     document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -631,7 +637,8 @@
     // ==================== ADD PLAYLIST ====================
     async function addPlaylist() {
         const name = document.getElementById('newPlaylistName').value.trim();
-        const section = document.getElementById('newPlaylistSection').value || 'Math';
+        // FIX: default fallback should match the real section key 'recorded'
+        const section = document.getElementById('newPlaylistSection').value || DEFAULT_SECTION;
         if (!name) {
             showFeedback('⚠️ Enter playlist name', 'error', 'playlistFeedback');
             return;
@@ -873,7 +880,7 @@
     };
 
     // ==================== RENDER FUNCTIONS ====================
-    // 🔥 UPDATED: playlists are now grouped by Section (Recorded, Reasoning, Quant, Computer, English)
+    // Playlists grouped by Section (Recorded, Reasoning, Quant, Computer, English)
     function renderAdminList() {
         const list = document.getElementById('adminList');
         if (!playlists.length) {
@@ -882,7 +889,9 @@
         }
         let html = '';
         SECTION_ORDER.forEach(sectionKey => {
-            const sectionPlaylists = playlists.filter(p => (p.section || 'math') === sectionKey);
+            // FIX: fallback for old rows with NULL/empty section is now
+            // DEFAULT_SECTION ('recorded') instead of the never-matching 'math'
+            const sectionPlaylists = playlists.filter(p => (p.section || DEFAULT_SECTION) === sectionKey);
             if (!sectionPlaylists.length) return;
             html += `<div class="section-title" style="margin-top:16px;">${SECTION_LABELS[sectionKey] || sectionKey}</div>`;
             sectionPlaylists.forEach(playlist => {
@@ -942,14 +951,15 @@
         window.resetUser = resetUser;
     }
 
-    // 🔥 UPDATED: playlist dropdown (for Add Chapter) is now filtered by the selected Section
+    // Playlist dropdown (for Add Chapter) filtered by the selected Section
     function updatePlaylistSelect() {
         const select = document.getElementById('playlistSelect');
         const sectionFilterEl = document.getElementById('chapterSectionFilter');
-        const sectionFilter = sectionFilterEl ? sectionFilterEl.value : 'math';
+        // FIX: default was 'math', now correctly 'recorded'
+        const sectionFilter = sectionFilterEl ? sectionFilterEl.value : DEFAULT_SECTION;
         select.innerHTML = '<option value="">Select playlist</option>';
         playlists
-            .filter(p => (p.section || 'math') === sectionFilter)
+            .filter(p => (p.section || DEFAULT_SECTION) === sectionFilter)
             .forEach(p => {
                 select.innerHTML += `<option value="${p.id}">${p.name}</option>`;
             });
@@ -1048,7 +1058,7 @@
     document.getElementById('chapterLink').addEventListener('keydown', e => { if (e.key === 'Enter') addChapter(); });
     document.getElementById('newUserEmail').addEventListener('keydown', e => { if (e.key === 'Enter') addUser(); });
 
-    // 🔥 NEW: when Section (for Add Chapter) changes, refresh the playlist dropdown to only show that section's playlists
+    // When Section (for Add Chapter) changes, refresh the playlist dropdown to only show that section's playlists
     document.getElementById('chapterSectionFilter').addEventListener('change', updatePlaylistSelect);
 
     // Allowed Emails event listeners
