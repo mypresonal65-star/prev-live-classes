@@ -1069,7 +1069,7 @@
         if (isYouTube) {
             const videoId = extractYouTubeId(link);
             if (videoId) {
-                let embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&controls=0&showinfo=0&iv_load_policy=3`;
+                let embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&controls=0&showinfo=0&iv_load_policy=3&cc_load_policy=0`;
                 if (googleUser) embedUrl += `&origin=${window.location.origin}`;
                 wrapper.innerHTML = `<iframe src="${embedUrl}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="width:100%;height:100%;aspect-ratio:16/9;border:none;border-radius:12px;"></iframe>`;
                 if (loadingSpinner) loadingSpinner.classList.remove('show');
