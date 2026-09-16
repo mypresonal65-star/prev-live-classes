@@ -1,3 +1,12 @@
+हाँ, पहले वाला **सॉफ्ट ब्लू / पर्पल कलर (`#6c8cff`)** वापस लगा दिया गया है! 
+
+अब प्रोग्रेस बार (Seek line) और वॉल्यूम बार दोनों पहले वाले ओरिजिनल कलर में दिखेंगे।
+
+---
+
+यहाँ आपका पूरा अपडेटेड कोड है:
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -101,7 +110,7 @@
 
     /* ===== DESKTOP VIDEO PLAYER STYLES ===== */
     .player-wrapper-professional { width: 100%; margin-top: 12px; border-radius: 16px; overflow: hidden; background: #000; position: relative; aspect-ratio: 16/9; }
-    .video-js { width: 100% !important; height: 100% !important; background: #000 !important; }
+    .video-js { width: 100% !important; height: 100% !important; background: #000 !important; position: relative; }
     .video-js.vjs-fluid { padding-top: 56.25% !important; }
     
     /* Control Bar - Desktop Style */
@@ -123,6 +132,7 @@
       border: 1px solid rgba(255,255,255,0.08) !important;
       gap: 6px;
       transition: opacity 0.3s ease, visibility 0.3s ease !important;
+      z-index: 10 !important;
     }
 
     /* Auto-hide controls when video is playing */
@@ -147,14 +157,18 @@
     
     .video-js .vjs-progress-control { flex: 1 1 auto !important; min-width: 60px !important; height: 100% !important; display: flex !important; align-items: center !important; padding: 0 8px !important; }
     .video-js .vjs-progress-control .vjs-progress-holder { background: rgba(255, 255, 255, 0.15) !important; border-radius: 20px !important; height: 5px !important; }
-    .video-js .vjs-progress-control .vjs-play-progress { background: #f7971e !important; border-radius: 20px !important; }
+    
+    /* 🔵 ORIGINAL BLUE/PURPLE COLOR RESTORED */
+    .video-js .vjs-progress-control .vjs-play-progress { background: #6c8cff !important; border-radius: 20px !important; }
     .video-js .vjs-progress-control .vjs-play-progress::before { display: none !important; }
     .video-js .vjs-progress-control .vjs-load-progress { background: rgba(255, 255, 255, 0.2) !important; border-radius: 20px !important; }
     
     .video-js .vjs-volume-panel { display: flex !important; align-items: center !important; height: 100% !important; flex-shrink: 0 !important; }
     .video-js .vjs-mute-control { width: 34px !important; }
     .video-js .vjs-volume-bar { background: rgba(255, 255, 255, 0.2) !important; }
-    .video-js .vjs-volume-level { background: #f7971e !important; }
+    
+    /* 🔵 ORIGINAL BLUE/PURPLE COLOR RESTORED */
+    .video-js .vjs-volume-level { background: #6c8cff !important; }
     
     .speed-select-wrap { display: flex !important; align-items: center !important; height: 100% !important; flex-shrink: 0 !important; }
     .speed-select-wrap select { background: rgba(20, 28, 44, 0.7); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 20px; padding: 4px 22px 4px 10px; color: #d3defa; font-weight: 600; font-size: 0.75rem; cursor: pointer; outline: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23a0b4e0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; background-size: 8px; min-width: 58px; height: 28px !important; }
@@ -164,6 +178,34 @@
     .video-js .vjs-fullscreen-control { display: flex !important; font-size: 1.3em !important; width: 38px !important; }
     .video-js .vjs-picture-in-picture-control, .video-js .vjs-captions-button, .video-js .vjs-seek-button, .video-js .vjs-seek-to-live-control, .video-js .vjs-live-control { display: none !important; }
     .video-js .vjs-big-play-button { display: none !important; }
+
+    /* ===== YOUTUBE-STYLE DOUBLE-TAP RIPPLE OVERLAY ===== */
+    .double-tap-ripple {
+      position: absolute;
+      top: 0;
+      width: 40%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+      color: #ffffff;
+      font-size: 1.2rem;
+      font-weight: 700;
+      pointer-events: none;
+      opacity: 0;
+      transform: scale(0.6);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      z-index: 25;
+    }
+    .double-tap-ripple.left { left: 0; border-radius: 0 100px 100px 0; }
+    .double-tap-ripple.right { right: 0; border-radius: 100px 0 0 100px; }
+    .double-tap-ripple.animate {
+      opacity: 1;
+      transform: scale(1);
+    }
+    .double-tap-ripple .skip-icon { font-size: 1.8rem; margin-bottom: 2px; }
 
     /* ===== MOBILE RESPONSIVE TWEAKS (<= 768px) ===== */
     @media (max-width: 768px) {
@@ -314,7 +356,7 @@
     .duration-bar.hidden { display: none !important; }
     .loading-spinner-pos { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 5; display: none; }
     .loading-spinner-pos.show { display: block; }
-    .loading-spinner-pos .spinner { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.08); border-top-color: #f7971e; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    .loading-spinner-pos .spinner { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.08); border-top-color: #6c8cff; border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .chapter-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .star-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0 4px; transition: 0.15s; color: #ccc; }
@@ -1021,6 +1063,74 @@
         return null;
     }
 
+    // ===== DOUBLE TAP GESTURE (YOUTUBE-STYLE SEEK) =====
+    function showDoubleTapAnimation(container, side, text) {
+        let ripple = container.querySelector(`.double-tap-ripple.${side}`);
+        if (!ripple) {
+            ripple = document.createElement('div');
+            ripple.className = `double-tap-ripple ${side}`;
+            ripple.innerHTML = `<span class="skip-icon">${side === 'right' ? '⏩' : '⏪'}</span><span>${text}</span>`;
+            container.appendChild(ripple);
+        } else {
+            ripple.querySelector('span:last-child').textContent = text;
+        }
+        ripple.classList.add('animate');
+        clearTimeout(ripple._timer);
+        ripple._timer = setTimeout(() => {
+            ripple.classList.remove('animate');
+        }, 550);
+    }
+
+    function enableDoubleTapSeek(player) {
+        const el = player.el();
+        let lastTapTime = 0;
+        let tapTimeout = null;
+
+        el.addEventListener('touchend', function(e) {
+            // Ignore touches on control bar buttons
+            if (e.target.closest('.vjs-control-bar')) return;
+
+            const touch = e.changedTouches[0];
+            if (!touch) return;
+
+            const currentTime = Date.now();
+            const tapGap = currentTime - lastTapTime;
+            const rect = el.getBoundingClientRect();
+            const touchX = touch.clientX - rect.left;
+            const isRightSide = touchX > (rect.width / 2);
+
+            // Double tap condition: between 40ms and 320ms
+            if (tapGap > 40 && tapGap < 320) {
+                e.preventDefault();
+                if (tapTimeout) { clearTimeout(tapTimeout); tapTimeout = null; }
+
+                if (player.hasClass('vjs-live')) {
+                    showToast('⛔ LIVE stream mein forward/backward disabled', 'error');
+                    return;
+                }
+
+                const curr = player.currentTime() || 0;
+                const total = player.duration() || 0;
+
+                if (isRightSide) {
+                    const newTime = Math.min(total || curr + 10, curr + 10);
+                    player.currentTime(newTime);
+                    showDoubleTapAnimation(el, 'right', '+10s');
+                } else {
+                    const newTime = Math.max(0, curr - 10);
+                    player.currentTime(newTime);
+                    showDoubleTapAnimation(el, 'left', '-10s');
+                }
+                lastTapTime = 0;
+            } else {
+                lastTapTime = currentTime;
+                tapTimeout = setTimeout(() => {
+                    lastTapTime = 0;
+                }, 320);
+            }
+        });
+    }
+
     // ===== INIT PROFESSIONAL PLAYER (FOR LIVE & IMPORTANT CLASSES) =====
     function initProfessionalPlayer(wrapper, link, playerId) {
         disposePlayer();
@@ -1060,6 +1170,9 @@
 
         activePlayer = player;
         activePlayerId = playerId;
+
+        // Enable Double-Tap gestures
+        enableDoubleTapSeek(player);
 
         player.on('loadedmetadata', function() {
             const duration = player.duration();
@@ -1541,6 +1654,7 @@
                     hls.on(Hls.Events.ERROR, function(event, data) { if (data.fatal) tryFallbackHLSPlayer(videoEl, link, playerId); });
                     window[`hls_${playerId}`] = hls;
                     const player = videojs(videoEl, { controls: true, fluid: true, inactivityTimeout: 3000, html5: { nativeAudioTracks: false, nativeVideoTracks: false } });
+                    enableDoubleTapSeek(player);
                     window[`player_${playerId}`] = player;
                     wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     return;
@@ -1554,6 +1668,7 @@
                     videoEl.style.width = '100%'; videoEl.style.height = '100%'; videoEl.style.aspectRatio = '16/9';
                     wrapper.innerHTML = ''; wrapper.appendChild(videoEl);
                     const player = videojs(videoEl, { autoplay: true, controls: true, fluid: true, inactivityTimeout: 3000, html5: { nativeAudioTracks: false, nativeVideoTracks: false } });
+                    enableDoubleTapSeek(player);
                     window[`player_${playerId}`] = player;
                     player.src({ src: link, type: 'video/mp4' });
                     player.play();
@@ -1572,6 +1687,7 @@
             autoplay: true, controls: true, fluid: true, inactivityTimeout: 3000,
             html5: { hls: { enableLowInitialPlaylist: true, smoothQualityChange: true, overrideNative: true }, nativeAudioTracks: false, nativeVideoTracks: false }
         });
+        enableDoubleTapSeek(player);
         window[`player_${playerId}`] = player;
         if (link && link.includes('.m3u8')) player.src({ src: link, type: 'application/x-mpegURL' });
         else if (link) player.src({ src: link, type: 'video/mp4' });
@@ -1690,8 +1806,9 @@
         document.getElementById('googleStatusBar').style.display = 'none';
         document.getElementById('userBar').style.display = 'none';
     }
-    console.log('✅ Video Portal loaded - Responsive mobile player fixed');
+    console.log('✅ Video Portal loaded - Original blue seek color restored');
 })();
 </script>
 </body>
 </html>
+```
