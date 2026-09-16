@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1079,6 +1078,7 @@
         let tapTimeout = null;
 
         el.addEventListener('touchend', function(e) {
+            // Ignore touches on control bar buttons
             if (e.target.closest('.vjs-control-bar')) return;
 
             const touch = e.changedTouches[0];
@@ -1090,6 +1090,7 @@
             const touchX = touch.clientX - rect.left;
             const isRightSide = touchX > (rect.width / 2);
 
+            // Double tap condition: between 40ms and 320ms
             if (tapGap > 40 && tapGap < 320) {
                 e.preventDefault();
                 if (tapTimeout) { clearTimeout(tapTimeout); tapTimeout = null; }
@@ -1120,54 +1121,6 @@
             }
         });
     }
-
-    // ===== 🔄 AUTO-ROTATE & ORIENTATION SYNC =====
-    function setupOrientationHandlers(player) {
-        // 1. Fullscreen Button Click pe Screen Landscape Lock
-        player.on('fullscreenchange', function() {
-            if (player.isFullscreen()) {
-                if (screen.orientation && screen.orientation.lock) {
-                    screen.orientation.lock('landscape').catch(() => {});
-                }
-            } else {
-                if (screen.orientation && screen.orientation.unlock) {
-                    try { screen.orientation.unlock(); } catch(e) {}
-                }
-            }
-        });
-    }
-
-    // 2. Mobile Tilt (Rotate) hone pe Auto Fullscreen / Exit Fullscreen
-    function handleMobileTilt() {
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
-        if (!isMobile || !activePlayer) return;
-
-        const isPlaying = !activePlayer.paused();
-        const isLandscape = (window.orientation === 90 || window.orientation === -90) ||
-                            (window.screen?.orientation?.type?.includes('landscape')) ||
-                            (window.innerWidth > window.innerHeight);
-
-        if (isLandscape && isPlaying && !activePlayer.isFullscreen()) {
-            activePlayer.requestFullscreen();
-            if (screen.orientation && screen.orientation.lock) {
-                screen.orientation.lock('landscape').catch(() => {});
-            }
-        } else if (!isLandscape && activePlayer.isFullscreen()) {
-            activePlayer.exitFullscreen();
-            if (screen.orientation && screen.orientation.unlock) {
-                try { screen.orientation.unlock(); } catch(e) {}
-            }
-        }
-    }
-
-    if (window.screen && window.screen.orientation) {
-        window.screen.orientation.addEventListener('change', handleMobileTilt);
-    }
-    window.addEventListener('orientationchange', handleMobileTilt);
-    window.addEventListener('resize', function() {
-        clearTimeout(window._orientTimer);
-        window._orientTimer = setTimeout(handleMobileTilt, 150);
-    });
 
     // ===== INIT PROFESSIONAL PLAYER (FOR LIVE & IMPORTANT CLASSES) =====
     function initProfessionalPlayer(wrapper, link, playerId) {
@@ -1209,8 +1162,8 @@
         activePlayer = player;
         activePlayerId = playerId;
 
+        // Enable Double-Tap gestures
         enableDoubleTapSeek(player);
-        setupOrientationHandlers(player);
 
         player.on('loadedmetadata', function() {
             const duration = player.duration();
@@ -1692,10 +1645,7 @@
                     hls.on(Hls.Events.ERROR, function(event, data) { if (data.fatal) tryFallbackHLSPlayer(videoEl, link, playerId); });
                     window[`hls_${playerId}`] = hls;
                     const player = videojs(videoEl, { controls: true, fluid: true, inactivityTimeout: 3000, html5: { nativeAudioTracks: false, nativeVideoTracks: false } });
-                    activePlayer = player;
-                    activePlayerId = playerId;
                     enableDoubleTapSeek(player);
-                    setupOrientationHandlers(player);
                     window[`player_${playerId}`] = player;
                     wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     return;
@@ -1709,10 +1659,7 @@
                     videoEl.style.width = '100%'; videoEl.style.height = '100%'; videoEl.style.aspectRatio = '16/9';
                     wrapper.innerHTML = ''; wrapper.appendChild(videoEl);
                     const player = videojs(videoEl, { autoplay: true, controls: true, fluid: true, inactivityTimeout: 3000, html5: { nativeAudioTracks: false, nativeVideoTracks: false } });
-                    activePlayer = player;
-                    activePlayerId = playerId;
                     enableDoubleTapSeek(player);
-                    setupOrientationHandlers(player);
                     window[`player_${playerId}`] = player;
                     player.src({ src: link, type: 'video/mp4' });
                     player.play();
@@ -1731,10 +1678,7 @@
             autoplay: true, controls: true, fluid: true, inactivityTimeout: 3000,
             html5: { hls: { enableLowInitialPlaylist: true, smoothQualityChange: true, overrideNative: true }, nativeAudioTracks: false, nativeVideoTracks: false }
         });
-        activePlayer = player;
-        activePlayerId = playerId;
         enableDoubleTapSeek(player);
-        setupOrientationHandlers(player);
         window[`player_${playerId}`] = player;
         if (link && link.includes('.m3u8')) player.src({ src: link, type: 'application/x-mpegURL' });
         else if (link) player.src({ src: link, type: 'video/mp4' });
@@ -1853,7 +1797,7 @@
         document.getElementById('googleStatusBar').style.display = 'none';
         document.getElementById('userBar').style.display = 'none';
     }
-    console.log('✅ Video Portal loaded - Auto-rotate and tilt support added');
+    console.log('✅ Video Portal loaded - Original blue seek color restored');
 })();
 </script>
 </body>
