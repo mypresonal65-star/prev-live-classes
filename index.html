@@ -71,7 +71,104 @@
     /* ===== HEADER ===== */
     .header { border-bottom: 1px solid #e8edf6; padding-bottom: 18px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
     .header h1 { font-weight: 600; font-size: 1.9rem; color: #0b1a33; transition: color 0.3s; }
-    .header-right { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .header-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    
+    /* ===== REAL-TIME ACTIVE USERS BADGE (GREEN DOT) ===== */
+    .live-users-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 14px;
+      border-radius: 40px;
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      color: #065f46;
+      font-size: 0.8rem;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.12);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      user-select: none;
+      cursor: pointer;
+    }
+    .live-users-pill:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.28);
+      background: #e6fcf1;
+    }
+    .pulsing-green-dot-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 10px;
+      height: 10px;
+    }
+    .pulsing-green-dot {
+      width: 8px;
+      height: 8px;
+      background-color: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 6px rgba(16, 185, 129, 0.8);
+      z-index: 2;
+    }
+    .pulsing-green-ring {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background-color: rgba(16, 185, 129, 0.55);
+      animation: live-ring-pulse 1.8s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+      z-index: 1;
+    }
+    @keyframes live-ring-pulse {
+      0% {
+        transform: scale(0.8);
+        opacity: 0.95;
+      }
+      70% {
+        transform: scale(2.3);
+        opacity: 0;
+      }
+      100% {
+        transform: scale(2.5);
+        opacity: 0;
+      }
+    }
+    .live-users-text {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .live-users-text strong {
+      font-weight: 700;
+      color: #047857;
+      font-variant-numeric: tabular-nums;
+      transition: transform 0.2s ease, color 0.2s ease;
+      display: inline-block;
+    }
+
+    /* Dark Mode styles for Live Users Badge */
+    body.dark-mode .live-users-pill {
+      background: rgba(16, 185, 129, 0.12);
+      border-color: rgba(16, 185, 129, 0.35);
+      color: #34d399;
+      box-shadow: 0 2px 10px rgba(16, 185, 129, 0.15);
+    }
+    body.dark-mode .live-users-pill:hover {
+      background: rgba(16, 185, 129, 0.18);
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.28);
+    }
+    body.dark-mode .live-users-text strong {
+      color: #6ee7b7;
+    }
+    body.dark-mode .pulsing-green-dot {
+      background-color: #34d399;
+      box-shadow: 0 0 8px rgba(52, 211, 153, 0.9);
+    }
+    body.dark-mode .pulsing-green-ring {
+      background-color: rgba(52, 211, 153, 0.6);
+    }
+
     .theme-toggle-wrap { display: flex; align-items: center; }
     .theme-toggle { background: #1a2b4c; color: white; border: none; border-radius: 40px; padding: 8px 18px; font-weight: 600; font-size: 0.8rem; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px; }
     .theme-toggle:hover { transform: scale(1.04); }
@@ -202,6 +299,7 @@
     @media (max-width: 768px) {
       .app { padding: 14px; border-radius: 20px; }
       .header h1 { font-size: 1.3rem; }
+      .live-users-pill { padding: 4px 10px; font-size: 0.72rem; }
       .chapter-item { padding: 12px 14px; gap: 10px; }
       .chapter-number { font-size: 0.9rem; min-width: 60px; }
       .chapter-name { font-size: 0.95rem; }
@@ -239,6 +337,9 @@
     @media (max-width: 480px) {
       .app { padding: 10px; border-radius: 16px; }
       .header h1 { font-size: 1.1rem; }
+      .header-right { gap: 6px; }
+      .live-users-pill { padding: 3px 8px; font-size: 0.68rem; gap: 5px; }
+      .theme-toggle { padding: 6px 12px; font-size: 0.72rem; }
       .chapter-item { flex-direction: column; align-items: stretch; gap: 8px; }
       .play-btn { width: 100%; text-align: center; }
       .duration-bar .value { font-size: 12px; min-width: 70px; }
@@ -367,8 +468,554 @@
     .live-schedule-banner .pulse-dot { display: inline-block; width: 12px; height: 12px; background: #ff0044; border-radius: 50%; animation: pulse 1.2s infinite; margin-right: 8px; }
     .live-schedule-banner .schedule-text { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .live-schedule-banner .telegram-btn { background: #0d1117; color: #fff; border: none; border-radius: 40px; padding: 6px 20px; font-weight: 600; cursor: pointer; transition: 0.15s; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
-    .live-schedule-banner .telegram-btn:hover { transform: scale(1.03); background: #1a2b4c; }
-    @media (max-width: 600px) { .live-schedule-banner { flex-direction: column; align-items: stretch; text-align: center; } }
+    /* ===== ONLINE USERS MODAL ===== */
+    .online-users-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(10, 15, 25, 0.65);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .online-users-modal.show { display: flex; }
+    .online-users-content {
+      background: #ffffff;
+      border-radius: 28px;
+      width: 100%;
+      max-width: 440px;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+      border: 1px solid #e6edf6;
+      overflow: hidden;
+      transition: background 0.3s, border-color 0.3s;
+    }
+    body.dark-mode .online-users-content {
+      background: #161b22;
+      border-color: #2d3748;
+      color: #e6edf3;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.7);
+    }
+    .online-users-header {
+      padding: 18px 22px;
+      border-bottom: 1px solid #eef2f8;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    body.dark-mode .online-users-header { border-bottom-color: #2d3748; }
+    .online-users-header h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #0b1a33;
+    }
+    body.dark-mode .online-users-header h3 { color: #f0f4ff; }
+    .modal-close-btn {
+      background: #f0f4fb;
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #6a7c94;
+      transition: 0.15s;
+    }
+    .modal-close-btn:hover { background: #fee; color: #b33a3a; transform: scale(1.05); }
+    body.dark-mode .modal-close-btn { background: #222c3c; color: #a0aec0; }
+    .online-users-list {
+      padding: 14px 18px;
+      overflow-y: auto;
+      max-height: 380px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .online-user-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border-radius: 16px;
+      background: #f8faff;
+      border: 1px solid #eef2f8;
+      transition: all 0.2s ease;
+    }
+    body.dark-mode .online-user-card {
+      background: #1c2333;
+      border-color: #283348;
+    }
+    .online-user-card:hover {
+      transform: translateX(3px);
+      border-color: #a7f3d0;
+    }
+    .online-user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .user-avatar-initial {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      font-weight: 700;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .online-user-email {
+      font-weight: 600;
+      font-size: 0.88rem;
+      color: #1a2b4c;
+    }
+    body.dark-mode .online-user-email { color: #e6edf3; }
+    .online-status-pill {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 30px;
+      background: #ecfdf5;
+      color: #065f46;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    body.dark-mode .online-status-pill {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+    }
+
+    /* ===== FLOATING STUDY CHAT WIDGET ===== */
+    .floating-chat-btn {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: linear-gradient(135deg, #1a2b4c, #2b4577);
+      color: white;
+      border: none;
+      border-radius: 50px;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      box-shadow: 0 10px 30px rgba(26, 43, 76, 0.35);
+      z-index: 9990;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .floating-chat-btn:hover {
+      transform: translateY(-3px) scale(1.03);
+      box-shadow: 0 14px 36px rgba(26, 43, 76, 0.45);
+      background: linear-gradient(135deg, #233966, #365592);
+    }
+    body.dark-mode .floating-chat-btn {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      box-shadow: 0 10px 30px rgba(37, 99, 235, 0.35);
+    }
+    .floating-chat-btn .chat-unread-badge {
+      background: #ef4444;
+      color: white;
+      font-size: 0.7rem;
+      padding: 2px 7px;
+      border-radius: 40px;
+      font-weight: 800;
+      margin-left: 2px;
+      animation: pulse 1.5s infinite;
+    }
+
+    /* Chat Window */
+    .study-chat-window {
+      display: none;
+      position: fixed;
+      bottom: 84px;
+      right: 24px;
+      width: 390px;
+      max-width: calc(100vw - 32px);
+      height: 520px;
+      max-height: calc(100vh - 110px);
+      background: #ffffff;
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+      border: 1px solid #e4eaf4;
+      z-index: 9991;
+      flex-direction: column;
+      overflow: hidden;
+      animation: slideUpFade 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .study-chat-window.open { display: flex; }
+    @keyframes slideUpFade {
+      from { opacity: 0; transform: translateY(18px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    body.dark-mode .study-chat-window {
+      background: #161b22;
+      border-color: #2d3748;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65);
+    }
+    .study-chat-header {
+      padding: 14px 18px;
+      background: linear-gradient(135deg, #1a2b4c, #263c66);
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    body.dark-mode .study-chat-header {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      border-bottom: 1px solid #334155;
+    }
+    .study-chat-title-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .study-chat-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .study-chat-sub {
+      font-size: 0.72rem;
+      opacity: 0.85;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .study-chat-sub .dot { width: 6px; height: 6px; border-radius: 50%; background: #10b981; }
+    .study-chat-close {
+      background: rgba(255,255,255,0.15);
+      border: none;
+      color: white;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.15s;
+    }
+    .study-chat-close:hover { background: rgba(255,255,255,0.3); }
+
+    /* Dual Chat Mode Tabs */
+    .study-chat-tabs {
+      display: flex;
+      background: #f1f5f9;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    body.dark-mode .study-chat-tabs {
+      background: #0f172a;
+      border-bottom-color: #334155;
+    }
+    .chat-mode-tab {
+      flex: 1;
+      padding: 10px 12px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      border: none;
+      background: transparent;
+      color: #64748b;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    body.dark-mode .chat-mode-tab { color: #94a3b8; }
+    .chat-mode-tab.active {
+      color: #1a2b4c;
+      border-bottom-color: #2563eb;
+      background: #ffffff;
+    }
+    body.dark-mode .chat-mode-tab.active {
+      color: #38bdf8;
+      border-bottom-color: #38bdf8;
+      background: #1e293b;
+    }
+    .chat-my-name-bar {
+      padding: 5px 14px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 0.72rem;
+      color: #64748b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    body.dark-mode .chat-my-name-bar {
+      background: #0d1117;
+      border-bottom-color: #1f2937;
+      color: #9ca3af;
+    }
+    .edit-name-btn {
+      background: transparent;
+      border: none;
+      color: #2563eb;
+      cursor: pointer;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-decoration: underline;
+    }
+    body.dark-mode .edit-name-btn { color: #60a5fa; }
+    .direct-chat-active-bar {
+      background: #eff6ff;
+      border-bottom: 1px solid #bfdbfe;
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    body.dark-mode .direct-chat-active-bar {
+      background: #1e293b;
+      border-bottom-color: #334155;
+    }
+    .direct-back-btn {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      cursor: pointer;
+      color: #1e293b;
+      transition: 0.15s;
+    }
+    .direct-back-btn:hover { background: #e2e8f0; }
+    body.dark-mode .direct-back-btn {
+      background: #334155;
+      color: #f1f5f9;
+      border-color: #475569;
+    }
+    body.dark-mode .direct-back-btn:hover { background: #475569; }
+    .direct-with-info {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #1e3a8a;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    body.dark-mode .direct-with-info { color: #93c5fd; }
+    .direct-user-select-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+      background: #f8faff;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    body.dark-mode .direct-user-select-list { background: #0d1117; }
+    .direct-user-header-text {
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: #64748b;
+      margin-bottom: 2px;
+    }
+    body.dark-mode .direct-user-header-text { color: #8b949e; }
+    .direct-user-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 12px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    body.dark-mode .direct-user-item {
+      background: #161b22;
+      border-color: #283348;
+    }
+    .direct-user-item:hover {
+      border-color: #2563eb;
+      transform: translateX(3px);
+    }
+    .direct-chat-btn-action {
+      background: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 30px;
+      padding: 4px 12px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+    .direct-chat-btn-action:hover { background: #1d4ed8; }
+
+    .study-chat-guideline {
+      background: #fffbeb;
+      border-bottom: 1px solid #fef3c7;
+      color: #92400e;
+      font-size: 0.72rem;
+      padding: 6px 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      line-height: 1.3;
+    }
+    body.dark-mode .study-chat-guideline {
+      background: #23221b;
+      border-bottom-color: #3b351e;
+      color: #fcd34d;
+    }
+
+    .study-chat-messages {
+      flex: 1;
+      padding: 14px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: #f8faff;
+    }
+    body.dark-mode .study-chat-messages {
+      background: #0d1117;
+    }
+
+    .chat-bubble-wrap {
+      display: flex;
+      flex-direction: column;
+      max-width: 82%;
+    }
+    .chat-bubble-wrap.self {
+      align-self: flex-end;
+      align-items: flex-end;
+    }
+    .chat-bubble-wrap.other {
+      align-self: flex-start;
+      align-items: flex-start;
+    }
+
+    .chat-sender-name {
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: #6a7c94;
+      margin-bottom: 3px;
+      padding: 0 4px;
+    }
+    body.dark-mode .chat-sender-name { color: #8b949e; }
+
+    .chat-bubble {
+      padding: 9px 14px;
+      border-radius: 18px;
+      font-size: 0.85rem;
+      line-height: 1.4;
+      word-break: break-word;
+      position: relative;
+    }
+    .chat-bubble-wrap.self .chat-bubble {
+      background: linear-gradient(135deg, #1a2b4c, #263e6e);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+    body.dark-mode .chat-bubble-wrap.self .chat-bubble {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    }
+    .chat-bubble-wrap.other .chat-bubble {
+      background: #ffffff;
+      color: #0b1a33;
+      border: 1px solid #e4eaf4;
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    }
+    body.dark-mode .chat-bubble-wrap.other .chat-bubble {
+      background: #1c2333;
+      color: #e6edf3;
+      border-color: #2d3748;
+    }
+
+    .chat-msg-time {
+      font-size: 0.62rem;
+      opacity: 0.7;
+      margin-top: 3px;
+      padding: 0 4px;
+    }
+
+    .study-chat-input-bar {
+      padding: 10px 14px;
+      background: #ffffff;
+      border-top: 1px solid #eef2f8;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    body.dark-mode .study-chat-input-bar {
+      background: #161b22;
+      border-top-color: #2d3748;
+    }
+    .study-chat-input {
+      flex: 1;
+      padding: 9px 16px;
+      border-radius: 40px;
+      border: 1px solid #d9e1ec;
+      font-size: 0.85rem;
+      outline: none;
+      background: #f8faff;
+      color: #0b1a33;
+      transition: border-color 0.2s;
+    }
+    .study-chat-input:focus {
+      border-color: #2563eb;
+      background: white;
+    }
+    body.dark-mode .study-chat-input {
+      background: #0d1117;
+      border-color: #2d3748;
+      color: #e6edf3;
+    }
+    body.dark-mode .study-chat-input:focus {
+      border-color: #3b82f6;
+      background: #161b22;
+    }
+    .study-chat-send-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      background: #1a2b4c;
+      color: white;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.15s, background 0.15s;
+      flex-shrink: 0;
+    }
+    .study-chat-send-btn:hover {
+      transform: scale(1.08);
+      background: #284478;
+    }
+    body.dark-mode .study-chat-send-btn {
+      background: #2563eb;
+    }
+    body.dark-mode .study-chat-send-btn:hover {
+      background: #3b82f6;
+    }
   </style>
 </head>
 <body>
@@ -381,6 +1028,13 @@
 <div class="header">
     <h1>📽️ Video Portal</h1>
     <div class="header-right">
+        <div class="live-users-pill" id="liveUsersBadge" title="👥 Click to see who is online" style="display: none;">
+            <span class="pulsing-green-dot-wrap">
+                <span class="pulsing-green-ring"></span>
+                <span class="pulsing-green-dot"></span>
+            </span>
+            <span class="live-users-text"><strong id="activeUsersCount">1</strong> Online</span>
+        </div>
         <a href="https://prev-live-classes-azio.onrender.com/admin" 
            target="_blank" 
            style="background: #f7971e; 
@@ -628,6 +1282,78 @@
   <div class="footer-note">⬇️ Click Play on any chapter → Supports HLS, MP4, YouTube (Unlisted + Private)</div>
 </div>
 
+<!-- ===== ONLINE USERS MODAL ===== -->
+<div id="onlineUsersModal" class="online-users-modal">
+  <div class="online-users-content">
+    <div class="online-users-header">
+      <h3><span>👥</span> Online Students <span class="tab-count" id="modalOnlineCount">1</span></h3>
+      <button class="modal-close-btn" id="closeOnlineModalBtn" title="Close">✕</button>
+    </div>
+    <div class="online-users-list" id="onlineUsersList">
+      <div style="text-align:center; padding: 20px; color:#8b949e;">Loading active users...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FLOATING STUDY CHAT WIDGET ===== -->
+<button class="floating-chat-btn" id="floatingChatBtn" title="Study & Doubts Community Chat" style="display: none;">
+  <span style="font-size:1.2rem;">💬</span>
+  <span>Study Chat</span>
+  <span class="chat-unread-badge" id="chatUnreadBadge" style="display:none;">0</span>
+</button>
+
+<div class="study-chat-window" id="studyChatWindow">
+  <div class="study-chat-header">
+    <div class="study-chat-title-wrap">
+      <div class="study-chat-title" id="studyChatMainTitle">💬 Study & Doubts Chat</div>
+      <div class="study-chat-sub"><span class="dot"></span> Online Discussion</div>
+    </div>
+    <button class="study-chat-close" id="closeChatBtn" title="Close Chat">✕</button>
+  </div>
+
+  <!-- Dual Mode Tabs (Group vs 1-on-1 Personal) -->
+  <div class="study-chat-tabs">
+    <button type="button" class="chat-mode-tab active" id="chatTabGroupBtn">🌐 Study Group</button>
+    <button type="button" class="chat-mode-tab" id="chatTabDirectBtn">🔒 Personal (1-on-1)</button>
+  </div>
+
+  <!-- My Display Name Bar -->
+  <div class="chat-my-name-bar">
+    <span>Chatting as: <strong id="chatMyDisplayName">Student</strong></span>
+    <button type="button" class="edit-name-btn" id="editDisplayNameBtn" title="Change your display name">✏️ Edit Name</button>
+  </div>
+
+  <!-- 1-on-1 Direct Chat Active Bar (shown when chatting with a specific student) -->
+  <div id="directChatActiveBar" class="direct-chat-active-bar" style="display:none;">
+    <button type="button" class="direct-back-btn" id="directBackBtn">← All Students</button>
+    <div class="direct-with-info">
+      <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#10b981;"></span>
+      <span id="directWithStudentName">Chatting with Student</span>
+    </div>
+  </div>
+
+  <div class="study-chat-guideline">
+    <span>⚠️ <strong>Study Discussion Only:</strong> Ask doubts & discuss classes. Monitored by Admin.</span>
+  </div>
+
+  <!-- Direct 1-on-1 Student Selection View -->
+  <div id="directChatUserList" class="direct-user-select-list" style="display:none;">
+    <div class="direct-user-header-text">Select a student to chat privately:</div>
+    <div id="directUserCardsContainer" style="display:flex; flex-direction:column; gap:6px;"></div>
+  </div>
+
+  <!-- Messages List -->
+  <div class="study-chat-messages" id="studyChatMessages">
+    <div style="text-align:center; padding:30px 10px; color:#8b949e; font-size:0.8rem;">Loading messages...</div>
+  </div>
+
+  <!-- Input Bar -->
+  <form class="study-chat-input-bar" id="studyChatForm">
+    <input type="text" class="study-chat-input" id="studyChatInput" placeholder="Ask a doubt or discuss study topic..." maxlength="500" autocomplete="off" />
+    <button type="submit" class="study-chat-send-btn" id="studyChatSendBtn" title="Send Message">➤</button>
+  </form>
+</div>
+
 <script>
 // ========================================================================
 //  ANTI-DEVELOPER TOOLS
@@ -813,42 +1539,633 @@
         return (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)) ? 'Mobile' : 'Desktop';
     }
 
+    // ===== REAL-TIME ACTIVE USERS COUNT (GREEN DOT) =====
+    let activeUsersPollInterval = null;
+
+    function updateActiveUsersCount(count) {
+        const el = document.getElementById('activeUsersCount');
+        if (!el) return;
+        const currentVal = parseInt(el.textContent) || 0;
+        const targetVal = Math.max(1, count || 1);
+        if (currentVal !== targetVal) {
+            el.style.transform = 'scale(1.25)';
+            el.style.color = '#10b981';
+            setTimeout(() => {
+                el.textContent = targetVal;
+                el.style.transform = 'scale(1)';
+                el.style.color = '';
+            }, 180);
+        } else {
+            el.textContent = targetVal;
+        }
+    }
+
+    async function fetchActiveUsersCount() {
+        try {
+            const response = await fetch(API_BASE + '/active-users');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.activeCount !== undefined) {
+                    updateActiveUsersCount(data.activeCount);
+                }
+            }
+        } catch (e) {
+            // graceful fallback
+        }
+    }
+
+    function startActiveUsersPolling() {
+        fetchActiveUsersCount();
+        if (activeUsersPollInterval) clearInterval(activeUsersPollInterval);
+        activeUsersPollInterval = setInterval(fetchActiveUsersCount, 12000);
+    }
+
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+            fetchActiveUsersCount();
+            validateSession();
+            if (isChatOpen) fetchChatMessages(false);
+        }
+    });
+
+    // ===== OFFLINE BEACON (INSTANT OFFLINE STATUS ON TAB / BROWSER CLOSE) =====
+    function sendOfflineSignal() {
+        try {
+            const session = getSession();
+            const email = (session && session.user && session.user.email) || (currentUser && currentUser.email) || (googleUser && googleUser.email);
+            if (email) {
+                const payload = JSON.stringify({ email: email, sessionId: session ? session.sessionId : undefined });
+                const url = API_BASE + '/session/offline';
+                if (navigator.sendBeacon) {
+                    const blob = new Blob([payload], { type: 'application/json' });
+                    navigator.sendBeacon(url, blob);
+                } else {
+                    fetch(url, { method: 'POST', body: payload, headers: { 'Content-Type': 'application/json' }, keepalive: true }).catch(() => {});
+                }
+            }
+        } catch (e) {}
+    }
+    window.addEventListener('beforeunload', sendOfflineSignal);
+
+    // ===== DISPLAY NAME MANAGEMENT =====
+    const STUDENT_NAME_KEY = 'student_display_name';
+
+    function getStudentDisplayName() {
+        let saved = localStorage.getItem(STUDENT_NAME_KEY);
+        if (saved && saved.trim()) return saved.trim();
+        if (googleUser && googleUser.name) return googleUser.name;
+        if (currentUser && currentUser.name) return currentUser.name;
+        const email = (currentUser && currentUser.email) || (googleUser && googleUser.email);
+        if (email) {
+            const prefix = email.split('@')[0];
+            return prefix.charAt(0).toUpperCase() + prefix.slice(1);
+        }
+        return 'Student';
+    }
+
+    function updateDisplayNameUI() {
+        const el = document.getElementById('chatMyDisplayName');
+        if (el) el.textContent = getStudentDisplayName();
+    }
+
+    function promptEditDisplayName() {
+        const curr = getStudentDisplayName();
+        const newName = prompt('Apna chat display name likhein (Enter your name for Study Chat):', curr);
+        if (newName && newName.trim()) {
+            const trimmed = newName.trim().slice(0, 30);
+            localStorage.setItem(STUDENT_NAME_KEY, trimmed);
+            updateDisplayNameUI();
+            showToast('✅ Display name updated: ' + trimmed, 'success');
+            validateSession();
+        }
+    }
+
+    // ===== ONLINE USERS MODAL & STUDY CHAT =====
+    let chatPollInterval = null;
+    let chatBackgroundCheckInterval = null;
+    let lastRenderedChatCount = 0;
+    let isChatOpen = false;
+    let currentChatMode = 'group'; // 'group' | 'direct'
+    let activeDirectStudent = null; // { email: '', name: '' }
+
+    function maskEmailForPrivacy(email) {
+        if (!email) return 'Student';
+        const parts = email.split('@');
+        if (parts.length !== 2) return email;
+        const name = parts[0];
+        const domain = parts[1];
+        if (name.length <= 3) {
+            return name + '***@' + domain;
+        }
+        return name.substring(0, 3) + '***@' + domain;
+    }
+
+    // Modal: Who is online
+    function openOnlineUsersModal() {
+        const user = currentUser || googleUser;
+        if (!user) {
+            showToast('⚠️ Please login first to see online students', 'error');
+            return;
+        }
+        const modal = document.getElementById('onlineUsersModal');
+        if (!modal) return;
+        modal.classList.add('show');
+        fetchOnlineUsersList();
+    }
+
+    function closeOnlineUsersModal() {
+        const modal = document.getElementById('onlineUsersModal');
+        if (modal) modal.classList.remove('show');
+    }
+
+    async function fetchOnlineUsersList() {
+        const user = currentUser || googleUser;
+        if (!user) return;
+        const container = document.getElementById('onlineUsersList');
+        const countBadge = document.getElementById('modalOnlineCount');
+        if (!container) return;
+        container.innerHTML = '<div style="text-align:center; padding: 24px; color:#6a7c94; font-size:0.9rem;">⏳ Fetching active students...</div>';
+        
+        try {
+            const res = await fetch(API_BASE + '/active-users/list');
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+            
+            if (data.success && Array.isArray(data.users)) {
+                const users = data.users;
+                if (countBadge) countBadge.textContent = users.length;
+                updateActiveUsersCount(users.length);
+                
+                if (users.length === 0) {
+                    container.innerHTML = '<div style="text-align:center; padding: 24px; color:#6a7c94; font-size:0.9rem;">No active users right now</div>';
+                    return;
+                }
+
+                const myEmail = ((currentUser && currentUser.email) || (googleUser && googleUser.email) || '').toLowerCase();
+                let html = '';
+                users.forEach(u => {
+                    const isMe = myEmail && u.email && myEmail === u.email.toLowerCase();
+                    const displayName = u.name || maskEmailForPrivacy(u.email);
+                    const initial = (displayName ? displayName.charAt(0) : 'U').toUpperCase();
+                    const displayEmail = isMe ? `${displayName} (${u.email}) <span style="font-size:0.75rem; color:#10b981; font-weight:700;">(You)</span>` : displayName;
+                    const safeEmail = (u.email || '').replace(/'/g, "\\'");
+                    const safeName = (displayName || '').replace(/'/g, "\\'");
+                    
+                    html += `
+                        <div class="online-user-card">
+                            <div class="online-user-info">
+                                <div class="user-avatar-initial">${initial}</div>
+                                <div>
+                                    <div class="online-user-email">${displayEmail}</div>
+                                    <div style="font-size:0.72rem; color:#6a7c94;">Active now on portal</div>
+                                </div>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span class="online-status-pill">
+                                    <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#10b981;"></span> Online
+                                </span>
+                                ${!isMe ? `<button type="button" onclick="closeOnlineUsersModal(); window.startDirectChat('${safeEmail}', '${safeName}');" style="background:#2563eb; color:#fff; border:none; padding:4px 9px; border-radius:6px; font-size:0.75rem; font-weight:600; cursor:pointer;">💬 Chat</button>` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = '<div style="text-align:center; padding: 20px; color:#b33a3a; font-size:0.9rem;">⚠️ Failed to load online list</div>';
+            }
+        } catch (err) {
+            console.error('Error fetching online users list:', err);
+            const myEmail = ((currentUser && currentUser.email) || (googleUser && googleUser.email) || '');
+            if (myEmail) {
+                const displayName = getStudentDisplayName();
+                const initial = (displayName ? displayName.charAt(0) : 'U').toUpperCase();
+                container.innerHTML = `
+                    <div class="online-user-card">
+                        <div class="online-user-info">
+                            <div class="user-avatar-initial">${initial}</div>
+                            <div>
+                                <div class="online-user-email">${displayName} (${myEmail}) <span style="font-size:0.75rem; color:#10b981; font-weight:700;">(You)</span></div>
+                                <div style="font-size:0.72rem; color:#6a7c94;">Active now on portal</div>
+                            </div>
+                        </div>
+                        <span class="online-status-pill"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#10b981;"></span> Online</span>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = '<div style="text-align:center; padding: 20px; color:#6a7c94; font-size:0.88rem;">1 student active on portal</div>';
+            }
+        }
+    }
+
+    // ===== DUAL CHAT SYSTEM (GROUP & DIRECT 1-ON-1) =====
+    function switchChatMode(mode) {
+        currentChatMode = mode;
+        const groupBtn = document.getElementById('chatTabGroupBtn');
+        const directBtn = document.getElementById('chatTabDirectBtn');
+        const directActiveBar = document.getElementById('directChatActiveBar');
+        const directUserList = document.getElementById('directChatUserList');
+        const messagesBox = document.getElementById('studyChatMessages');
+        const inputForm = document.getElementById('studyChatForm');
+        const inputEl = document.getElementById('studyChatInput');
+        const chatSub = document.querySelector('.study-chat-sub');
+
+        if (mode === 'group') {
+            if (groupBtn) groupBtn.classList.add('active');
+            if (directBtn) directBtn.classList.remove('active');
+            if (directActiveBar) directActiveBar.style.display = 'none';
+            if (directUserList) directUserList.style.display = 'none';
+            if (messagesBox) messagesBox.style.display = 'flex';
+            if (inputForm) inputForm.style.display = 'flex';
+            if (inputEl) {
+                inputEl.placeholder = "Ask a doubt or discuss study topic (Sabke Liye)...";
+                inputEl.focus();
+            }
+            if (chatSub) chatSub.innerHTML = '<span class="dot"></span> Online Discussion (Study Group)';
+            lastRenderedChatCount = 0;
+            fetchChatMessages(true);
+        } else {
+            if (directBtn) directBtn.classList.add('active');
+            if (groupBtn) groupBtn.classList.remove('active');
+            if (activeDirectStudent && activeDirectStudent.email) {
+                if (directActiveBar) directActiveBar.style.display = 'flex';
+                if (directUserList) directUserList.style.display = 'none';
+                if (messagesBox) messagesBox.style.display = 'flex';
+                if (inputForm) inputForm.style.display = 'flex';
+                const targetName = activeDirectStudent.name || activeDirectStudent.email;
+                const targetNameEl = document.getElementById('directWithStudentName');
+                if (targetNameEl) targetNameEl.textContent = targetName;
+                if (inputEl) {
+                    inputEl.placeholder = `Message ${targetName} privately...`;
+                    inputEl.focus();
+                }
+                if (chatSub) chatSub.innerHTML = `<span class="dot" style="background:#3b82f6;"></span> 1-on-1 with ${targetName}`;
+                lastRenderedChatCount = 0;
+                fetchChatMessages(true);
+            } else {
+                if (directActiveBar) directActiveBar.style.display = 'none';
+                if (directUserList) directUserList.style.display = 'block';
+                if (messagesBox) messagesBox.style.display = 'none';
+                if (inputForm) inputForm.style.display = 'none';
+                if (chatSub) chatSub.innerHTML = '<span class="dot" style="background:#3b82f6;"></span> Personal 1-on-1 Chat';
+                loadDirectUsersList();
+            }
+        }
+    }
+
+    async function loadDirectUsersList() {
+        const container = document.getElementById('directUserCardsContainer');
+        if (!container) return;
+        container.innerHTML = '<div style="text-align:center; padding: 20px; color:#8b949e; font-size:0.85rem;">⏳ Loading online students...</div>';
+        
+        try {
+            const res = await fetch(API_BASE + '/active-users/list');
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+            
+            if (data.success && Array.isArray(data.users)) {
+                const myEmail = ((currentUser && currentUser.email) || (googleUser && googleUser.email) || '').toLowerCase();
+                const otherUsers = data.users.filter(u => u.email && u.email.toLowerCase() !== myEmail);
+                
+                if (otherUsers.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align:center; padding: 25px 12px; color:#6a7c94; font-size:0.85rem;">
+                            👥 Abhi koi dusra student online nahi hai.<br>
+                            <span style="font-size:0.75rem; color:#8b949e; margin-top:4px; display:inline-block;">Aap <strong>Study Group</strong> me doubt puch sakte hain ya students ke aane ka wait karein.</span>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = '';
+                otherUsers.forEach(u => {
+                    const displayName = u.name || maskEmailForPrivacy(u.email);
+                    const initial = (displayName.charAt(0) || 'S').toUpperCase();
+                    const safeEmail = (u.email || '').replace(/'/g, "\\'");
+                    const safeName = (displayName || '').replace(/'/g, "\\'");
+
+                    html += `
+                        <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; transition:all 0.2s;">
+                            <div style="display:flex; align-items:center; gap:8px; min-width:0;">
+                                <div style="width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg, #2563eb, #3b82f6); color:#fff; font-weight:700; font-size:0.75rem; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                                    ${initial}
+                                </div>
+                                <div style="min-width:0;">
+                                    <div style="font-weight:600; font-size:0.82rem; color:#1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                        ${displayName}
+                                    </div>
+                                    <div style="font-size:0.7rem; color:#64748b;">
+                                        <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#10b981;margin-right:3px;"></span> Online
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" onclick="window.startDirectChat('${safeEmail}', '${safeName}')" style="background:#2563eb; color:#fff; border:none; padding:5px 10px; border-radius:6px; font-size:0.75rem; font-weight:600; cursor:pointer; flex-shrink:0; display:flex; align-items:center; gap:4px;">
+                                💬 Chat
+                            </button>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            } else {
+                renderManualDirectInput(container, 'Abhi koi aur student online list me nahi mila.');
+            }
+        } catch (err) {
+            console.error('Error loading direct users:', err);
+            renderManualDirectInput(container, 'Direct chat karne ke liye student ka email enter karein:');
+        }
+    }
+
+    function renderManualDirectInput(container, message) {
+        if (!container) return;
+        container.innerHTML = `
+            <div style="text-align:center; padding: 14px 10px; color:#64748b; font-size:0.82rem;">
+                ${message}
+            </div>
+            <div style="padding:12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; margin-top:6px;">
+                <div style="font-size:0.75rem; font-weight:600; color:#475569; margin-bottom:8px;">💬 Student ke email se private chat karein:</div>
+                <div style="display:flex; gap:6px;">
+                    <input type="text" id="manualDirectStudentInput" placeholder="Enter student email..." style="flex:1; padding:7px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.8rem;" />
+                    <button type="button" onclick="window.handleManualDirectChat()" style="background:#2563eb; color:#fff; border:none; padding:7px 14px; border-radius:6px; font-size:0.75rem; font-weight:600; cursor:pointer;">Chat</button>
+                </div>
+            </div>
+        `;
+    }
+
+    window.handleManualDirectChat = function() {
+        const input = document.getElementById('manualDirectStudentInput');
+        if (!input) return;
+        const val = input.value.trim();
+        if (!val) {
+            showToast('⚠️ Please enter student email to chat', 'error');
+            return;
+        }
+        window.startDirectChat(val, val.split('@')[0]);
+    };
+
+    window.startDirectChat = function(email, name) {
+        activeDirectStudent = { email, name: name || email };
+        openStudyChat();
+        switchChatMode('direct');
+    };
+
+    // Study Chat: Open/Close/Toggle
+    function toggleStudyChat() {
+        const user = currentUser || googleUser;
+        if (!user) {
+            showToast('⚠️ Please login first to access Study Chat', 'error');
+            return;
+        }
+        if (isChatOpen) closeStudyChat();
+        else openStudyChat();
+    }
+
+    function openStudyChat() {
+        const user = currentUser || googleUser;
+        if (!user) {
+            showToast('⚠️ Please login first to access Study Chat', 'error');
+            return;
+        }
+        const chatWin = document.getElementById('studyChatWindow');
+        const badge = document.getElementById('chatUnreadBadge');
+        if (!chatWin) return;
+        isChatOpen = true;
+        chatWin.classList.add('open');
+        if (badge) {
+            badge.style.display = 'none';
+            badge.textContent = '0';
+        }
+        updateDisplayNameUI();
+        if (currentChatMode === 'direct' && (!activeDirectStudent || !activeDirectStudent.email)) {
+            loadDirectUsersList();
+        } else {
+            fetchChatMessages(true);
+        }
+        if (chatPollInterval) clearInterval(chatPollInterval);
+        chatPollInterval = setInterval(() => {
+            if (currentChatMode === 'group' || (currentChatMode === 'direct' && activeDirectStudent && activeDirectStudent.email)) {
+                fetchChatMessages(false);
+            }
+        }, 3500);
+        setTimeout(() => {
+            const input = document.getElementById('studyChatInput');
+            if (input && input.offsetParent !== null) input.focus();
+        }, 150);
+    }
+
+    function closeStudyChat() {
+        const chatWin = document.getElementById('studyChatWindow');
+        if (!chatWin) return;
+        isChatOpen = false;
+        chatWin.classList.remove('open');
+        if (chatPollInterval) {
+            clearInterval(chatPollInterval);
+            chatPollInterval = null;
+        }
+    }
+
+    async function fetchChatMessages(forceScrollBottom = false) {
+        const user = currentUser || googleUser;
+        if (!user) return;
+        const box = document.getElementById('studyChatMessages');
+        if (!box || box.style.display === 'none') return;
+
+        const myEmail = ((currentUser && currentUser.email) || (googleUser && googleUser.email) || '').toLowerCase();
+        let url = API_BASE + '/chat/messages';
+        
+        if (currentChatMode === 'direct') {
+            if (!activeDirectStudent || !activeDirectStudent.email) return;
+            url += `?type=direct&myEmail=${encodeURIComponent(myEmail)}&withEmail=${encodeURIComponent(activeDirectStudent.email)}`;
+        } else {
+            url += `?type=group`;
+        }
+
+        try {
+            const res = await fetch(url);
+            if (!res.ok) return;
+            const data = await res.json();
+            if (!data.success || !Array.isArray(data.messages)) return;
+
+            const messages = data.messages;
+            
+            // Unread badge when chat is closed
+            if (!isChatOpen && messages.length > lastRenderedChatCount && lastRenderedChatCount > 0) {
+                const unread = messages.length - lastRenderedChatCount;
+                const badge = document.getElementById('chatUnreadBadge');
+                if (badge) {
+                    badge.textContent = unread > 99 ? '99+' : unread;
+                    badge.style.display = 'inline-block';
+                }
+            }
+
+            const isNearBottom = (box.scrollHeight - box.scrollTop - box.clientHeight) < 70;
+
+            if (messages.length === 0) {
+                if (currentChatMode === 'direct') {
+                    const targetName = activeDirectStudent ? (activeDirectStudent.name || activeDirectStudent.email) : 'student';
+                    box.innerHTML = `<div style="text-align:center; padding:30px 10px; color:#8b949e; font-size:0.85rem;">🔒 No private messages yet with <strong>${targetName}</strong>.<br>Send a message below to start chatting!</div>`;
+                } else {
+                    box.innerHTML = '<div style="text-align:center; padding:30px 10px; color:#8b949e; font-size:0.85rem;">👋 No messages yet.<br>Start asking doubts or discuss today\'s classes with everyone!</div>';
+                }
+                lastRenderedChatCount = 0;
+                return;
+            }
+
+            // Only re-render if count changed or forced
+            if (messages.length !== lastRenderedChatCount || forceScrollBottom || box.children.length <= 1) {
+                box.innerHTML = '';
+                messages.forEach(m => {
+                    const isSelf = myEmail && m.email && (myEmail === m.email.toLowerCase());
+                    const wrap = document.createElement('div');
+                    wrap.className = 'chat-bubble-wrap ' + (isSelf ? 'self' : 'other');
+
+                    const sender = document.createElement('div');
+                    sender.className = 'chat-sender-name';
+                    const timeStr = m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+                    const senderDisplay = m.sender_name ? m.sender_name : (m.email ? maskEmailForPrivacy(m.email) : 'Student');
+                    
+                    if (isSelf) {
+                        sender.textContent = `You (${senderDisplay}) • ${timeStr}`;
+                    } else {
+                        const prefixIcon = currentChatMode === 'direct' ? '🔒' : '🎓';
+                        sender.textContent = `${prefixIcon} ${senderDisplay} • ${timeStr}`;
+                    }
+
+                    const bubble = document.createElement('div');
+                    bubble.className = 'chat-bubble';
+                    bubble.textContent = m.message; // Safe textContent prevents XSS
+
+                    wrap.appendChild(sender);
+                    wrap.appendChild(bubble);
+                    box.appendChild(wrap);
+                });
+
+                lastRenderedChatCount = messages.length;
+
+                if (forceScrollBottom || isNearBottom) {
+                    box.scrollTop = box.scrollHeight;
+                }
+            }
+        } catch (err) {
+            console.error('Chat fetch error:', err);
+        }
+    }
+
+    async function sendStudyMessage(e) {
+        if (e) e.preventDefault();
+        const student = currentUser || googleUser;
+        if (!student || !student.email) {
+            showToast('⚠️ Please sign in first to chat with other students', 'error');
+            document.getElementById('loginContainer').style.display = 'block';
+            document.getElementById('loginContainer').scrollIntoView({ behavior: 'smooth' });
+            return;
+        }
+
+        const input = document.getElementById('studyChatInput');
+        if (!input) return;
+        const text = input.value.trim();
+        if (!text) return;
+
+        if (currentChatMode === 'direct' && (!activeDirectStudent || !activeDirectStudent.email)) {
+            showToast('⚠️ Please select a student to chat with first', 'error');
+            return;
+        }
+
+        const sendBtn = document.getElementById('studyChatSendBtn');
+        if (sendBtn) sendBtn.disabled = true;
+
+        const myDisplayName = getStudentDisplayName();
+        const payload = {
+            email: student.email,
+            sender_name: myDisplayName,
+            message: text,
+            chat_type: currentChatMode === 'direct' ? 'direct' : 'group'
+        };
+
+        if (currentChatMode === 'direct') {
+            payload.receiver_email = activeDirectStudent.email;
+            payload.receiver_name = activeDirectStudent.name || activeDirectStudent.email;
+        }
+
+        try {
+            const res = await fetch(API_BASE + '/chat/messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.success) {
+                input.value = '';
+                await fetchChatMessages(true);
+            } else {
+                showToast('❌ ' + (data.error || 'Failed to send message'), 'error');
+            }
+        } catch (err) {
+            showToast('❌ Network error sending message', 'error');
+        } finally {
+            if (sendBtn) sendBtn.disabled = false;
+            input.focus();
+        }
+    }
+
     async function validateSession() {
         const session = getSession();
-        if (!session) { handleSessionExpired(); return false; }
+        if (!session || !session.user) { return false; }
         try {
             const response = await fetch(API_BASE + '/session/validate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sessionId: session.sessionId, email: session.user.email, device: session.device || 'Unknown' })
+                body: JSON.stringify({
+                    sessionId: session.sessionId,
+                    email: session.user.email,
+                    name: getStudentDisplayName(),
+                    device: session.device || 'Unknown'
+                })
             });
+            if (!response.ok) {
+                // Network or server status (500, 502, 429) -> NEVER logout legitimate student
+                return true;
+            }
             const data = await response.json();
-            if (data.hijacked || data.autoLogout) {
+            if (data.activeCount !== undefined) {
+                updateActiveUsersCount(data.activeCount);
+            }
+            // Trigger auto-logout when user logs in from another device or session is superseded
+            if (data.valid === false || data.hijacked === true || data.loggedOutByOtherDevice === true) {
                 isHijacked = true;
+                const reasonMsg = data.reason || '⚠️ Aapka account kisi dusre device par login kiya gaya hai. Is device se auto-logout kar diya gaya hai.';
                 clearSession();
                 localStorage.removeItem(GOOGLE_SESSION_KEY);
-                showHijackNotification();
-                logout();
+                showHijackNotification(reasonMsg);
+                logout(reasonMsg);
                 return false;
             }
-            if (!data.valid) { clearSession(); localStorage.removeItem(GOOGLE_SESSION_KEY); logout(); return false; }
             return true;
-        } catch { return true; }
+        } catch (e) {
+            // Offline or temporary network blip -> Keep user logged in
+            return true;
+        }
     }
 
-    function showHijackNotification() {
+    function showHijackNotification(msg) {
         const el = document.getElementById('hijackNotification');
-        el.classList.add('show');
-        setTimeout(() => el.classList.remove('show'), 5000);
+        if (el) {
+            if (msg) el.textContent = msg;
+            el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), 6000);
+        }
     }
     function handleSessionExpired() {
         if (document.getElementById('videoContent').style.display !== 'none') logout();
     }
     function startSessionValidation() {
         if (sessionValidationInterval) clearInterval(sessionValidationInterval);
+        // Fast initial check after 800ms to detect any pre-existing session hijack on reload
+        setTimeout(() => {
+            if (document.getElementById('videoContent').style.display !== 'none' && !isHijacked) validateSession();
+        }, 800);
+        // Responsive check every 5 seconds for rapid single-device enforcement
         sessionValidationInterval = setInterval(() => {
             if (document.getElementById('videoContent').style.display !== 'none' && !isHijacked) validateSession();
-        }, 8000);
+        }, 5000);
     }
 
     // ===== KEY GENERATION =====
@@ -958,19 +2275,22 @@
             const response = await fetch(API_BASE + '/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, key: key || '', sessionId, device })
+                body: JSON.stringify({ email, name: getStudentDisplayName(), key: key || '', sessionId, device })
             });
             const data = await response.json();
             if (data.success) {
                 currentUser = data.user;
+                localStorage.setItem('timer_start', Date.now().toString());
                 successEl.textContent = '✅ Login successful! Loading videos...';
-                saveSession(data.user, key, sessionId);
+                const actualSessionId = data.sessionId || sessionId;
+                saveSession(data.user, key, actualSessionId);
                 isHijacked = false;
                 showVideoContent();
                 fetchPlaylists();
                 fetchImportantSection();
                 startSessionValidation();
-                document.getElementById('hijackNotification').classList.remove('show');
+                const hijackEl = document.getElementById('hijackNotification');
+                if (hijackEl) hijackEl.classList.remove('show');
             } else {
                 errorEl.textContent = '❌ ' + (data.error || 'Login failed');
                 if (data.error && data.error.includes('already logged in')) errorEl.textContent = '❌ You are already logged in on another device.';
@@ -981,9 +2301,10 @@
     }
 
     // ===== LOGOUT =====
-    window.logout = async function() {
+    window.logout = async function(reasonMessage) {
+        sendOfflineSignal();
         const session = getSession();
-        if (session && session.user) {
+        if (session && session.user && !isHijacked) {
             try {
                 await fetch(API_BASE + '/auth/logout', {
                     method: 'POST',
@@ -994,8 +2315,19 @@
         }
         clearSession();
         if (sessionValidationInterval) { clearInterval(sessionValidationInterval); sessionValidationInterval = null; }
+        if (activeUsersPollInterval) { clearInterval(activeUsersPollInterval); activeUsersPollInterval = null; }
+        if (chatBackgroundCheckInterval) { clearInterval(chatBackgroundCheckInterval); chatBackgroundCheckInterval = null; }
+        if (chatPollInterval) { clearInterval(chatPollInterval); chatPollInterval = null; }
+        closeStudyChat();
+        closeOnlineUsersModal();
+
+        const liveUsersBadge = document.getElementById('liveUsersBadge');
+        if (liveUsersBadge) liveUsersBadge.style.display = 'none';
+        const chatBtn = document.getElementById('floatingChatBtn');
+        if (chatBtn) chatBtn.style.display = 'none';
+
         localStorage.removeItem(GOOGLE_SESSION_KEY);
-        currentUser = null; googleUser = null; googleAccessToken = null; isHijacked = false;
+        currentUser = null; googleUser = null; googleAccessToken = null;
         document.getElementById('loginContainer').style.display = 'block';
         document.getElementById('videoContent').style.display = 'none';
         document.getElementById('googleStatusBar').style.display = 'none';
@@ -1003,9 +2335,18 @@
         document.getElementById('userEmail').textContent = '-';
         document.getElementById('loginEmail').value = '';
         document.getElementById('loginKey').value = '';
-        document.getElementById('loginError').textContent = '';
         document.getElementById('loginSuccess').textContent = '';
         document.getElementById('resetBanner').style.display = 'none';
+        
+        const loginErrorEl = document.getElementById('loginError');
+        if (reasonMessage) {
+            loginErrorEl.innerHTML = `<strong>${reasonMessage}</strong>`;
+            loginErrorEl.style.display = 'block';
+            loginErrorEl.style.color = '#b33a3a';
+        } else {
+            loginErrorEl.textContent = '';
+        }
+
         if (resetCheckInterval) { clearInterval(resetCheckInterval); resetCheckInterval = null; }
         document.getElementById('durationDisplay').textContent = '00:00:00';
         disposePlayer();
@@ -1285,6 +2626,20 @@
         document.getElementById('googleStatusBar').style.display = 'flex';
         document.getElementById('userBar').style.display = 'flex';
         document.getElementById('userEmail').textContent = user.email;
+
+        // Show Online Badge & Floating Study Chat only inside portal
+        const liveUsers = document.getElementById('liveUsersBadge');
+        if (liveUsers) liveUsers.style.display = 'inline-flex';
+        const chatBtn = document.getElementById('floatingChatBtn');
+        if (chatBtn) chatBtn.style.display = 'flex';
+
+        startActiveUsersPolling();
+        if (!chatBackgroundCheckInterval) {
+            setTimeout(() => { if (currentUser || googleUser) fetchChatMessages(false); }, 1200);
+            chatBackgroundCheckInterval = setInterval(() => {
+                if (!isChatOpen && (currentUser || googleUser)) fetchChatMessages(false);
+            }, 15000);
+        }
         
         const isGoogleLoggedIn = !!googleUser;
         const dot = document.getElementById('googleStatusDot');
@@ -1773,10 +3128,56 @@
         }
     });
 
-    // ===== DISPOSE =====
+    // Online Users Modal Events
+    const liveUsersBadge = document.getElementById('liveUsersBadge');
+    if (liveUsersBadge) liveUsersBadge.addEventListener('click', openOnlineUsersModal);
+    
+    const closeOnlineModalBtn = document.getElementById('closeOnlineModalBtn');
+    if (closeOnlineModalBtn) closeOnlineModalBtn.addEventListener('click', closeOnlineUsersModal);
+
+    const onlineModal = document.getElementById('onlineUsersModal');
+    if (onlineModal) {
+        onlineModal.addEventListener('click', function(e) {
+            if (e.target === this) closeOnlineUsersModal();
+        });
+    }
+
+    // Floating Study Chat Events
+    const floatingChatBtn = document.getElementById('floatingChatBtn');
+    if (floatingChatBtn) floatingChatBtn.addEventListener('click', toggleStudyChat);
+
+    const closeChatBtn = document.getElementById('closeChatBtn');
+    if (closeChatBtn) closeChatBtn.addEventListener('click', closeStudyChat);
+
+    const studyChatForm = document.getElementById('studyChatForm');
+    if (studyChatForm) studyChatForm.addEventListener('submit', sendStudyMessage);
+
+    // Chat Tabs (Group vs 1-on-1 Direct)
+    const chatTabGroupBtn = document.getElementById('chatTabGroupBtn');
+    if (chatTabGroupBtn) chatTabGroupBtn.addEventListener('click', () => switchChatMode('group'));
+
+    const chatTabDirectBtn = document.getElementById('chatTabDirectBtn');
+    if (chatTabDirectBtn) chatTabDirectBtn.addEventListener('click', () => switchChatMode('direct'));
+
+    // Edit Name
+    const editDisplayNameBtn = document.getElementById('editDisplayNameBtn');
+    if (editDisplayNameBtn) editDisplayNameBtn.addEventListener('click', promptEditDisplayName);
+
+    // Direct 1-on-1 Back to User List Button
+    const directBackBtn = document.getElementById('directBackBtn');
+    if (directBackBtn) directBackBtn.addEventListener('click', () => {
+        activeDirectStudent = null;
+        switchChatMode('direct');
+    });
+
+    // ===== DISPOSE & OFFLINE =====
     window.addEventListener('beforeunload', function() {
+        sendOfflineSignal();
         if (resetCheckInterval) clearInterval(resetCheckInterval);
         if (sessionValidationInterval) clearInterval(sessionValidationInterval);
+        if (activeUsersPollInterval) clearInterval(activeUsersPollInterval);
+        if (chatPollInterval) clearInterval(chatPollInterval);
+        if (chatBackgroundCheckInterval) clearInterval(chatBackgroundCheckInterval);
         disposePlayer();
         for (let key in window) {
             if (key.startsWith('player_') && window[key] && typeof window[key].dispose === 'function') {
@@ -1790,14 +3191,22 @@
 
     // ===== INIT =====
     if (!localStorage.getItem('timer_start')) localStorage.setItem('timer_start', Date.now().toString());
+    updateDisplayNameUI();
+
     const hasSession = checkExistingSession();
     if (!hasSession) {
         document.getElementById('loginContainer').style.display = 'block';
         document.getElementById('videoContent').style.display = 'none';
         document.getElementById('googleStatusBar').style.display = 'none';
         document.getElementById('userBar').style.display = 'none';
+        const liveUsers = document.getElementById('liveUsersBadge');
+        if (liveUsers) liveUsers.style.display = 'none';
+        const chatBtn = document.getElementById('floatingChatBtn');
+        if (chatBtn) chatBtn.style.display = 'none';
+        closeStudyChat();
+        closeOnlineUsersModal();
     }
-    console.log('✅ Video Portal loaded - Original blue seek color restored');
+    console.log('✅ Video Portal loaded - Real-time active users & Study Chat enabled');
 })();
 </script>
 </body>
