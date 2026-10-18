@@ -1,0 +1,24 @@
+{
+  "name": "spider-classes",
+  "version": "1.0.0",
+  "description": "Spider Classes — Cinema-grade Video Lectures & Study Portal",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "build": "echo 'Build successful'",
+    "dev": "node server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {},
+  "keywords": [
+    "education",
+    "study-portal",
+    "video-player",
+    "hls",
+    "youtube"
+  ],
+  "author": "Spider Classes",
+  "license": "ISC"
+}

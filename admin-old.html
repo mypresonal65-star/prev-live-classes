@@ -1,0 +1,3018 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Admin Panel</title>
+    <!-- ===== GOOGLE FONTS (PLUS JAKARTA SANS & OUTFIT) ===== -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        /* ==========================================================================
+           CLAYMORPHISM DESIGN SYSTEM - ADMIN PANEL
+           ========================================================================== */
+
+        :root {
+            --font-body: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            --font-heading: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+
+            --clay-canvas: #e9eff8;
+            --clay-canvas-mesh: 
+                radial-gradient(circle at 10% 12%, rgba(224, 231, 255, 0.85) 0%, transparent 40%),
+                radial-gradient(circle at 92% 16%, rgba(254, 243, 199, 0.75) 0%, transparent 35%),
+                radial-gradient(circle at 85% 85%, rgba(252, 231, 243, 0.7) 0%, transparent 40%),
+                radial-gradient(circle at 12% 88%, rgba(224, 242, 254, 0.8) 0%, transparent 40%),
+                #e9eff8;
+
+            --clay-app-bg: #f3f6fc;
+            --clay-app-border: rgba(255, 255, 255, 0.9);
+            --clay-app-shadow: 
+                18px 24px 45px rgba(160, 175, 204, 0.42),
+                -14px -14px 35px rgba(255, 255, 255, 0.95),
+                inset 3px 3px 6px rgba(255, 255, 255, 0.9),
+                inset -3px -3px 7px rgba(160, 175, 204, 0.22);
+
+            --clay-card-bg: #f4f8fe;
+            --clay-card-border: rgba(255, 255, 255, 0.88);
+            --clay-card-shadow: 
+                8px 12px 24px rgba(165, 180, 208, 0.35),
+                -6px -6px 16px rgba(255, 255, 255, 0.95),
+                inset 2px 2px 4px rgba(255, 255, 255, 0.85),
+                inset -2px -2px 5px rgba(165, 180, 208, 0.2);
+
+            --clay-sunken-bg: #ebf1f9;
+            --clay-sunken-border: rgba(255, 255, 255, 0.65);
+            --clay-sunken-shadow: 
+                inset 4px 4px 8px rgba(160, 175, 204, 0.35),
+                inset -4px -4px 8px rgba(255, 255, 255, 0.95);
+
+            --clay-text-primary: #0b1a33;
+            --clay-text-secondary: #4a617e;
+            --clay-text-muted: #7387a2;
+            --clay-border-subtle: rgba(217, 225, 236, 0.7);
+
+            --clay-primary-gradient: linear-gradient(145deg, #3b82f6, #1d4ed8);
+            --clay-primary-shadow: 
+                6px 9px 20px rgba(37, 99, 235, 0.38),
+                -3px -3px 8px rgba(255, 255, 255, 0.8),
+                inset 2px 2px 4px rgba(255, 255, 255, 0.45),
+                inset -2px -2px 4px rgba(0, 0, 0, 0.25);
+
+            --clay-emerald-gradient: linear-gradient(145deg, #10b981, #059669);
+            --clay-emerald-shadow: 
+                6px 9px 20px rgba(16, 185, 129, 0.35),
+                -3px -3px 8px rgba(255, 255, 255, 0.8),
+                inset 2px 2px 4px rgba(255, 255, 255, 0.5),
+                inset -2px -2px 4px rgba(4, 120, 87, 0.3);
+
+            --clay-danger-gradient: linear-gradient(145deg, #ef4444, #b91c1c);
+            --clay-danger-shadow: 
+                6px 9px 20px rgba(239, 68, 68, 0.35),
+                -3px -3px 8px rgba(255, 255, 255, 0.8),
+                inset 2px 2px 4px rgba(255, 255, 255, 0.45),
+                inset -2px -2px 4px rgba(153, 27, 27, 0.3);
+
+            --clay-amber-gradient: linear-gradient(145deg, #fbbf24, #f59e0b);
+            --clay-amber-shadow: 
+                6px 9px 20px rgba(245, 158, 11, 0.35),
+                -3px -3px 8px rgba(255, 255, 255, 0.8),
+                inset 2px 2px 4px rgba(255, 255, 255, 0.55),
+                inset -2px -2px 4px rgba(180, 83, 9, 0.25);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: var(--font-body);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: var(--clay-canvas);
+            background-image: var(--clay-canvas-mesh);
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 34px 18px;
+            color: var(--clay-text-primary);
+            transition: background 0.35s ease, color 0.35s ease;
+        }
+
+        /* Clay Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.04);
+            border-radius: 20px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c3d2e6;
+            border-radius: 20px;
+            border: 2px solid transparent;
+            background-clip: padding-box;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #9ab4d6;
+        }
+
+        /* ===== MAIN CLAY APP CONTAINER ===== */
+        .app {
+            max-width: 960px;
+            width: 100%;
+            background: var(--clay-app-bg);
+            border-radius: 38px;
+            border: 2px solid var(--clay-app-border);
+            box-shadow: var(--clay-app-shadow);
+            padding: 32px 34px;
+            position: relative;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 22px;
+            margin-bottom: 26px;
+            flex-wrap: wrap;
+            gap: 16px;
+            position: relative;
+        }
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--clay-border-subtle), transparent);
+        }
+
+        .header h1 {
+            font-family: var(--font-heading);
+            font-weight: 800;
+            font-size: 2.1rem;
+            letter-spacing: -0.5px;
+            color: var(--clay-text-primary);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+        }
+
+        .badge {
+            background: var(--clay-sunken-bg);
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-size: 0.82rem;
+            font-weight: 800;
+            color: var(--clay-text-secondary);
+            border: 2px solid var(--clay-sunken-border);
+            box-shadow: var(--clay-sunken-shadow);
+        }
+
+        /* ===== SECTION TITLES ===== */
+        .section-title {
+            font-family: var(--font-heading);
+            font-weight: 800;
+            color: var(--clay-text-primary);
+            margin-top: 28px;
+            margin-bottom: 12px;
+            font-size: 1.25rem;
+            border-bottom: 2px solid var(--clay-border-subtle);
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .flex-row {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .flex-row > * {
+            flex: 1;
+            min-width: 160px;
+        }
+
+        /* ===== DEBOSSED CLAY INPUTS & SELECTS ===== */
+        input,
+        select {
+            width: 100%;
+            padding: 13px 20px;
+            border: 2px solid var(--clay-sunken-border);
+            border-radius: 22px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            background: var(--clay-sunken-bg);
+            color: var(--clay-text-primary);
+            box-shadow: var(--clay-sunken-shadow);
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #3b82f6;
+            box-shadow: 
+                var(--clay-sunken-shadow),
+                0 0 0 4px rgba(59, 130, 246, 0.15);
+        }
+
+        /* ===== TACTILE SQUISHY CLAY BUTTONS ===== */
+        .btn {
+            padding: 12px 28px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 40px;
+            font-weight: 800;
+            font-size: 0.92rem;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            flex: 1;
+            min-width: 130px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px) scale(1.03);
+        }
+
+        .btn:active {
+            transform: translateY(1px) scale(0.97);
+        }
+
+        .btn-primary {
+            background: var(--clay-primary-gradient);
+            color: white;
+            box-shadow: var(--clay-primary-shadow);
+        }
+        .btn-primary:hover {
+            box-shadow: 8px 14px 24px rgba(37, 99, 235, 0.45);
+        }
+        .btn-primary:active {
+            box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.35);
+        }
+
+        .btn-success {
+            background: var(--clay-emerald-gradient);
+            color: white;
+            box-shadow: var(--clay-emerald-shadow);
+        }
+        .btn-success:hover {
+            box-shadow: 8px 14px 24px rgba(16, 185, 129, 0.45);
+        }
+        .btn-success:active {
+            box-shadow: inset 3px 3px 6px rgba(4, 120, 87, 0.4);
+        }
+
+        .btn-danger {
+            background: var(--clay-danger-gradient);
+            color: white;
+            box-shadow: var(--clay-danger-shadow);
+        }
+        .btn-danger:hover {
+            box-shadow: 8px 14px 24px rgba(239, 68, 68, 0.45);
+        }
+        .btn-danger:active {
+            box-shadow: inset 3px 3px 6px rgba(153, 27, 27, 0.4);
+        }
+
+        .btn-outline {
+            background: var(--clay-card-bg);
+            color: var(--clay-text-primary);
+            border: 2px solid var(--clay-card-border);
+            box-shadow: var(--clay-card-shadow);
+        }
+        .btn-outline:hover {
+            background: #ffffff;
+            box-shadow: 10px 14px 24px rgba(165, 180, 208, 0.45);
+        }
+        .btn-outline:active {
+            box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-sm {
+            padding: 8px 20px;
+            font-size: 0.85rem;
+            flex: 0;
+            border-radius: 30px;
+        }
+
+        .btn-copy {
+            background: linear-gradient(145deg, #0ea5e9, #0284c7);
+            color: white;
+            padding: 6px 18px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 40px;
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-weight: 800;
+            box-shadow: 
+                4px 6px 14px rgba(14, 165, 233, 0.3),
+                inset 1px 1px 3px rgba(255, 255, 255, 0.4);
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .btn-copy:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 6px 10px 18px rgba(14, 165, 233, 0.4);
+        }
+
+        .btn-highlight {
+            padding: 6px 16px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 40px;
+            cursor: pointer;
+            font-size: 0.78rem;
+            font-weight: 800;
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .btn-highlight.active {
+            background: var(--clay-emerald-gradient);
+            color: white;
+            box-shadow: var(--clay-emerald-shadow);
+        }
+        .btn-highlight.active:hover {
+            transform: scale(1.05);
+        }
+        .btn-highlight.inactive {
+            background: linear-gradient(145deg, #64748b, #475569);
+            color: white;
+            box-shadow: 4px 6px 12px rgba(71, 85, 105, 0.3);
+        }
+        .btn-highlight.inactive:hover {
+            transform: scale(1.05);
+        }
+
+        /* ===== FLOATING CLAY LISTS & ITEMS ===== */
+        .entry-list {
+            background: var(--clay-sunken-bg);
+            border-radius: 28px;
+            padding: 10px;
+            margin: 16px 0 10px;
+            max-height: 380px;
+            overflow-y: auto;
+            border: 2px solid var(--clay-sunken-border);
+            box-shadow: var(--clay-sunken-shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .entry-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 18px;
+            background: var(--clay-card-bg);
+            border: 2px solid var(--clay-card-border);
+            border-radius: 20px;
+            box-shadow: var(--clay-card-shadow);
+            transition: all 0.2s ease;
+        }
+        .entry-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 10px 14px 24px rgba(165, 180, 208, 0.42);
+        }
+
+        .entry-item .info {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            flex: 1;
+        }
+
+        .entry-item .name {
+            font-weight: 700;
+            color: var(--clay-text-primary);
+            font-size: 0.98rem;
+        }
+
+        .entry-item .sub {
+            color: var(--clay-text-secondary);
+            font-size: 0.82rem;
+            word-break: break-all;
+            font-weight: 500;
+        }
+
+        .entry-item .del-btn {
+            background: linear-gradient(145deg, #fee2e2, #fecaca);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            color: #b91c1c;
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 40px;
+            box-shadow: 2px 4px 8px rgba(239, 68, 68, 0.2);
+            transition: all 0.2s;
+        }
+        .entry-item .del-btn:hover {
+            background: #fca5a5;
+            transform: scale(1.1);
+        }
+
+        .entry-item .key-btn {
+            background: var(--clay-sunken-bg);
+            border: 2px solid var(--clay-sunken-border);
+            border-radius: 40px;
+            padding: 6px 16px;
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--clay-text-secondary);
+            box-shadow: var(--clay-sunken-shadow);
+            transition: all 0.2s;
+        }
+        .entry-item .key-btn:hover {
+            background: #ffffff;
+            transform: scale(1.05);
+        }
+
+        .entry-item .reset-btn {
+            background: var(--clay-amber-gradient);
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            border-radius: 40px;
+            padding: 6px 16px;
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-weight: 800;
+            color: #78350f;
+            box-shadow: var(--clay-amber-shadow);
+            transition: all 0.2s;
+        }
+        .entry-item .reset-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .empty-state {
+            color: var(--clay-text-muted);
+            padding: 24px 0;
+            text-align: center;
+            font-style: italic;
+            font-weight: 600;
+        }
+
+        /* ===== TOAST ALERTS (CLAY PILLS) ===== */
+        .toast-msg {
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-top: 14px;
+            padding: 10px 22px;
+            border-radius: 40px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 2px solid rgba(255, 255, 255, 0.85);
+            box-shadow: var(--clay-card-shadow);
+        }
+
+        .toast-error {
+            background: linear-gradient(145deg, #fee2e2, #fecaca);
+            color: #991b1b;
+        }
+
+        .toast-success {
+            background: linear-gradient(145deg, #ecfdf5, #d1fae5);
+            color: #065f46;
+        }
+
+        .toast-info {
+            background: linear-gradient(145deg, #e0f2fe, #bae6fd);
+            color: #0369a1;
+        }
+
+        /* ===== PASSWORD GATE (CLAY PANEL) ===== */
+        .password-gate {
+            background: var(--clay-card-bg);
+            border-radius: 28px;
+            padding: 28px;
+            margin-top: 14px;
+            border: 2px solid var(--clay-card-border);
+            box-shadow: var(--clay-card-shadow);
+        }
+
+        .password-gate label {
+            font-weight: 700;
+            color: var(--clay-text-primary);
+            display: block;
+            margin-top: 14px;
+            margin-bottom: 6px;
+            font-size: 0.92rem;
+        }
+
+        .password-gate .pwd-error {
+            color: #ef4444;
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-top: 8px;
+        }
+
+        .api-status {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--clay-text-secondary);
+            padding: 6px 18px;
+            background: var(--clay-sunken-bg);
+            border-radius: 40px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 2px solid var(--clay-sunken-border);
+            box-shadow: var(--clay-sunken-shadow);
+        }
+
+        .status-connected {
+            background: linear-gradient(145deg, #ecfdf5, #d1fae5);
+            color: #065f46;
+        }
+
+        .status-error {
+            background: linear-gradient(145deg, #fee2e2, #fecaca);
+            color: #991b1b;
+        }
+
+        .playlist-header {
+            background: var(--clay-card-bg);
+            padding: 12px 20px;
+            font-weight: 800;
+            border-radius: 18px;
+            margin: 12px 0 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 2px solid var(--clay-card-border);
+            box-shadow: var(--clay-card-shadow);
+            color: var(--clay-text-primary);
+        }
+
+        /* ===== TABS (TACTILE CLAY PILLS) ===== */
+        .tab-buttons {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 22px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 11px 26px;
+            border: 2px solid var(--clay-card-border);
+            border-radius: 40px;
+            background: var(--clay-card-bg);
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.92rem;
+            color: var(--clay-text-primary);
+            box-shadow: var(--clay-card-shadow);
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .tab-btn:hover {
+            transform: translateY(-2px) scale(1.03);
+            box-shadow: 10px 14px 26px rgba(165, 180, 208, 0.45);
+        }
+
+        .tab-btn:active {
+            transform: translateY(1px) scale(0.97);
+        }
+
+        .tab-btn.active {
+            border-color: rgba(255, 255, 255, 0.4);
+            background: var(--clay-primary-gradient);
+            color: white;
+            box-shadow: var(--clay-primary-shadow);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Debossed Key Display */
+        .key-display {
+            background: var(--clay-sunken-bg);
+            padding: 14px 20px;
+            border-radius: 18px;
+            font-family: monospace;
+            word-break: break-all;
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            border: 2px solid var(--clay-sunken-border);
+            box-shadow: var(--clay-sunken-shadow);
+        }
+
+        .key-display .key-text {
+            font-size: 1.15rem;
+            color: var(--clay-text-primary);
+            font-weight: 700;
+        }
+
+        .important-item {
+            background: var(--clay-card-bg);
+            border-left: 6px solid #f59e0b;
+        }
+
+        .important-item.hidden {
+            opacity: 0.6;
+            border-left-color: #64748b;
+        }
+
+        .visibility-badge {
+            font-size: 0.75rem;
+            padding: 4px 14px;
+            border-radius: 40px;
+            font-weight: 800;
+            border: 1px solid rgba(255, 255, 255, 0.7);
+        }
+
+        .visibility-badge.visible {
+            background: linear-gradient(145deg, #ecfdf5, #d1fae5);
+            color: #065f46;
+        }
+
+        .visibility-badge.hidden {
+            background: linear-gradient(145deg, #fee2e2, #fecaca);
+            color: #991b1b;
+        }
+
+        /* ===== REAL-TIME ACTIVE USERS BADGE ===== */
+        .live-users-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            border-radius: 40px;
+            background: linear-gradient(145deg, #ecfdf5, #d1fae5);
+            border: 2px solid rgba(255, 255, 255, 0.9);
+            color: #065f46;
+            font-size: 0.82rem;
+            font-weight: 700;
+            box-shadow: 
+                5px 7px 16px rgba(16, 185, 129, 0.24),
+                -3px -3px 8px rgba(255, 255, 255, 0.9),
+                inset 2px 2px 4px rgba(255, 255, 255, 0.85),
+                inset -2px -2px 4px rgba(16, 185, 129, 0.18);
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            user-select: none;
+        }
+
+        .pulsing-green-dot-wrap {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 12px;
+            height: 12px;
+        }
+
+        .pulsing-green-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.85);
+            z-index: 2;
+        }
+
+        .pulsing-green-ring {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background-color: rgba(16, 185, 129, 0.6);
+            animation: live-ring-pulse 1.8s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+            z-index: 1;
+        }
+
+        @keyframes live-ring-pulse {
+            0% { transform: scale(0.8); opacity: 0.95; }
+            70% { transform: scale(2.3); opacity: 0; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
+
+        .live-users-text strong {
+            font-weight: 800;
+            color: #047857;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* ===== CHAT MONITOR STYLES ===== */
+        .chat-msg-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 14px 18px;
+            background: var(--clay-card-bg);
+            border: 2px solid var(--clay-card-border);
+            border-radius: 20px;
+            box-shadow: var(--clay-card-shadow);
+            gap: 14px;
+            margin-bottom: 10px;
+            transition: all 0.2s ease;
+        }
+        .chat-msg-row:hover {
+            transform: translateY(-2px);
+            box-shadow: 10px 14px 24px rgba(165, 180, 208, 0.42);
+        }
+
+        .chat-msg-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .chat-msg-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .chat-sender-badge {
+            font-weight: 800;
+            color: var(--clay-text-primary);
+            font-size: 0.92rem;
+        }
+
+        .chat-time-badge {
+            font-size: 0.75rem;
+            color: var(--clay-text-muted);
+            font-weight: 600;
+        }
+
+        .chat-msg-body {
+            font-size: 0.92rem;
+            color: var(--clay-text-primary);
+            line-height: 1.45;
+            word-break: break-word;
+            background: var(--clay-sunken-bg);
+            border: 2px solid var(--clay-sunken-border);
+            box-shadow: var(--clay-sunken-shadow);
+            padding: 10px 16px;
+            border-radius: 16px;
+            margin-top: 4px;
+        }
+
+        .chat-delete-btn {
+            background: linear-gradient(145deg, #fee2e2, #fecaca);
+            color: #991b1b;
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 40px;
+            padding: 8px 16px;
+            font-size: 0.78rem;
+            font-weight: 800;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+            box-shadow: 3px 5px 10px rgba(239, 68, 68, 0.2);
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .chat-delete-btn:hover {
+            background: #ef4444;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .admin-online-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: var(--clay-card-bg);
+            border: 2px solid var(--clay-card-border);
+            border-radius: 30px;
+            font-size: 0.82rem;
+            color: var(--clay-text-primary);
+            margin: 4px;
+            font-weight: 700;
+            box-shadow: var(--clay-card-shadow);
+        }
+
+        .chat-type-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+        }
+
+        .chat-type-pill.group {
+            background: linear-gradient(145deg, #ecfdf5, #d1fae5);
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .chat-type-pill.direct {
+            background: linear-gradient(145deg, #f5f3ff, #ede9fe);
+            color: #6d28d9;
+            border: 1px solid #ddd6fe;
+        }
+
+        /* ===== YOUTUBE BULK IMPORT STYLES ===== */
+        .yt-import-card {
+            background: var(--clay-card-bg);
+            border: 2px dashed #93c5fd;
+            border-radius: 28px;
+            padding: 24px 26px;
+            margin: 24px 0;
+            box-shadow: var(--clay-card-shadow);
+            transition: all 0.25s ease;
+        }
+
+        .yt-import-card:focus-within {
+            border-color: #2563eb;
+            box-shadow: 
+                var(--clay-card-shadow),
+                0 0 0 4px rgba(37, 99, 235, 0.15);
+        }
+
+        .yt-preview-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 16px;
+            background: var(--clay-card-bg);
+            border: 2px solid var(--clay-card-border);
+            border-radius: 18px;
+            box-shadow: var(--clay-card-shadow);
+            margin-bottom: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .yt-preview-row:hover {
+            transform: translateX(4px);
+        }
+
+        .yt-preview-thumb {
+            width: 76px;
+            height: 46px;
+            border-radius: 12px;
+            object-fit: cover;
+            flex-shrink: 0;
+            background: #000;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .yt-preview-num {
+            font-weight: 800;
+            font-size: 0.82rem;
+            color: var(--clay-text-primary);
+            min-width: 34px;
+            text-align: center;
+            background: var(--clay-sunken-bg);
+            padding: 6px 8px;
+            border-radius: 12px;
+            box-shadow: var(--clay-sunken-shadow);
+        }
+
+        .yt-preview-input {
+            flex: 1;
+            padding: 10px 14px !important;
+            font-size: 0.9rem !important;
+            border-radius: 14px !important;
+            margin-bottom: 0 !important;
+        }
+
+        /* ===== RESPONSIVE TWEAKS ===== */
+        @media (max-width: 768px) {
+            body { padding: 18px 10px; }
+            .app { padding: 18px 16px; border-radius: 26px; }
+            .header h1 { font-size: 1.45rem; }
+            .flex-row { flex-direction: column; }
+            .flex-row > * { min-width: auto; width: 100%; }
+            .btn { min-width: auto; padding: 11px 22px; }
+            .tab-btn { padding: 9px 18px; font-size: 0.85rem; }
+            .entry-item { flex-wrap: wrap; gap: 10px; }
+            .key-display { flex-direction: column; align-items: stretch; }
+        }
+
+        @media (max-width: 480px) {
+            body { padding: 12px 6px; }
+            .app { padding: 14px 12px; border-radius: 20px; }
+            .header h1 { font-size: 1.25rem; }
+            .tab-buttons { gap: 8px; }
+            .tab-btn { padding: 7px 14px; font-size: 0.78rem; }
+            .section-title { font-size: 1.05rem; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app">
+        <div class="header">
+            <h1>⚙️ Admin Panel</h1>
+            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                <div class="live-users-pill" id="adminLiveUsersBadge" title="Real-time Active Students Online">
+                    <span class="pulsing-green-dot-wrap">
+                        <span class="pulsing-green-ring"></span>
+                        <span class="pulsing-green-dot"></span>
+                    </span>
+                    <span class="live-users-text"><strong id="adminActiveUsersCount">0</strong> Active Online</span>
+                </div>
+                <span class="badge">🔐 Protected</span>
+            </div>
+        </div>
+
+        <!-- Password Gate -->
+        <div id="passwordGate" class="password-gate">
+            <label for="adminUsername">👤 Username</label>
+            <input type="text" id="adminUsername" placeholder="Enter username" value="admin" />
+
+            <label for="adminPwdInput">🔑 Password</label>
+            <input type="password" id="adminPwdInput" placeholder="Enter password" />
+
+            <div id="pwdError" class="pwd-error"></div>
+            <div class="flex-row">
+                <button class="btn btn-primary" id="unlockBtn">🔓 Login</button>
+            </div>
+        </div>
+
+        <!-- Admin Content -->
+        <div id="adminContent" style="display: none;">
+            <div class="flex-row" style="margin-bottom:16px;">
+                <span class="api-status" id="apiStatus">🗄️ D1 Database</span>
+                <button class="btn btn-outline btn-sm" id="refreshBtn">📥 Refresh</button>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tab-buttons">
+                <button class="tab-btn active" data-tab="playlists">📁 Recorded Classes</button>
+                <button class="tab-btn" data-tab="important">⭐ Live</button>
+                <button class="tab-btn" data-tab="users">👥 Users</button>
+                <button class="tab-btn" data-tab="allowed-emails">📧 Allowed Emails</button>
+                <button class="tab-btn" data-tab="chat" id="adminChatTabBtn">💬 Chat Monitor</button>
+            </div>
+
+            <!-- Playlists Tab -->
+            <div id="tab-playlists" class="tab-content active">
+                <div class="section-title">📁 Add New Playlist</div>
+                <p style="color:#6a7c94;font-size:0.85rem;margin-bottom:8px;">
+                    Pehle Section select karo (Recorded / Reasoning / Quant / Computer / English), fir playlist name
+                    daal ke Add karo.
+                </p>
+                <div class="flex-row">
+                    <select id="newPlaylistSection" style="flex:1; min-width:150px;">
+                        <option value="recorded">📐 Math</option>
+                        <option value="reasoning">🧠 Reasoning</option>
+                        <option value="quant">🔢 Quant</option>
+                        <option value="computer">💻 Computer</option>
+                        <option value="english">📖 English</option>
+                    </select>
+                    <input type="text" id="newPlaylistName" placeholder="Playlist name" style="flex:2;" />
+                    <button class="btn btn-success" id="addPlaylistBtn">➕ Add</button>
+                </div>
+                <div id="playlistFeedback" class="toast-msg"></div>
+
+                <div class="section-title">📝 Add Chapter</div>
+                <p style="color:#6a7c94;font-size:0.85rem;margin-bottom:8px;">
+                    Pehle Section select karo, uske baad us section ki playlist chuno, fir chapter name aur video link
+                    daal ke save karo.
+                </p>
+                <div class="flex-row">
+                    <select id="chapterSectionFilter" style="flex:1; min-width:150px;">
+                        <option value="recorded">📐 Math</option>
+                        <option value="reasoning">🧠 Reasoning</option>
+                        <option value="quant">🔢 Quant</option>
+                        <option value="computer">💻 Computer</option>
+                        <option value="english">📖 English</option>
+                    </select>
+                    <select id="playlistSelect" style="flex:2;">
+                        <option value="">Select playlist</option>
+                    </select>
+                </div>
+                <div class="flex-row">
+                    <input type="text" id="chapterName" placeholder="Chapter name" />
+                    <input type="text" id="chapterLink" placeholder="Video URL (HLS / MP4)" />
+                </div>
+                <div class="flex-row">
+                    <button class="btn btn-primary" id="addChapterBtn">➕ Add Chapter</button>
+                </div>
+                <div id="chapterFeedback" class="toast-msg"></div>
+
+                <!-- ===== YOUTUBE PLAYLIST BULK IMPORT (NEW) ===== -->
+                <div class="yt-import-card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <span style="font-size:1.6rem;">🎬</span>
+                            <div>
+                                <h3 style="color:#0b1a33; font-size:1.15rem; font-weight:700; margin:0;">Direct Import YouTube Playlist &amp; Private Videos</h3>
+                                <p style="color:#6a7c94; font-size:0.82rem; margin:2px 0 0;">
+                                    Playlist link daalo ya apne Private video links paste karo — saare lectures serial &amp; name wise add ho jayenge.
+                                </p>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-outline btn-sm" id="ytApiKeyToggleBtn" style="padding:6px 14px; font-size:0.75rem;">
+                            ⚙️ YouTube Access Settings <span id="ytApiKeyBadge" style="color:#1a7a3a; font-weight:700;"></span>
+                        </button>
+                    </div>
+
+                    <!-- YouTube API Key & OAuth Panel (Stored in LocalStorage) -->
+                    <div id="ytApiKeyPanel" style="display:none; background:#ffffff; border:1px solid #d9e1ec; border-radius:16px; padding:16px; margin-bottom:16px;">
+                        <div style="font-size:0.88rem; font-weight:700; color:#1a2b4c; margin-bottom:10px;">
+                            🔑 YouTube API &amp; Private Video Access Settings:
+                        </div>
+                        
+                        <div style="margin-bottom:12px;">
+                            <label style="font-size:0.78rem; font-weight:600; color:#4c637f; margin-bottom:4px; display:block;">
+                                1. YouTube Data API v3 Key (Public / Unlisted Playlist ke liye):
+                            </label>
+                            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                                <input type="text" id="ytApiKeyInput" placeholder="AIzaSy..." style="flex:2; font-family:monospace; font-size:0.85rem;" />
+                                <button type="button" class="btn btn-primary btn-sm" id="saveYtApiKeyBtn">💾 Save Key</button>
+                                <button type="button" class="btn btn-outline btn-sm" id="clearYtApiKeyBtn">✕ Clear</button>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom:12px;">
+                            <label style="font-size:0.78rem; font-weight:600; color:#4c637f; margin-bottom:4px; display:block;">
+                                2. Google OAuth Access Token (Sirf agar Playlist 100% Private ho):
+                            </label>
+                            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                                <input type="text" id="ytOAuthTokenInput" placeholder="ya29.a0A..." style="flex:2; font-family:monospace; font-size:0.85rem;" />
+                                <button type="button" class="btn btn-primary btn-sm" id="saveYtOAuthTokenBtn">💾 Save Token</button>
+                                <button type="button" class="btn btn-outline btn-sm" id="clearYtOAuthTokenBtn">✕ Clear</button>
+                            </div>
+                        </div>
+
+                        <div style="background:#f0f9ff; border:1px solid #bae6fd; border-radius:12px; padding:10px 14px; font-size:0.78rem; color:#0369a1; line-height:1.45;">
+                            🔒 <strong>Private Videos Guidance:</strong><br>
+                            • Agar aapke videos YouTube par <strong>Private</strong> hain, toh sabse aasan tareeqa neeche diya gaya <strong>"📋 Bulk Private Video Links Paste"</strong> tab hai — jisme bina kisi API ya token ke direct saare links 1-click me import ho jate hain.<br>
+                            • Agar playlist link se fetch karna hai, toh YouTube Studio me playlist ko <strong>Unlisted</strong> rakh sakte hain (videos Private hi rahenge), ya upar apna Google OAuth Token daal sakte hain.
+                        </div>
+                    </div>
+
+                    <!-- Step 1: Section & Target Playlist -->
+                    <div style="margin-bottom:12px;">
+                        <label style="font-size:0.82rem; font-weight:600; color:#4c637f; margin-bottom:6px; display:block;">
+                            1. Target Section &amp; Playlist Chuno:
+                        </label>
+                        <div class="flex-row">
+                            <select id="ytSectionSelect" style="flex:1; min-width:140px;">
+                                <option value="recorded">📐 Math</option>
+                                <option value="reasoning">🧠 Reasoning</option>
+                                <option value="quant">🔢 Quant</option>
+                                <option value="computer">💻 Computer</option>
+                                <option value="english">📖 English</option>
+                            </select>
+                            
+                            <select id="ytPlaylistMode" style="flex:1; min-width:160px;">
+                                <option value="new">➕ Nayi Playlist Banao (Auto Name)</option>
+                                <option value="existing">📁 Existing Playlist me jodo</option>
+                            </select>
+
+                            <select id="ytExistingPlaylistSelect" style="flex:1.5; min-width:180px; display:none;">
+                                <option value="">Select existing playlist</option>
+                            </select>
+
+                            <input type="text" id="ytNewPlaylistName" placeholder="Playlist name (Auto-filled on fetch)" style="flex:1.5; min-width:180px;" />
+                        </div>
+                    </div>
+
+                    <!-- Import Mode Switcher (Playlist Link vs Bulk Paste) -->
+                    <div style="margin-bottom:12px;">
+                        <label style="font-size:0.82rem; font-weight:600; color:#4c637f; margin-bottom:6px; display:block;">
+                            2. Import Method Chuno:
+                        </label>
+                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                            <button type="button" class="btn btn-sm btn-primary" id="ytTabPlaylistModeBtn" style="border-radius:20px; padding:6px 16px;">
+                                🔗 Playlist URL (Auto-Fetch)
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline" id="ytTabBulkModeBtn" style="border-radius:20px; padding:6px 16px;">
+                                📋 Bulk Private Video Links Paste (Sabse Simple &amp; Fast)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Mode A: Playlist URL Input -->
+                    <div id="ytPlaylistInputSection" style="margin-bottom:12px;">
+                        <label style="font-size:0.82rem; font-weight:600; color:#4c637f; margin-bottom:6px; display:block;">
+                            YouTube Playlist Link Paste Karo:
+                        </label>
+                        <div class="flex-row">
+                            <input type="text" id="ytPlaylistUrlInput" placeholder="https://www.youtube.com/playlist?list=PLxxxxxx" style="flex:3;" />
+                            <button type="button" class="btn btn-primary" id="fetchYtPlaylistBtn" style="flex:1; min-width:150px; background:#e63946; color:#fff;">
+                                🔍 Fetch Videos
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Mode B: Bulk Video Links Textarea (Zero API / Guaranteed for Private) -->
+                    <div id="ytBulkInputSection" style="display:none; margin-bottom:12px;">
+                        <label style="font-size:0.82rem; font-weight:600; color:#4c637f; margin-bottom:6px; display:block;">
+                            Private Video Links Paste Karo (Line by Line):
+                        </label>
+                        <textarea id="ytBulkLinksInput" rows="5" placeholder="Ek ke baad ek YouTube video link daalo, jaise:&#10;https://youtu.be/34v4r2_Abc&#10;https://youtu.be/98x7z1_Def&#10;&#10;Ya title ke sath bhi daal sakte hain:&#10;Lecture 1 - Number Systems | https://youtu.be/34v4r2_Abc&#10;Lecture 2 - HCF &amp; LCM | https://youtu.be/98x7z1_Def" style="width:100%; border:2px solid #d9e1ec; border-radius:14px; padding:12px 14px; font-family:monospace; font-size:0.84rem; line-height:1.5; resize:vertical; outline:none; margin-bottom:8px;"></textarea>
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                            <span style="font-size:0.75rem; color:#6a7c94;">💡 Private videos ke saare links YouTube Studio se copy karke yahan direct paste kar sakte hain.</span>
+                            <button type="button" class="btn btn-primary btn-sm" id="parseYtBulkBtn" style="background:#2563eb; color:#fff; padding:8px 20px;">
+                                ⚡ Load Lectures
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="ytImportFeedback" class="toast-msg"></div>
+
+                    <!-- Step 3: Video Preview List Container (Hidden initially) -->
+                    <div id="ytPreviewContainer" style="display:none; margin-top:16px; background:#ffffff; border:1px solid #d9e1ec; border-radius:18px; padding:18px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; border-bottom:1px solid #eef2f8; padding-bottom:12px; margin-bottom:14px;">
+                            <div>
+                                <span id="ytPreviewTitle" style="font-weight:700; font-size:1.05rem; color:#0b1a33;">Playlist Title</span>
+                                <span id="ytPreviewBadge" style="background:#eef3fa; color:#2d7a9b; font-size:0.75rem; font-weight:700; padding:3px 10px; border-radius:30px; margin-left:8px;">0 Videos</span>
+                            </div>
+                            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                                <button type="button" class="btn btn-outline btn-sm" id="ytToggleSelectBtn">Toggle All</button>
+                                <label style="font-size:0.8rem; color:#4c637f; display:inline-flex; align-items:center; gap:5px; cursor:pointer; user-select:none;">
+                                    <input type="checkbox" id="ytPrefixLectureCheck" checked style="width:auto; cursor:pointer;" />
+                                    Prefix "Lecture 1, 2..."
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Video items preview list -->
+                        <div id="ytPreviewList" style="max-height:360px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding-right:4px;">
+                            <!-- Dynamic video items -->
+                        </div>
+
+                        <!-- Progress Bar & Actions -->
+                        <div style="margin-top:16px; padding-top:14px; border-top:1px solid #eef2f8;">
+                            <div id="ytImportProgressWrap" style="display:none; margin-bottom:12px;">
+                                <div style="display:flex; justify-content:space-between; font-size:0.82rem; font-weight:600; color:#1a2b4c; margin-bottom:5px;">
+                                    <span id="ytImportProgressText">Importing videos...</span>
+                                    <span id="ytImportProgressPercent">0%</span>
+                                </div>
+                                <div style="width:100%; height:8px; background:#e2e8f0; border-radius:10px; overflow:hidden;">
+                                    <div id="ytImportProgressBar" style="width:0%; height:100%; background:#10b981; transition:width 0.2s ease;"></div>
+                                </div>
+                            </div>
+
+                            <div style="display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;">
+                                <button type="button" class="btn btn-outline btn-sm" id="ytCancelPreviewBtn">✕ Cancel</button>
+                                <button type="button" class="btn btn-success" id="ytConfirmImportBtn" style="min-width:200px;">
+                                    💾 Import All (<span id="ytSelectedCount">0</span> Videos)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-title">📋 All Playlists & Chapters</div>
+                <div class="entry-list" id="adminList">
+                    <div class="empty-state">Loading...</div>
+                </div>
+            </div>
+
+            <!-- Important Tab -->
+            <div id="tab-important" class="tab-content">
+                <div class="section-title">⭐ Live Section</div>
+                <p style="color:#6a7c94;font-size:0.85rem;margin-bottom:12px;">
+                    Add important classes. Use Hide/Show to control visibility on user website.
+                </p>
+
+                <div class="flex-row">
+                    <input type="text" id="importantTitle" placeholder="Class Title" />
+                </div>
+                <div class="flex-row">
+                    <input type="text" id="importantLink" placeholder="Video URL (HLS / MP4)" />
+                </div>
+                <div class="flex-row">
+                    <button class="btn btn-success" id="saveImportantBtn">💾 Save Live Links</button>
+                </div>
+                <div id="importantFeedback" class="toast-msg"></div>
+
+                <div class="section-title" style="margin-top:16px;">📋 All Live Classes</div>
+                <div id="importantList" class="entry-list">
+                    <div class="empty-state">Loading...</div>
+                </div>
+            </div>
+
+            <!-- Users Tab -->
+            <div id="tab-users" class="tab-content">
+                <div class="section-title">👤 Add New User</div>
+                <div class="flex-row">
+                    <input type="email" id="newUserEmail" placeholder="User email" />
+                    <button class="btn btn-success" id="addUserBtn">➕ Add User</button>
+                </div>
+                <div id="userFeedback" class="toast-msg"></div>
+
+                <div class="section-title">🔑 Generate New Key</div>
+                <div class="flex-row">
+                    <select id="userSelect">
+                        <option value="">Select user</option>
+                    </select>
+                    <button class="btn btn-primary" id="generateKeyBtn">🔄 Generate Key</button>
+                </div>
+                <div id="keyDisplay" class="key-display" style="display:none;">
+                    <span class="key-text" id="keyText"></span>
+                    <button class="btn-copy" id="copyKeyBtn" onclick="copyKey()">📋 Copy</button>
+                </div>
+                <div id="keyFeedback" class="toast-msg"></div>
+
+                <div class="section-title">👥 All Users & Keys</div>
+                <div class="entry-list" id="userList">
+                    <div class="empty-state">Loading...</div>
+                </div>
+            </div>
+
+            <!-- Allowed Emails Tab (NEW) -->
+            <div id="tab-allowed-emails" class="tab-content">
+                <div class="section-title">📧 Allowed Emails (No Key Required)</div>
+                <p style="color:#6a7c94;font-size:0.85rem;margin-bottom:12px;">
+                    These users can login <strong>without</strong> access key. Just email is enough.
+                </p>
+
+                <div style="display:flex; gap:12px; margin-bottom:12px; flex-wrap:wrap;">
+                    <input type="email" id="allowedEmailInput" placeholder="Enter email" style="flex:2;" />
+                    <button class="btn btn-success" id="addAllowedEmailBtn" style="flex:1;">➕ Add</button>
+                </div>
+
+                <div id="allowedEmailsList" class="entry-list">
+                    <div class="empty-state">No allowed emails</div>
+                </div>
+                <div id="allowedEmailFeedback" class="toast-msg"></div>
+            </div>
+
+            <!-- Chat Monitor Tab (NEW) -->
+            <div id="tab-chat" class="tab-content">
+                <div class="section-title"
+                    style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                    <span>💬 Student Study & Doubts Chat Monitor</span>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn btn-primary btn-sm" id="refreshChatBtn">🔄 Refresh</button>
+                        <button class="btn btn-danger btn-sm" id="clearAllChatBtn">🧹 Clear All Chat</button>
+                    </div>
+                </div>
+                <p style="color:#6a7c94;font-size:0.85rem;margin-bottom:14px;">
+                    Aap yahan real-time dekh sakte hain ki students study se related discussions kar rahe hain ya kya
+                    baat ho rahi hai. Kisi bhi inappropriate message ko delete kar sakte hain.
+                </p>
+
+                <!-- Active Online Students Summary -->
+                <div
+                    style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:18px; padding:12px 18px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                    <div
+                        style="display:flex; align-items:center; gap:8px; color:#065f46; font-weight:600; font-size:0.9rem;">
+                        <span
+                            style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#10b981;"></span>
+                        <span>Online Students Right Now: <strong id="adminOnlineUsersListCount">0</strong></span>
+                    </div>
+                    <button class="btn btn-outline btn-sm" id="toggleOnlineUsersBtn"
+                        style="padding:4px 14px; font-size:0.75rem;">👥 View Online Students</button>
+                </div>
+
+                <div id="adminOnlineUsersPanel"
+                    style="display:none; background:#f8faff; border:1px solid #e2e8f0; border-radius:16px; padding:14px; margin-bottom:16px; max-height:220px; overflow-y:auto;">
+                    <div id="adminOnlineUsersContent" style="color:#6a7c94; font-size:0.85rem;">Loading active
+                        students...</div>
+                </div>
+
+                <div id="adminChatFeedback" class="toast-msg"></div>
+
+                <div class="section-title"
+                    style="margin-top:16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                    <span>📋 Messages Stream (<span id="adminChatMessageCount">0</span>)</span>
+                    <div style="display:flex; gap:6px;" id="adminChatFilterGroup">
+                        <button type="button" class="btn btn-sm btn-primary" data-chat-filter="all"
+                            id="filterChatAllBtn">🔘 All (<span id="filterCountAll">0</span>)</button>
+                        <button type="button" class="btn btn-sm btn-outline" data-chat-filter="group"
+                            id="filterChatGroupBtn">🌐 Group Only (<span id="filterCountGroup">0</span>)</button>
+                        <button type="button" class="btn btn-sm btn-outline" data-chat-filter="direct"
+                            id="filterChatDirectBtn">🔒 1-on-1 Only (<span id="filterCountDirect">0</span>)</button>
+                    </div>
+                </div>
+                <div class="entry-list" id="adminChatList" style="max-height: 480px;">
+                    <div class="empty-state">Loading chat messages...</div>
+                </div>
+            </div>
+
+            <div style="margin-top:20px; border-top:1px solid #e8edf6; padding-top:18px;">
+                <button class="btn btn-danger" id="logoutBtn" style="flex:0; padding:8px 24px;">🚪 Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== MAIN ADMIN APP ====================
+        (function () {
+            const API_BASE = 'https://video-play-api.newstreamcp.workers.dev/api';
+            let playlists = [];
+            let users = [];
+            let importantItems = [];
+            let allowedEmails = [];
+            let adminOnlineUsersList = [];
+            let isAuthenticated = false;
+
+            // Sections (Recorded, Reasoning, Quant, Computer, English)
+            const SECTION_LABELS = {
+                recorded: '📐 Math',
+                reasoning: '🧠 Reasoning',
+                quant: '🔢 Quant',
+                computer: '💻 Computer',
+                english: '📖 English'
+            };
+            const SECTION_ORDER = ['recorded', 'reasoning', 'quant', 'computer', 'english'];
+            const DEFAULT_SECTION = 'recorded';
+
+            // ----- Tabs -----
+            let adminChatPollInterval = null;
+
+            function startAdminChatPolling() {
+                if (adminChatPollInterval) clearInterval(adminChatPollInterval);
+                adminChatPollInterval = setInterval(() => {
+                    loadAdminChat(false);
+                }, 4000);
+            }
+
+            function stopAdminChatPolling() {
+                if (adminChatPollInterval) {
+                    clearInterval(adminChatPollInterval);
+                    adminChatPollInterval = null;
+                }
+            }
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    this.classList.add('active');
+                    const tabId = this.dataset.tab;
+                    document.getElementById('tab-' + tabId).classList.add('active');
+                    if (tabId === 'users') { loadUsers(); stopAdminChatPolling(); }
+                    else if (tabId === 'playlists') { loadPlaylists(); stopAdminChatPolling(); }
+                    else if (tabId === 'important') { loadImportant(); stopAdminChatPolling(); }
+                    else if (tabId === 'allowed-emails') { loadAllowedEmails(); stopAdminChatPolling(); }
+                    else if (tabId === 'chat') {
+                        loadAdminChat(true);
+                        loadAdminOnlineUsers();
+                        startAdminChatPolling();
+                    }
+                });
+            });
+
+            // ----- API Call (Robust JSON Error Handling) -----
+            async function apiCall(endpoint, options = {}) {
+                try {
+                    const url = API_BASE + endpoint;
+                    const response = await fetch(url, {
+                        ...options,
+                        headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }
+                    });
+                    let data = null;
+                    try {
+                        data = await response.json();
+                    } catch (e) {
+                        data = null;
+                    }
+                    if (!response.ok) {
+                        const errMsg = (data && (data.error || data.message)) ? (data.error || data.message) : `HTTP ${response.status}`;
+                        throw new Error(errMsg);
+                    }
+                    return data;
+                } catch (error) {
+                    console.error('API Error (' + endpoint + '):', error);
+                    throw error;
+                }
+            }
+
+            // ==================== ADMIN AUTH ====================
+            function unlockAdminPanel(username) {
+                isAuthenticated = true;
+                document.getElementById('passwordGate').style.display = 'none';
+                document.getElementById('adminContent').style.display = 'block';
+                const errorEl = document.getElementById('pwdError');
+                if (errorEl) errorEl.textContent = '';
+                loadPlaylists();
+                loadUsers();
+                loadImportant();
+                loadAllowedEmails();
+                fetchAdminActiveUsers();
+                loadAdminOnlineUsers();
+                if (username) {
+                    showFeedback('✅ Welcome ' + username, 'success', 'playlistFeedback');
+                }
+            }
+
+            async function adminLogin() {
+                const username = document.getElementById('adminUsername').value.trim();
+                const password = document.getElementById('adminPwdInput').value.trim();
+                const errorEl = document.getElementById('pwdError');
+
+                if (!username || !password) {
+                    errorEl.textContent = '❌ Please enter username and password';
+                    return;
+                }
+
+                errorEl.textContent = '⏳ Logging in...';
+
+                try {
+                    const data = await apiCall('/admin/login', {
+                        method: 'POST',
+                        body: JSON.stringify({ username, password })
+                    });
+
+                    if (data && data.success) {
+                        sessionStorage.setItem('admin_auth', 'true');
+                        sessionStorage.setItem('admin_username', (data.admin && data.admin.username) ? data.admin.username : username);
+                        unlockAdminPanel((data.admin && data.admin.username) ? data.admin.username : username);
+                    } else {
+                        errorEl.textContent = '❌ ' + (data?.error || 'Invalid credentials');
+                        document.getElementById('adminPwdInput').value = '';
+                        document.getElementById('adminPwdInput').focus();
+                    }
+                } catch (error) {
+                    errorEl.textContent = '❌ ' + error.message;
+                }
+            }
+
+            // ==================== ALLOWED EMAILS MANAGEMENT (NEW) ====================
+            async function loadAllowedEmails() {
+                try {
+                    const data = await apiCall('/allowed-emails');
+                    if (data.success) {
+                        allowedEmails = data.emails || [];
+                        renderAllowedEmailsList();
+                        showFeedback('✅ Allowed emails loaded', 'success', 'allowedEmailFeedback');
+                    }
+                } catch (error) {
+                    showFeedback('❌ Failed to load: ' + error.message, 'error', 'allowedEmailFeedback');
+                }
+            }
+
+            async function addAllowedEmail() {
+                const email = document.getElementById('allowedEmailInput').value.trim();
+                if (!email) {
+                    showFeedback('⚠️ Enter email', 'error', 'allowedEmailFeedback');
+                    return;
+                }
+                try {
+                    const data = await apiCall('/allowed-emails', {
+                        method: 'POST',
+                        body: JSON.stringify({ email })
+                    });
+                    if (data.success) {
+                        document.getElementById('allowedEmailInput').value = '';
+                        loadAllowedEmails();
+                        showFeedback('✅ Email added: ' + email, 'success', 'allowedEmailFeedback');
+                    } else {
+                        showFeedback('❌ ' + data.error, 'error', 'allowedEmailFeedback');
+                    }
+                } catch (error) {
+                    showFeedback('❌ Failed: ' + error.message, 'error', 'allowedEmailFeedback');
+                }
+            }
+
+            async function deleteAllowedEmail(email) {
+                if (!confirm(`Remove ${email}?`)) return;
+                try {
+                    const data = await apiCall('/allowed-emails', {
+                        method: 'DELETE',
+                        body: JSON.stringify({ email })
+                    });
+                    if (data.success) {
+                        loadAllowedEmails();
+                        showFeedback('✅ Removed: ' + email, 'success', 'allowedEmailFeedback');
+                    } else {
+                        showFeedback('❌ Failed to remove', 'error', 'allowedEmailFeedback');
+                    }
+                } catch (error) {
+                    showFeedback('❌ Error: ' + error.message, 'error', 'allowedEmailFeedback');
+                }
+            }
+
+            function renderAllowedEmailsList() {
+                const list = document.getElementById('allowedEmailsList');
+                if (!allowedEmails.length) {
+                    list.innerHTML = `<div class="empty-state">No allowed emails added</div>`;
+                    return;
+                }
+                let html = '';
+                allowedEmails.forEach(item => {
+                    html += `
+                <div class="entry-item">
+                    <div class="info">
+                        <span class="name">📧 ${item.email}</span>
+                        <span class="sub">Added: ${new Date(item.created_at).toLocaleString()}</span>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button class="del-btn" onclick="window.deleteAllowedEmail('${item.email}')">✕</button>
+                    </div>
+                </div>
+            `;
+                });
+                list.innerHTML = html;
+                window.deleteAllowedEmail = deleteAllowedEmail;
+            }
+
+            // ==================== IMPORTANT SECTION ====================
+            async function loadImportant() {
+                try {
+                    const data = await apiCall('/important/all');
+                    if (data.success) {
+                        importantItems = data.items || [];
+                        renderImportantList();
+                        showFeedback('✅ Important items loaded', 'success', 'importantFeedback');
+                    }
+                } catch (error) {
+                    showFeedback('❌ Failed to load: ' + error.message, 'error', 'importantFeedback');
+                }
+            }
+
+            async function saveImportant() {
+                const title = document.getElementById('importantTitle').value.trim();
+                const link = document.getElementById('importantLink').value.trim();
+
+                if (!title || !link) {
+                    showFeedback('⚠️ Please fill both Title and URL', 'error', 'importantFeedback');
+                    return;
+                }
+
+                try {
+                    const data = await apiCall('/important', {
+                        method: 'POST',
+                        body: JSON.stringify({ title, link })
+                    });
+
+                    if (data.success) {
+                        document.getElementById('importantTitle').value = '';
+                        document.getElementById('importantLink').value = '';
+                        showFeedback('✅ Important class saved!', 'success', 'importantFeedback');
+                        loadImportant();
+                    } else {
+                        showFeedback('❌ Failed to save: ' + data.error, 'error', 'importantFeedback');
+                    }
+                } catch (error) {
+                    showFeedback('❌ Error: ' + error.message, 'error', 'importantFeedback');
+                }
+            }
+
+            async function toggleImportantVisibility(id) {
+                try {
+                    const data = await apiCall('/important/toggle', {
+                        method: 'POST',
+                        body: JSON.stringify({ id })
+                    });
+
+                    if (data.success) {
+                        showFeedback(data.message, 'success', 'importantFeedback');
+                        loadImportant();
+                    } else {
+                        showFeedback('❌ Failed to toggle: ' + data.error, 'error', 'importantFeedback');
+                    }
+                } catch (error) {
+                    showFeedback('❌ Error: ' + error.message, 'error', 'importantFeedback');
+                }
+            }
+
+            async function deleteImportant(id) {
+                if (!confirm('Delete this important class?')) return;
+                try {
+                    const data = await apiCall('/important', {
+                        method: 'DELETE',
+                        body: JSON.stringify({ id })
+                    });
+                    if (data.success) {
+                        showFeedback('🗑️ Deleted', 'success', 'importantFeedback');
+                        loadImportant();
+                    } else {
+                        showFeedback('❌ Failed to delete', 'error', 'importantFeedback');
+                    }
+                } catch (error) {
+                    showFeedback('❌ Error: ' + error.message, 'error', 'importantFeedback');
+                }
+            }
+
+            function renderImportantList() {
+                const list = document.getElementById('importantList');
+                if (!importantItems.length) {
+                    list.innerHTML = `<div class="empty-state">No important classes added yet</div>`;
+                    return;
+                }
+                let html = '';
+                importantItems.forEach(item => {
+                    const isVisible = item.is_visible === 1;
+                    const itemClass = isVisible ? '' : 'hidden';
+                    html += `
+                <div class="entry-item important-item ${itemClass}">
+                    <div class="info">
+                        <span class="name">
+                            ${isVisible ? '👁️' : '🚫'} ${item.title}
+                            <span class="visibility-badge ${isVisible ? 'visible' : 'hidden'}" style="margin-left:8px;">
+                                ${isVisible ? 'Visible' : 'Hidden'}
+                            </span>
+                        </span>
+                        <span class="sub">${item.link}</span>
+                    </div>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                        <button class="btn-highlight ${isVisible ? 'active' : 'inactive'}" 
+                                onclick="window.toggleImportantVisibility('${item.id}')">
+                            ${isVisible ? '👁️ Hide' : '🚫 Show'}
+                        </button>
+                        <button class="del-btn" onclick="window.deleteImportant('${item.id}')">✕</button>
+                    </div>
+                </div>
+            `;
+                });
+                list.innerHTML = html;
+                window.toggleImportantVisibility = toggleImportantVisibility;
+                window.deleteImportant = deleteImportant;
+            }
+
+            // ==================== LOAD PLAYLISTS ====================
+            async function loadPlaylists() {
+                try {
+                    const data = await apiCall('/playlists');
+                    if (data.success) {
+                        playlists = data.playlists;
+                        renderAdminList();
+                        updatePlaylistSelect();
+                        updateYtExistingPlaylists();
+                        updateApiStatus('connected');
+                        showFeedback('✅ Playlists loaded', 'success', 'playlistFeedback');
+                    }
+                } catch (error) {
+                    showFeedback('❌ Failed to load: ' + error.message, 'error', 'playlistFeedback');
+                    updateApiStatus('error');
+                }
+            }
+
+            // ==================== ADD PLAYLIST ====================
+            async function addPlaylist() {
+                const name = document.getElementById('newPlaylistName').value.trim();
+                // FIX: default fallback should match the real section key 'recorded'
+                const section = document.getElementById('newPlaylistSection').value || DEFAULT_SECTION;
+                if (!name) {
+                    showFeedback('⚠️ Enter playlist name', 'error', 'playlistFeedback');
+                    return;
+                }
+                try {
+                    const data = await apiCall('/playlists', {
+                        method: 'POST',
+                        body: JSON.stringify({ name, section })
+                    });
+                    if (data.success) {
+                        document.getElementById('newPlaylistName').value = '';
+                        showFeedback('✅ Playlist added to ' + (SECTION_LABELS[section] || section), 'success', 'playlistFeedback');
+                        loadPlaylists();
+                    } else {
+                        showFeedback('❌ ' + (data.error || 'Failed to add playlist'), 'error', 'playlistFeedback');
+                    }
+                } catch (error) {
+                    showFeedback('❌ Failed: ' + error.message, 'error', 'playlistFeedback');
+                }
+            }
+
+            // ==================== ADD CHAPTER ====================
+            async function addChapter() {
+                const playlistId = document.getElementById('playlistSelect').value;
+                const name = document.getElementById('chapterName').value.trim();
+                const link = document.getElementById('chapterLink').value.trim();
+                if (!playlistId || !name || !link) {
+                    showFeedback('⚠️ Section + Playlist select karo aur sab fields bharo', 'error', 'chapterFeedback');
+                    return;
+                }
+                try {
+                    const data = await apiCall('/playlists/chapter', {
+                        method: 'POST',
+                        body: JSON.stringify({ playlistId, chapterName: name, chapterLink: link })
+                    });
+                    if (data.success) {
+                        document.getElementById('chapterName').value = '';
+                        document.getElementById('chapterLink').value = '';
+                        showFeedback('✅ Chapter added', 'success', 'chapterFeedback');
+                        loadPlaylists();
+                    }
+                } catch (error) {
+                    showFeedback('❌ Failed: ' + error.message, 'error', 'chapterFeedback');
+                }
+            }
+
+            // ==================== DELETE PLAYLIST ====================
+            async function deletePlaylist(playlistId) {
+                if (!confirm('Delete this playlist?')) return;
+                try {
+                    await apiCall('/playlists', {
+                        method: 'DELETE',
+                        body: JSON.stringify({ playlistId })
+                    });
+                    loadPlaylists();
+                    showFeedback('🗑️ Deleted', 'success', 'playlistFeedback');
+                } catch (error) {
+                    showFeedback('❌ Failed to delete', 'error', 'playlistFeedback');
+                }
+            }
+
+            // ==================== DELETE CHAPTER ====================
+            async function deleteChapter(playlistId, chapterId) {
+                if (!confirm('Delete this chapter?')) return;
+                try {
+                    await apiCall('/playlists/chapter', {
+                        method: 'DELETE',
+                        body: JSON.stringify({ playlistId, chapterId })
+                    });
+                    loadPlaylists();
+                    showFeedback('🗑️ Deleted', 'success', 'playlistFeedback');
+                } catch (error) {
+                    showFeedback('❌ Failed to delete', 'error', 'playlistFeedback');
+                }
+            }
+
+            // ==================== LOAD USERS ====================
+            async function loadUsers() {
+                try {
+                    try {
+                        const onlineData = await apiCall('/active-users/list');
+                        if (onlineData.success && Array.isArray(onlineData.users)) {
+                            adminOnlineUsersList = onlineData.users;
+                        }
+                    } catch (e) { }
+
+                    const data = await apiCall('/users');
+                    if (data.success) {
+                        users = data.users;
+                        renderUserList();
+                        updateUserSelect();
+                        updateApiStatus('connected');
+                        showFeedback('✅ Users loaded', 'success', 'userFeedback');
+                    }
+                } catch (error) {
+                    showFeedback('❌ Failed to load users: ' + error.message, 'error', 'userFeedback');
+                    updateApiStatus('error');
+                }
+            }
+
+            // ==================== ADD USER ====================
+            async function addUser() {
+                const email = document.getElementById('newUserEmail').value.trim();
+                if (!email) {
+                    showFeedback('⚠️ Enter email', 'error', 'userFeedback');
+                    return;
+                }
+                try {
+                    const data = await apiCall('/users', {
+                        method: 'POST',
+                        body: JSON.stringify({ email })
+                    });
+                    if (data.success) {
+                        document.getElementById('newUserEmail').value = '';
+                        showFeedback('✅ User added. Key: ' + data.key, 'success', 'userFeedback');
+                        loadUsers();
+                    } else {
+                        showFeedback('❌ ' + data.error, 'error', 'userFeedback');
+                    }
+                } catch (error) {
+                    showFeedback('❌ Failed: ' + error.message, 'error', 'userFeedback');
+                }
+            }
+
+            // ==================== DELETE USER ====================
+            async function deleteUser(userId) {
+                if (!confirm('Delete this user?')) return;
+                try {
+                    await apiCall('/users', {
+                        method: 'DELETE',
+                        body: JSON.stringify({ userId })
+                    });
+                    loadUsers();
+                    showFeedback('🗑️ User deleted', 'success', 'userFeedback');
+                } catch (error) {
+                    showFeedback('❌ Failed to delete', 'error', 'userFeedback');
+                }
+            }
+
+            // ==================== RESET USER ====================
+            window.resetUser = async function (userId) {
+                if (!confirm('⚠️ Are you sure you want to reset this user?')) return;
+                try {
+                    const data = await apiCall('/admin/reset-user', {
+                        method: 'POST',
+                        body: JSON.stringify({ userId })
+                    });
+                    if (data.success) {
+                        showFeedback('✅ User reset!', 'success', 'userFeedback');
+                        loadUsers();
+                    } else {
+                        showFeedback('❌ Failed to reset', 'error', 'userFeedback');
+                    }
+                } catch (error) {
+                    showFeedback('❌ Network error', 'error', 'userFeedback');
+                }
+            };
+
+            // ==================== GENERATE KEY ====================
+            async function generateKey() {
+                const userId = document.getElementById('userSelect').value;
+                if (!userId) {
+                    showFeedback('⚠️ Select a user', 'error', 'keyFeedback');
+                    return;
+                }
+                try {
+                    const data = await apiCall('/keys/generate', {
+                        method: 'POST',
+                        body: JSON.stringify({ userId })
+                    });
+                    if (data.success) {
+                        const display = document.getElementById('keyDisplay');
+                        const keyText = document.getElementById('keyText');
+                        display.style.display = 'flex';
+                        keyText.textContent = data.key;
+                        showFeedback('✅ Key generated!', 'success', 'keyFeedback');
+                        loadUsers();
+                    }
+                } catch (error) {
+                    showFeedback('❌ Failed: ' + error.message, 'error', 'keyFeedback');
+                }
+            }
+
+            // ==================== COPY KEY ====================
+            window.copyKey = function () {
+                const keyText = document.getElementById('keyText').textContent;
+                if (!keyText) {
+                    showFeedback('⚠️ No key to copy', 'error', 'keyFeedback');
+                    return;
+                }
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(keyText)
+                        .then(() => {
+                            showFeedback('✅ Key copied!', 'success', 'keyFeedback');
+                            document.getElementById('copyKeyBtn').textContent = '✅ Copied!';
+                            setTimeout(() => {
+                                document.getElementById('copyKeyBtn').textContent = '📋 Copy';
+                            }, 2000);
+                        })
+                        .catch(() => fallbackCopy(keyText));
+                } else {
+                    fallbackCopy(keyText);
+                }
+            };
+
+            function fallbackCopy(text) {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    showFeedback('✅ Key copied!', 'success', 'keyFeedback');
+                    document.getElementById('copyKeyBtn').textContent = '✅ Copied!';
+                    setTimeout(() => {
+                        document.getElementById('copyKeyBtn').textContent = '📋 Copy';
+                    }, 2000);
+                } catch (err) {
+                    showFeedback('❌ Failed to copy', 'error', 'keyFeedback');
+                }
+                document.body.removeChild(textarea);
+            }
+
+            // ==================== VIEW KEYS ====================
+            window.viewKeys = async function (userId) {
+                try {
+                    const data = await apiCall('/keys?userId=' + userId);
+                    if (data.success) {
+                        let msg = '🔑 Keys for this user:\n\n';
+                        if (data.keys.length === 0) {
+                            msg += 'No keys generated yet.';
+                        } else {
+                            data.keys.forEach(k => {
+                                const status = k.is_used ? '✅ Used' : '❌ Not used';
+                                const expires = new Date(k.expires_at).toLocaleString();
+                                msg += `Key: ${k.key_value}\nStatus: ${status}\nExpires: ${expires}\n\n`;
+                            });
+                        }
+                        alert(msg);
+                    }
+                } catch (error) {
+                    alert('Failed to load keys');
+                }
+            };
+
+            // ==================== RENDER FUNCTIONS ====================
+            // Playlists grouped by Section (Recorded, Reasoning, Quant, Computer, English)
+            function renderAdminList() {
+                const list = document.getElementById('adminList');
+                if (!playlists.length) {
+                    list.innerHTML = `<div class="empty-state">No playlists</div>`;
+                    return;
+                }
+                let html = '';
+                SECTION_ORDER.forEach(sectionKey => {
+                    // FIX: fallback for old rows with NULL/empty section is now
+                    // DEFAULT_SECTION ('recorded') instead of the never-matching 'math'
+                    const sectionPlaylists = playlists.filter(p => (p.section || DEFAULT_SECTION) === sectionKey);
+                    if (!sectionPlaylists.length) return;
+                    html += `<div class="section-title" style="margin-top:16px;">${SECTION_LABELS[sectionKey] || sectionKey}</div>`;
+                    sectionPlaylists.forEach(playlist => {
+                        html += `
+                    <div class="playlist-header">
+                        📁 ${playlist.name}
+                        <button class="del-btn" onclick="window.deletePlaylist('${playlist.id}')">✕</button>
+                    </div>
+                `;
+                        if (playlist.chapters?.length) {
+                            playlist.chapters.forEach(chapter => {
+                                html += `
+                            <div class="entry-item" style="padding-left:32px;">
+                                <div class="info">
+                                    <span class="name">${chapter.name}</span>
+                                    <span class="sub">${chapter.link}</span>
+                                </div>
+                                <button class="del-btn" onclick="window.deleteChapter('${playlist.id}', '${chapter.id}')">✕</button>
+                            </div>
+                        `;
+                            });
+                        } else {
+                            html += `<div class="entry-item" style="padding-left:32px; color:#6a7c94; font-style:italic;">No chapters</div>`;
+                        }
+                    });
+                });
+                list.innerHTML = html;
+                window.deletePlaylist = deletePlaylist;
+                window.deleteChapter = deleteChapter;
+            }
+
+            function renderUserList() {
+                const list = document.getElementById('userList');
+                if (!users.length) {
+                    list.innerHTML = `<div class="empty-state">No users</div>`;
+                    return;
+                }
+                let html = '';
+                users.forEach(user => {
+                    const isOnline = adminOnlineUsersList.some(ou => ou.email && ou.email.toLowerCase() === user.email.toLowerCase());
+                    const statusBadge = isOnline
+                        ? `<span style="display:inline-flex; align-items:center; gap:5px; font-size:0.75rem; background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0; padding:2px 10px; border-radius:20px; font-weight:700; margin-left:8px;"><span style="width:7px;height:7px;border-radius:50%;background:#10b981;display:inline-block;"></span> Online</span>`
+                        : `<span style="display:inline-flex; align-items:center; gap:5px; font-size:0.75rem; background:#f8fafc; color:#94a3b8; border:1px solid #e2e8f0; padding:2px 10px; border-radius:20px; margin-left:8px;">⚪ Offline</span>`;
+
+                    html += `
+                <div class="entry-item">
+                    <div class="info">
+                        <span class="name" style="display:flex; align-items:center; flex-wrap:wrap;">${user.email} ${statusBadge}</span>
+                        <span class="sub">ID: ${user.id}</span>
+                    </div>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <button class="key-btn" onclick="window.viewKeys('${user.id}')">🔑 Keys</button>
+                        <button class="reset-btn" onclick="window.resetUser('${user.id}')">🔄 Reset</button>
+                        <button class="del-btn" onclick="window.deleteUser('${user.id}')">✕</button>
+                    </div>
+                </div>
+            `;
+                });
+                list.innerHTML = html;
+                window.deleteUser = deleteUser;
+                window.viewKeys = viewKeys;
+                window.resetUser = resetUser;
+            }
+
+            // Playlist dropdown (for Add Chapter) filtered by the selected Section
+            function updatePlaylistSelect() {
+                const select = document.getElementById('playlistSelect');
+                const sectionFilterEl = document.getElementById('chapterSectionFilter');
+                // FIX: default was 'math', now correctly 'recorded'
+                const sectionFilter = sectionFilterEl ? sectionFilterEl.value : DEFAULT_SECTION;
+                select.innerHTML = '<option value="">Select playlist</option>';
+                playlists
+                    .filter(p => (p.section || DEFAULT_SECTION) === sectionFilter)
+                    .forEach(p => {
+                        select.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+                    });
+            }
+
+            function updateUserSelect() {
+                const select = document.getElementById('userSelect');
+                select.innerHTML = '<option value="">Select user</option>';
+                users.forEach(u => {
+                    const opt = document.createElement('option');
+                    opt.value = u.id || '';
+                    opt.textContent = u.email || '';
+                    select.appendChild(opt);
+                });
+            }
+
+            function updateApiStatus(mode) {
+                const el = document.getElementById('apiStatus');
+                if (mode === 'connected') {
+                    el.textContent = '✅ D1 Database Connected';
+                    el.className = 'api-status status-connected';
+                } else if (mode === 'error') {
+                    el.textContent = '❌ Connection Failed';
+                    el.className = 'api-status status-error';
+                } else {
+                    el.textContent = '🔄 Connecting...';
+                    el.className = 'api-status';
+                }
+            }
+
+            function showFeedback(msg, type, elId) {
+                const el = document.getElementById(elId);
+                if (!el) return;
+                el.textContent = msg;
+                el.className = 'toast-msg';
+                if (type === 'error') el.classList.add('toast-error');
+                else if (type === 'success') el.classList.add('toast-success');
+                else el.classList.add('toast-info');
+                setTimeout(() => { el.textContent = ''; el.className = 'toast-msg'; }, 5000);
+            }
+
+            // ===== REAL-TIME ACTIVE USERS (ADMIN) =====
+            async function fetchAdminActiveUsers() {
+                try {
+                    const data = await apiCall('/active-users');
+                    const el = document.getElementById('adminActiveUsersCount');
+                    if (el && data && data.activeCount !== undefined) {
+                        el.textContent = data.activeCount;
+                    }
+                } catch (e) {
+                    // graceful fallback
+                }
+            }
+
+            // ==================== CHAT MONITOR & MODERATION ====================
+            let adminChatMessages = [];
+            let adminChatFilter = 'all'; // 'all' | 'group' | 'direct'
+
+            function setAdminChatFilter(filter) {
+                adminChatFilter = filter;
+                const allBtn = document.getElementById('filterChatAllBtn');
+                const groupBtn = document.getElementById('filterChatGroupBtn');
+                const directBtn = document.getElementById('filterChatDirectBtn');
+
+                if (allBtn) allBtn.className = filter === 'all' ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline';
+                if (groupBtn) groupBtn.className = filter === 'group' ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline';
+                if (directBtn) directBtn.className = filter === 'direct' ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-outline';
+
+                renderAdminChatList();
+            }
+
+            async function loadAdminChat(notify = false) {
+                try {
+                    const data = await apiCall('/chat/messages?view=admin');
+                    if (data.success && Array.isArray(data.messages)) {
+                        adminChatMessages = data.messages;
+
+                        // Update badge counts
+                        const allCount = adminChatMessages.length;
+                        const groupCount = adminChatMessages.filter(m => (m.chat_type || 'group') === 'group').length;
+                        const directCount = adminChatMessages.filter(m => m.chat_type === 'direct').length;
+
+                        const cntEl = document.getElementById('adminChatMessageCount');
+                        if (cntEl) cntEl.textContent = allCount;
+                        const filterAllEl = document.getElementById('filterCountAll');
+                        if (filterAllEl) filterAllEl.textContent = allCount;
+                        const filterGroupEl = document.getElementById('filterCountGroup');
+                        if (filterGroupEl) filterGroupEl.textContent = groupCount;
+                        const filterDirectEl = document.getElementById('filterCountDirect');
+                        if (filterDirectEl) filterDirectEl.textContent = directCount;
+
+                        renderAdminChatList();
+                        if (notify) showFeedback('✅ Chat feed updated (' + allCount + ' total msgs)', 'info', 'adminChatFeedback');
+                    }
+                } catch (err) {
+                    console.error('Error loading admin chat:', err);
+                    if (notify) showFeedback('❌ Failed to load chat: ' + err.message, 'error', 'adminChatFeedback');
+                }
+            }
+
+            function renderAdminChatList() {
+                const list = document.getElementById('adminChatList');
+                if (!list) return;
+
+                let filtered = adminChatMessages;
+                if (adminChatFilter === 'group') {
+                    filtered = adminChatMessages.filter(m => (m.chat_type || 'group') === 'group');
+                } else if (adminChatFilter === 'direct') {
+                    filtered = adminChatMessages.filter(m => m.chat_type === 'direct');
+                }
+
+                if (filtered.length === 0) {
+                    const filterLabel = adminChatFilter === 'direct' ? '1-on-1 private' : adminChatFilter === 'group' ? 'group' : '';
+                    list.innerHTML = `<div class="empty-state">💬 No ${filterLabel} student chat messages found.</div>`;
+                    return;
+                }
+
+                // Display newest messages first on admin panel for easy monitoring
+                const sorted = [...filtered].reverse();
+                list.innerHTML = '';
+
+                sorted.forEach(m => {
+                    const row = document.createElement('div');
+                    row.className = 'chat-msg-row';
+                    row.id = 'admin-msg-' + m.id;
+
+                    const main = document.createElement('div');
+                    main.className = 'chat-msg-main';
+
+                    const header = document.createElement('div');
+                    header.className = 'chat-msg-header';
+
+                    const sender = document.createElement('div');
+                    sender.className = 'chat-sender-badge';
+                    sender.style.display = 'flex';
+                    sender.style.alignItems = 'center';
+                    sender.style.gap = '6px';
+                    sender.style.flexWrap = 'wrap';
+
+                    const senderName = m.sender_name || 'Student';
+                    if (m.chat_type === 'direct') {
+                        const receiverName = m.receiver_name || m.receiver_email || 'Student';
+                        sender.innerHTML = `
+                    <span class="chat-type-pill direct">🔒 1-on-1 Private</span>
+                    <span style="font-weight:700; color:#1e293b;">${senderName}</span>
+                    <span style="color:#64748b; font-size:0.75rem;">(${m.email})</span>
+                    <span style="color:#8b5cf6; font-weight:700; margin:0 2px;">➔</span>
+                    <span style="font-weight:700; color:#1e293b;">${receiverName}</span>
+                    <span style="color:#64748b; font-size:0.75rem;">(${m.receiver_email || '-'})</span>
+                `;
+                    } else {
+                        sender.innerHTML = `
+                    <span class="chat-type-pill group">🌐 Study Group</span>
+                    <span style="font-weight:700; color:#1e293b;">${senderName}</span>
+                    <span style="color:#64748b; font-size:0.75rem;">(${m.email})</span>
+                `;
+                    }
+
+                    const time = document.createElement('span');
+                    time.className = 'chat-time-badge';
+                    time.textContent = `🕒 ${m.created_at ? new Date(m.created_at).toLocaleString() : ''}`;
+
+                    header.appendChild(sender);
+                    header.appendChild(time);
+
+                    const body = document.createElement('div');
+                    body.className = 'chat-msg-body';
+                    body.textContent = m.message; // Safe textContent prevents XSS
+
+                    main.appendChild(header);
+                    main.appendChild(body);
+
+                    const delBtn = document.createElement('button');
+                    delBtn.className = 'chat-delete-btn';
+                    delBtn.innerHTML = '🗑️ Delete';
+                    delBtn.title = 'Delete this message from community chat';
+                    delBtn.onclick = () => deleteChatMessage(m.id);
+
+                    row.appendChild(main);
+                    row.appendChild(delBtn);
+                    list.appendChild(row);
+                });
+            }
+
+            async function deleteChatMessage(msgId) {
+                if (!confirm('Are you sure you want to delete this message?\nIt will be permanently hidden from all student screens.')) return;
+
+                try {
+                    const data = await apiCall('/chat/messages', {
+                        method: 'DELETE',
+                        body: JSON.stringify({ id: msgId })
+                    });
+
+                    if (data.success) {
+                        showFeedback('🗑️ Message deleted successfully', 'success', 'adminChatFeedback');
+                        loadAdminChat(false);
+                    } else {
+                        showFeedback('❌ ' + (data.error || 'Failed to delete message'), 'error', 'adminChatFeedback');
+                    }
+                } catch (err) {
+                    showFeedback('❌ Error deleting message: ' + err.message, 'error', 'adminChatFeedback');
+                }
+            }
+
+            async function clearAllChat() {
+                if (!confirm('⚠️ DANGER: Are you sure you want to clear ALL chat history?\nThis will remove all messages for all students.')) return;
+
+                try {
+                    const data = await apiCall('/admin/chat/clear', {
+                        method: 'POST'
+                    });
+
+                    if (data.success) {
+                        showFeedback('🧹 All chat messages cleared successfully!', 'success', 'adminChatFeedback');
+                        loadAdminChat(false);
+                    } else {
+                        showFeedback('❌ ' + (data.error || 'Failed to clear chat'), 'error', 'adminChatFeedback');
+                    }
+                } catch (err) {
+                    showFeedback('❌ Error clearing chat: ' + err.message, 'error', 'adminChatFeedback');
+                }
+            }
+
+            async function loadAdminOnlineUsers() {
+                const countEl = document.getElementById('adminOnlineUsersListCount');
+                const badgeEl = document.getElementById('adminActiveUsersCount');
+                const contentEl = document.getElementById('adminOnlineUsersContent');
+
+                try {
+                    const data = await apiCall('/active-users/list');
+                    if (data.success && Array.isArray(data.users)) {
+                        const users = data.users;
+                        if (countEl) countEl.textContent = users.length;
+                        if (badgeEl) badgeEl.textContent = users.length;
+
+                        if (contentEl) {
+                            if (users.length === 0) {
+                                contentEl.innerHTML = '<span style="color:#6a7c94; font-style:italic;">No active students currently online</span>';
+                            } else {
+                                let html = '<div style="font-weight:600; font-size:0.82rem; color:#1a2b4c; margin-bottom:8px;">Currently logged in students:</div>';
+                                html += '<div style="display:flex; flex-wrap:wrap; gap:6px;">';
+                                users.forEach(u => {
+                                    const nameStr = u.name ? `<strong>${u.name}</strong> <span style="color:#64748b;font-size:0.75rem;">(${u.email})</span>` : `<span>${u.email}</span>`;
+                                    html += `
+                                <div class="admin-online-badge">
+                                    <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#10b981;"></span>
+                                    <span>${nameStr}</span>
+                                </div>
+                            `;
+                                });
+                                html += '</div>';
+                                contentEl.innerHTML = html;
+                            }
+                        }
+                    }
+                } catch (err) {
+                    console.error('Error loading online users in admin:', err);
+                }
+            }
+
+            function toggleOnlineUsersPanel() {
+                const panel = document.getElementById('adminOnlineUsersPanel');
+                if (!panel) return;
+                if (panel.style.display === 'none' || !panel.style.display) {
+                    panel.style.display = 'block';
+                    loadAdminOnlineUsers();
+                } else {
+                    panel.style.display = 'none';
+                }
+            }
+
+            // ==================== AUTH ====================
+            function setupAuth() {
+                const unlockBtn = document.getElementById('unlockBtn');
+                const pwdInput = document.getElementById('adminPwdInput');
+                const usernameInput = document.getElementById('adminUsername');
+
+                unlockBtn.addEventListener('click', adminLogin);
+                pwdInput.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') adminLogin();
+                });
+                usernameInput.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') {
+                        pwdInput.focus();
+                    }
+                });
+
+                document.getElementById('logoutBtn').addEventListener('click', function () {
+                    isAuthenticated = false;
+                    sessionStorage.removeItem('admin_auth');
+                    sessionStorage.removeItem('admin_username');
+                    stopAdminChatPolling();
+                    document.getElementById('passwordGate').style.display = 'block';
+                    document.getElementById('adminContent').style.display = 'none';
+                    document.getElementById('adminPwdInput').value = '';
+                    document.getElementById('adminUsername').value = 'admin';
+                    document.getElementById('pwdError').textContent = '';
+                });
+
+                // Auto-restore admin session if already logged in in this browser session
+                if (sessionStorage.getItem('admin_auth') === 'true') {
+                    unlockAdminPanel(sessionStorage.getItem('admin_username') || 'admin');
+                }
+            }
+
+            // ==================== YOUTUBE BULK IMPORT SYSTEM (NEW) ====================
+            let fetchedYtVideos = [];
+
+            function extractYouTubePlaylistId(url) {
+                if (!url) return null;
+                url = url.trim();
+                if (/^[A-Za-z0-9_-]{10,}$/.test(url) && !url.includes('/') && !url.includes('.')) {
+                    return url;
+                }
+                try {
+                    const parsed = new URL(url.startsWith('http') ? url : 'https://' + url);
+                    const listParam = parsed.searchParams.get('list');
+                    if (listParam) return listParam;
+                } catch (e) {}
+                const match = url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+                if (match) return match[1];
+                return null;
+            }
+
+            function initYtApiKeyUI() {
+                const savedKey = localStorage.getItem('yt_api_key') || '';
+                const savedToken = localStorage.getItem('yt_oauth_token') || '';
+                const keyInput = document.getElementById('ytApiKeyInput');
+                const tokenInput = document.getElementById('ytOAuthTokenInput');
+                const badge = document.getElementById('ytApiKeyBadge');
+                if (keyInput) keyInput.value = savedKey;
+                if (tokenInput) tokenInput.value = savedToken;
+                if (badge) {
+                    if (savedKey && savedToken) badge.textContent = '✅ Key & Token Saved';
+                    else if (savedKey) badge.textContent = '✅ API Key Saved';
+                    else if (savedToken) badge.textContent = '✅ OAuth Saved';
+                    else badge.textContent = '';
+                }
+            }
+
+            function extractYouTubeVideoId(url) {
+                if (!url) return null;
+                const clean = url.trim();
+                if (/^[a-zA-Z0-9_-]{11}$/.test(clean)) return clean;
+                const match = clean.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts|live)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+                return match ? match[1] : null;
+            }
+
+            function parseBulkYtVideos() {
+                const textInput = document.getElementById('ytBulkLinksInput');
+                const feedbackEl = 'ytImportFeedback';
+                const text = textInput ? textInput.value.trim() : '';
+
+                if (!text) {
+                    showFeedback('⚠️ Please paste at least one YouTube video link', 'error', feedbackEl);
+                    return;
+                }
+
+                const lines = text.split('\n');
+                const videos = [];
+                lines.forEach(rawLine => {
+                    const line = rawLine.trim();
+                    if (!line) return;
+
+                    let title = '';
+                    let urlCandidate = line;
+
+                    if (line.includes('|')) {
+                        const parts = line.split('|');
+                        title = parts[0].trim();
+                        urlCandidate = parts.slice(1).join('|').trim();
+                    } else if (line.includes(' - ') && (line.includes('http://') || line.includes('https://'))) {
+                        const parts = line.split(' - ');
+                        title = parts[0].trim();
+                        urlCandidate = parts.slice(1).join(' - ').trim();
+                    }
+
+                    const videoId = extractYouTubeVideoId(urlCandidate);
+                    if (videoId) {
+                        const num = videos.length + 1;
+                        videos.push({
+                            id: videoId,
+                            title: title || `Lecture ${num}`,
+                            link: `https://www.youtube.com/watch?v=${videoId}`,
+                            thumbnail: `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`,
+                            position: num
+                        });
+                    }
+                });
+
+                if (videos.length === 0) {
+                    showFeedback('❌ Koi valid YouTube video link nahi mila. Kripya check karein link https://youtu.be/... ya https://www.youtube.com/watch?v=... format me ho.', 'error', feedbackEl);
+                    return;
+                }
+
+                fetchedYtVideos = videos;
+                const playlistName = `Private Videos Batch (${videos.length} Lectures)`;
+                renderYtPreview(playlistName);
+                showFeedback(`✅ ${videos.length} Private videos loaded! Aap titles edit karke 'Import All' par click karein.`, 'success', feedbackEl);
+            }
+
+            function updateYtExistingPlaylists() {
+                const select = document.getElementById('ytExistingPlaylistSelect');
+                const sectionSelect = document.getElementById('ytSectionSelect');
+                if (!select || !sectionSelect) return;
+                const section = sectionSelect.value || DEFAULT_SECTION;
+                select.innerHTML = '<option value="">Select existing playlist</option>';
+                playlists
+                    .filter(p => (p.section || DEFAULT_SECTION) === section)
+                    .forEach(p => {
+                        select.innerHTML += `<option value="${p.id}">${p.name} (${p.chapters?.length || 0} lectures)</option>`;
+                    });
+            }
+
+            async function fetchYtPlaylistVideos() {
+                const urlInput = document.getElementById('ytPlaylistUrlInput');
+                const feedbackEl = 'ytImportFeedback';
+                const rawUrl = urlInput.value.trim();
+
+                if (!rawUrl) {
+                    showFeedback('⚠️ Please paste a YouTube playlist link', 'error', feedbackEl);
+                    return;
+                }
+
+                const playlistId = extractYouTubePlaylistId(rawUrl);
+                if (!playlistId) {
+                    showFeedback('❌ Invalid YouTube playlist URL (Could not find ?list= parameter)', 'error', feedbackEl);
+                    return;
+                }
+
+                const fetchBtn = document.getElementById('fetchYtPlaylistBtn');
+                fetchBtn.disabled = true;
+                fetchBtn.textContent = '⏳ Fetching...';
+                showFeedback('⏳ Fetching videos from YouTube playlist...', 'info', feedbackEl);
+
+                const apiKey = (localStorage.getItem('yt_api_key') || document.getElementById('ytApiKeyInput')?.value || '').trim();
+                const oauthToken = (localStorage.getItem('yt_oauth_token') || document.getElementById('ytOAuthTokenInput')?.value || '').trim();
+
+                let videos = [];
+                let playlistTitle = '';
+
+                try {
+                    // Method 1: Client-side YouTube Data API v3 (Fast & supports OAuth Bearer Token for Private Playlists)
+                    if (apiKey || oauthToken) {
+                        const reqHeaders = {};
+                        if (oauthToken) {
+                            reqHeaders['Authorization'] = `Bearer ${oauthToken}`;
+                        }
+
+                        try {
+                            const infoUrl = `https://www.googleapis.com/youtube/v3/playlists?part=snippet&id=${encodeURIComponent(playlistId)}${apiKey ? '&key=' + encodeURIComponent(apiKey) : ''}`;
+                            const infoRes = await fetch(infoUrl, { headers: reqHeaders });
+                            if (infoRes.ok) {
+                                const infoData = await infoRes.json();
+                                if (infoData.items && infoData.items[0]) {
+                                    playlistTitle = infoData.items[0].snippet?.title || '';
+                                }
+                            }
+                        } catch (e) {}
+
+                        let nextPageToken = '';
+                        do {
+                            const ytUrl = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${encodeURIComponent(playlistId)}${apiKey ? '&key=' + encodeURIComponent(apiKey) : ''}${nextPageToken ? '&pageToken=' + nextPageToken : ''}`;
+                            const res = await fetch(ytUrl, { headers: reqHeaders });
+                            if (!res.ok) {
+                                const errData = await res.json().catch(() => ({}));
+                                throw new Error(errData?.error?.message || `YouTube API error (${res.status})`);
+                            }
+                            const data = await res.json();
+                            if (data.items) {
+                                data.items.forEach(item => {
+                                    const snip = item.snippet;
+                                    if (snip && snip.resourceId && snip.resourceId.videoId && snip.title !== 'Deleted video') {
+                                        const vTitle = (snip.title && snip.title !== 'Private video')
+                                            ? snip.title
+                                            : `Lecture ${videos.length + 1}`;
+                                        videos.push({
+                                            id: snip.resourceId.videoId,
+                                            title: vTitle,
+                                            link: `https://www.youtube.com/watch?v=${snip.resourceId.videoId}`,
+                                            thumbnail: snip.thumbnails?.medium?.url || snip.thumbnails?.default?.url || `https://i.ytimg.com/vi/${snip.resourceId.videoId}/mqdefault.jpg`,
+                                            position: videos.length + 1
+                                        });
+                                    }
+                                });
+                            }
+                            nextPageToken = data.nextPageToken;
+                        } while (nextPageToken && videos.length < 500);
+                    } else {
+                        // Method 2: Try Backend Worker endpoint
+                        try {
+                            const backendData = await apiCall(`/youtube/playlist?id=${encodeURIComponent(playlistId)}${oauthToken ? '&token=' + encodeURIComponent(oauthToken) : ''}`);
+                            if (backendData && backendData.success && Array.isArray(backendData.videos) && backendData.videos.length > 0) {
+                                videos = backendData.videos;
+                                playlistTitle = backendData.title || '';
+                            }
+                        } catch (be) {
+                            console.log('Backend worker fetch attempt:', be.message);
+                        }
+
+                        // Method 3: Fallback via public Invidious instances
+                        if (videos.length === 0) {
+                            const invidiousInstances = [
+                                'https://inv.tux.pizza/api/v1/playlists/',
+                                'https://vid.puffyan.us/api/v1/playlists/'
+                            ];
+                            for (const instance of invidiousInstances) {
+                                try {
+                                    const invRes = await fetch(instance + encodeURIComponent(playlistId));
+                                    if (invRes.ok) {
+                                        const invData = await invRes.json();
+                                        if (invData.videos && Array.isArray(invData.videos) && invData.videos.length > 0) {
+                                            playlistTitle = invData.title || '';
+                                            invData.videos.forEach((v, idx) => {
+                                                videos.push({
+                                                    id: v.videoId,
+                                                    title: v.title || `Lecture ${idx + 1}`,
+                                                    link: `https://www.youtube.com/watch?v=${v.videoId}`,
+                                                    thumbnail: (v.videoThumbnails && v.videoThumbnails[0] ? v.videoThumbnails[0].url : `https://i.ytimg.com/vi/${v.videoId}/mqdefault.jpg`),
+                                                    position: idx + 1
+                                                });
+                                            });
+                                            break;
+                                        }
+                                    }
+                                } catch (ie) {}
+                            }
+                        }
+                    }
+
+                    if (videos.length === 0) {
+                        throw new Error('Playlist me koi video nahi mili! Agar playlist / videos Private hain, toh upar "📋 Bulk Private Video Links Paste" tab use karein ya Google OAuth token daalein.');
+                    }
+
+                    fetchedYtVideos = videos;
+                    renderYtPreview(playlistTitle);
+                    showFeedback(`✅ Fetched ${videos.length} videos from YouTube!`, 'success', feedbackEl);
+
+                } catch (err) {
+                    console.error('YouTube Fetch Error:', err);
+                    showFeedback(`❌ ${err.message}`, 'error', feedbackEl);
+                    if (!apiKey && !oauthToken) {
+                        const panel = document.getElementById('ytApiKeyPanel');
+                        if (panel) panel.style.display = 'block';
+                    }
+                } finally {
+                    fetchBtn.disabled = false;
+                    fetchBtn.textContent = '🔍 Fetch Videos';
+                }
+            }
+
+            function renderYtPreview(playlistTitle) {
+                const container = document.getElementById('ytPreviewContainer');
+                const listEl = document.getElementById('ytPreviewList');
+                const titleEl = document.getElementById('ytPreviewTitle');
+                const badgeEl = document.getElementById('ytPreviewBadge');
+                const newNameInput = document.getElementById('ytNewPlaylistName');
+
+                if (playlistTitle) {
+                    titleEl.textContent = playlistTitle;
+                    if (newNameInput && !newNameInput.value.trim()) {
+                        newNameInput.value = playlistTitle;
+                    }
+                } else {
+                    titleEl.textContent = 'YouTube Playlist';
+                }
+
+                badgeEl.textContent = `${fetchedYtVideos.length} Videos`;
+
+                let html = '';
+                fetchedYtVideos.forEach((v, idx) => {
+                    html += `
+                        <div class="yt-preview-row" data-index="${idx}">
+                            <input type="checkbox" class="yt-item-check" data-index="${idx}" checked style="width:18px; height:18px; cursor:pointer;" />
+                            <span class="yt-preview-num">#${idx + 1}</span>
+                            <img src="${v.thumbnail}" class="yt-preview-thumb" alt="thumbnail" onerror="this.src='https://i.ytimg.com/vi/${v.id}/mqdefault.jpg'" />
+                            <input type="text" class="yt-preview-input" id="yt_title_${idx}" value="${escapeHtml(v.title)}" />
+                            <a href="${v.link}" target="_blank" style="font-size:0.75rem; color:#2d7a9b; text-decoration:none; padding:4px 8px; background:#eef3fa; border-radius:6px; white-space:nowrap;">🔗 View</a>
+                        </div>
+                    `;
+                });
+
+                listEl.innerHTML = html;
+                container.style.display = 'block';
+                updateYtSelectedCount();
+
+                listEl.querySelectorAll('.yt-item-check').forEach(chk => {
+                    chk.addEventListener('change', updateYtSelectedCount);
+                });
+            }
+
+            function escapeHtml(str) {
+                if (!str) return '';
+                return str
+                    .replace(/&/g, '&amp;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;');
+            }
+
+            function updateYtSelectedCount() {
+                const checkedBoxes = document.querySelectorAll('.yt-item-check:checked');
+                const countEl = document.getElementById('ytSelectedCount');
+                if (countEl) countEl.textContent = checkedBoxes.length;
+            }
+
+            function toggleYtSelectAll() {
+                const allCheckboxes = document.querySelectorAll('.yt-item-check');
+                if (!allCheckboxes.length) return;
+                const anyUnchecked = Array.from(allCheckboxes).some(c => !c.checked);
+                allCheckboxes.forEach(c => { c.checked = anyUnchecked; });
+                updateYtSelectedCount();
+            }
+
+            async function confirmYtImport() {
+                const feedbackEl = 'ytImportFeedback';
+                const section = document.getElementById('ytSectionSelect').value || DEFAULT_SECTION;
+                const mode = document.getElementById('ytPlaylistMode').value;
+                let targetPlaylistId = '';
+                let targetPlaylistName = '';
+
+                // Step 1: Check target playlist
+                if (mode === 'new') {
+                    targetPlaylistName = document.getElementById('ytNewPlaylistName').value.trim();
+                    if (!targetPlaylistName) {
+                        showFeedback('⚠️ Please enter a Playlist Name to create', 'error', feedbackEl);
+                        document.getElementById('ytNewPlaylistName').focus();
+                        return;
+                    }
+                } else {
+                    targetPlaylistId = document.getElementById('ytExistingPlaylistSelect').value;
+                    if (!targetPlaylistId) {
+                        showFeedback('⚠️ Please select an existing playlist to add into', 'error', feedbackEl);
+                        document.getElementById('ytExistingPlaylistSelect').focus();
+                        return;
+                    }
+                    const found = playlists.find(p => p.id === targetPlaylistId);
+                    targetPlaylistName = found ? found.name : 'Selected Playlist';
+                }
+
+                // Step 2: Gather selected videos
+                const selectedItems = [];
+                const prefixCheck = document.getElementById('ytPrefixLectureCheck').checked;
+                let serialNumber = 1;
+                let existingChapters = [];
+
+                if (mode === 'existing' && targetPlaylistId) {
+                    const found = playlists.find(p => p.id === targetPlaylistId);
+                    if (found && Array.isArray(found.chapters)) {
+                        existingChapters = found.chapters;
+                        serialNumber = existingChapters.length + 1;
+                    }
+                }
+
+                document.querySelectorAll('.yt-preview-row').forEach(row => {
+                    const chk = row.querySelector('.yt-item-check');
+                    if (chk && chk.checked) {
+                        const idx = parseInt(chk.dataset.index, 10);
+                        const origVideo = fetchedYtVideos[idx];
+
+                        // Skip duplicate if already exists in target playlist
+                        if (mode === 'existing' && existingChapters.length > 0) {
+                            const isDup = existingChapters.some(ch => ch.link === origVideo.link || (extractYouTubeVideoId(ch.link) === origVideo.id));
+                            if (isDup) return;
+                        }
+
+                        const titleInput = document.getElementById(`yt_title_${idx}`);
+                        let finalTitle = titleInput ? titleInput.value.trim() : origVideo.title;
+
+                        if (prefixCheck) {
+                            if (!/^lecture\s*\d+/i.test(finalTitle) && !/^class\s*\d+/i.test(finalTitle)) {
+                                finalTitle = `Lecture ${serialNumber}: ${finalTitle}`;
+                            }
+                        }
+                        serialNumber++;
+
+                        selectedItems.push({
+                            name: finalTitle,
+                            link: origVideo.link
+                        });
+                    }
+                });
+
+                if (selectedItems.length === 0) {
+                    showFeedback('⚠️ Please select at least one video to import', 'error', feedbackEl);
+                    return;
+                }
+
+                const confirmBtn = document.getElementById('ytConfirmImportBtn');
+                const cancelBtn = document.getElementById('ytCancelPreviewBtn');
+                const progressWrap = document.getElementById('ytImportProgressWrap');
+                const progressBar = document.getElementById('ytImportProgressBar');
+                const progressText = document.getElementById('ytImportProgressText');
+                const progressPercent = document.getElementById('ytImportProgressPercent');
+
+                confirmBtn.disabled = true;
+                cancelBtn.disabled = true;
+                progressWrap.style.display = 'block';
+
+                try {
+                    // Step 3: Create Playlist if 'new'
+                    if (mode === 'new') {
+                        progressText.textContent = `Creating playlist "${targetPlaylistName}"...`;
+                        const createRes = await apiCall('/playlists', {
+                            method: 'POST',
+                            body: JSON.stringify({ name: targetPlaylistName, section })
+                        });
+                        if (createRes && createRes.success && createRes.playlist) {
+                            targetPlaylistId = createRes.playlist.id;
+                        } else {
+                            throw new Error(createRes?.error || 'Failed to create playlist');
+                        }
+                    }
+
+                    // Step 4: Add Chapters (Try batch first, fallback to individual)
+                    progressText.textContent = `Saving ${selectedItems.length} lectures...`;
+                    let batchSuccess = false;
+
+                    try {
+                        const batchRes = await apiCall('/playlists/chapters/batch', {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                playlistId: targetPlaylistId,
+                                chapters: selectedItems
+                            })
+                        });
+                        if (batchRes && batchRes.success) {
+                            batchSuccess = true;
+                            progressBar.style.width = '100%';
+                            progressPercent.textContent = '100%';
+                        }
+                    } catch (be) {
+                        console.log('Batch API not available or error, falling back to sequential:', be.message);
+                        batchSuccess = false;
+                    }
+
+                    if (!batchSuccess) {
+                        for (let i = 0; i < selectedItems.length; i++) {
+                            const item = selectedItems[i];
+                            const pct = Math.round(((i + 1) / selectedItems.length) * 100);
+                            progressText.textContent = `Saving ${i + 1}/${selectedItems.length}: ${item.name.substring(0, 30)}...`;
+                            progressBar.style.width = `${pct}%`;
+                            progressPercent.textContent = `${pct}%`;
+
+                            await apiCall('/playlists/chapter', {
+                                method: 'POST',
+                                body: JSON.stringify({
+                                    playlistId: targetPlaylistId,
+                                    chapterName: item.name,
+                                    chapterLink: item.link
+                                })
+                            });
+                        }
+                    }
+
+                    showFeedback(`🎉 Success! Added ${selectedItems.length} lectures to "${targetPlaylistName}"!`, 'success', feedbackEl);
+                    document.getElementById('ytPreviewContainer').style.display = 'none';
+                    document.getElementById('ytPlaylistUrlInput').value = '';
+                    document.getElementById('ytNewPlaylistName').value = '';
+                    fetchedYtVideos = [];
+
+                    await loadPlaylists();
+
+                    const adminList = document.getElementById('adminList');
+                    if (adminList) {
+                        adminList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+
+                } catch (err) {
+                    showFeedback(`❌ Import failed: ${err.message}`, 'error', feedbackEl);
+                } finally {
+                    confirmBtn.disabled = false;
+                    cancelBtn.disabled = false;
+                    progressWrap.style.display = 'none';
+                    progressBar.style.width = '0%';
+                }
+            }
+
+            // ==================== GLOBAL FUNCTIONS ====================
+            // Make all functions globally accessible for onclick
+            window.deletePlaylist = deletePlaylist;
+            window.deleteChapter = deleteChapter;
+            window.deleteUser = deleteUser;
+            window.resetUser = resetUser;
+            window.copyKey = copyKey;
+            window.viewKeys = viewKeys;
+            window.toggleImportantVisibility = toggleImportantVisibility;
+            window.deleteImportant = deleteImportant;
+            window.deleteAllowedEmail = deleteAllowedEmail;
+            window.deleteChatMessage = deleteChatMessage;
+            window.clearAllChat = clearAllChat;
+            window.loadAdminChat = loadAdminChat;
+            window.loadAdminOnlineUsers = loadAdminOnlineUsers;
+            window.toggleOnlineUsersPanel = toggleOnlineUsersPanel;
+            window.setAdminChatFilter = setAdminChatFilter;
+
+            // ==================== EVENT LISTENERS ====================
+            document.getElementById('addPlaylistBtn').addEventListener('click', addPlaylist);
+            document.getElementById('addChapterBtn').addEventListener('click', addChapter);
+            document.getElementById('addUserBtn').addEventListener('click', addUser);
+            document.getElementById('generateKeyBtn').addEventListener('click', generateKey);
+            document.getElementById('refreshBtn').addEventListener('click', () => {
+                loadPlaylists();
+                loadUsers();
+                loadImportant();
+                loadAllowedEmails();
+                fetchAdminActiveUsers();
+                loadAdminOnlineUsers();
+                const chatTab = document.getElementById('tab-chat');
+                if (chatTab && chatTab.classList.contains('active')) {
+                    loadAdminChat(true);
+                }
+                showFeedback('🔄 Refreshed', 'info', 'playlistFeedback');
+            });
+
+            document.getElementById('saveImportantBtn').addEventListener('click', saveImportant);
+            document.getElementById('importantTitle').addEventListener('keydown', e => { if (e.key === 'Enter') saveImportant(); });
+            document.getElementById('importantLink').addEventListener('keydown', e => { if (e.key === 'Enter') saveImportant(); });
+
+            document.getElementById('newPlaylistName').addEventListener('keydown', e => { if (e.key === 'Enter') addPlaylist(); });
+            document.getElementById('chapterName').addEventListener('keydown', e => { if (e.key === 'Enter') addChapter(); });
+            document.getElementById('chapterLink').addEventListener('keydown', e => { if (e.key === 'Enter') addChapter(); });
+            document.getElementById('newUserEmail').addEventListener('keydown', e => { if (e.key === 'Enter') addUser(); });
+
+            // When Section (for Add Chapter) changes, refresh the playlist dropdown to only show that section's playlists
+            document.getElementById('chapterSectionFilter').addEventListener('change', updatePlaylistSelect);
+
+            // Allowed Emails event listeners
+            document.getElementById('addAllowedEmailBtn').addEventListener('click', addAllowedEmail);
+            document.getElementById('allowedEmailInput').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') addAllowedEmail();
+            });
+
+            // Chat Monitor event listeners
+            const refreshChatBtn = document.getElementById('refreshChatBtn');
+            if (refreshChatBtn) refreshChatBtn.addEventListener('click', () => { loadAdminChat(true); loadAdminOnlineUsers(); });
+
+            const clearAllChatBtn = document.getElementById('clearAllChatBtn');
+            if (clearAllChatBtn) clearAllChatBtn.addEventListener('click', clearAllChat);
+
+            const toggleOnlineUsersBtn = document.getElementById('toggleOnlineUsersBtn');
+            if (toggleOnlineUsersBtn) toggleOnlineUsersBtn.addEventListener('click', toggleOnlineUsersPanel);
+
+            // Filter Buttons for Chat
+            const filterChatAllBtn = document.getElementById('filterChatAllBtn');
+            if (filterChatAllBtn) filterChatAllBtn.addEventListener('click', () => setAdminChatFilter('all'));
+
+            const filterChatGroupBtn = document.getElementById('filterChatGroupBtn');
+            if (filterChatGroupBtn) filterChatGroupBtn.addEventListener('click', () => setAdminChatFilter('group'));
+
+            const filterChatDirectBtn = document.getElementById('filterChatDirectBtn');
+            if (filterChatDirectBtn) filterChatDirectBtn.addEventListener('click', () => setAdminChatFilter('direct'));
+
+            // Click on live users badge in header to jump to online students view
+            const adminLiveUsersBadge = document.getElementById('adminLiveUsersBadge');
+            if (adminLiveUsersBadge) {
+                adminLiveUsersBadge.style.cursor = 'pointer';
+                adminLiveUsersBadge.addEventListener('click', () => {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    const chatTabBtn = document.getElementById('adminChatTabBtn');
+                    const chatTabContent = document.getElementById('tab-chat');
+                    if (chatTabBtn) chatTabBtn.classList.add('active');
+                    if (chatTabContent) chatTabContent.classList.add('active');
+                    const panel = document.getElementById('adminOnlineUsersPanel');
+                    if (panel) panel.style.display = 'block';
+                    loadAdminOnlineUsers();
+                    loadAdminChat(true);
+                });
+            }
+
+            // ===== YOUTUBE BULK IMPORT EVENT LISTENERS =====
+            initYtApiKeyUI();
+            updateYtExistingPlaylists();
+
+            const ytSectionSelect = document.getElementById('ytSectionSelect');
+            if (ytSectionSelect) {
+                ytSectionSelect.addEventListener('change', updateYtExistingPlaylists);
+            }
+
+            const ytPlaylistMode = document.getElementById('ytPlaylistMode');
+            if (ytPlaylistMode) {
+                ytPlaylistMode.addEventListener('change', function () {
+                    const mode = this.value;
+                    const newNameInput = document.getElementById('ytNewPlaylistName');
+                    const existingSelect = document.getElementById('ytExistingPlaylistSelect');
+                    if (mode === 'new') {
+                        if (newNameInput) newNameInput.style.display = 'block';
+                        if (existingSelect) existingSelect.style.display = 'none';
+                    } else {
+                        if (newNameInput) newNameInput.style.display = 'none';
+                        if (existingSelect) existingSelect.style.display = 'block';
+                        updateYtExistingPlaylists();
+                    }
+                });
+            }
+
+            const ytApiKeyToggleBtn = document.getElementById('ytApiKeyToggleBtn');
+            if (ytApiKeyToggleBtn) {
+                ytApiKeyToggleBtn.addEventListener('click', function () {
+                    const panel = document.getElementById('ytApiKeyPanel');
+                    if (panel) {
+                        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+                    }
+                });
+            }
+
+            const saveYtApiKeyBtn = document.getElementById('saveYtApiKeyBtn');
+            if (saveYtApiKeyBtn) {
+                saveYtApiKeyBtn.addEventListener('click', function () {
+                    const val = (document.getElementById('ytApiKeyInput')?.value || '').trim();
+                    if (val) {
+                        localStorage.setItem('yt_api_key', val);
+                        const badge = document.getElementById('ytApiKeyBadge');
+                        if (badge) badge.textContent = '✅ Saved';
+                        showFeedback('✅ YouTube API Key saved', 'success', 'ytImportFeedback');
+                    } else {
+                        showFeedback('⚠️ Please enter an API key first', 'error', 'ytImportFeedback');
+                    }
+                });
+            }
+
+            const clearYtApiKeyBtn = document.getElementById('clearYtApiKeyBtn');
+            if (clearYtApiKeyBtn) {
+                clearYtApiKeyBtn.addEventListener('click', function () {
+                    localStorage.removeItem('yt_api_key');
+                    const input = document.getElementById('ytApiKeyInput');
+                    if (input) input.value = '';
+                    initYtApiKeyUI();
+                    showFeedback('🗑️ YouTube API Key cleared', 'info', 'ytImportFeedback');
+                });
+            }
+
+            const saveYtOAuthTokenBtn = document.getElementById('saveYtOAuthTokenBtn');
+            if (saveYtOAuthTokenBtn) {
+                saveYtOAuthTokenBtn.addEventListener('click', function () {
+                    const val = (document.getElementById('ytOAuthTokenInput')?.value || '').trim();
+                    if (val) {
+                        localStorage.setItem('yt_oauth_token', val);
+                        initYtApiKeyUI();
+                        showFeedback('✅ Google OAuth Token saved', 'success', 'ytImportFeedback');
+                    } else {
+                        showFeedback('⚠️ Please enter an OAuth token first', 'error', 'ytImportFeedback');
+                    }
+                });
+            }
+
+            const clearYtOAuthTokenBtn = document.getElementById('clearYtOAuthTokenBtn');
+            if (clearYtOAuthTokenBtn) {
+                clearYtOAuthTokenBtn.addEventListener('click', function () {
+                    localStorage.removeItem('yt_oauth_token');
+                    const input = document.getElementById('ytOAuthTokenInput');
+                    if (input) input.value = '';
+                    initYtApiKeyUI();
+                    showFeedback('🗑️ Google OAuth Token cleared', 'info', 'ytImportFeedback');
+                });
+            }
+
+            // Mode Switching: Playlist URL vs Bulk Links Paste
+            const ytTabPlaylistModeBtn = document.getElementById('ytTabPlaylistModeBtn');
+            const ytTabBulkModeBtn = document.getElementById('ytTabBulkModeBtn');
+            const ytPlaylistInputSection = document.getElementById('ytPlaylistInputSection');
+            const ytBulkInputSection = document.getElementById('ytBulkInputSection');
+
+            if (ytTabPlaylistModeBtn && ytTabBulkModeBtn) {
+                ytTabPlaylistModeBtn.addEventListener('click', function () {
+                    ytTabPlaylistModeBtn.className = 'btn btn-sm btn-primary';
+                    ytTabBulkModeBtn.className = 'btn btn-sm btn-outline';
+                    if (ytPlaylistInputSection) ytPlaylistInputSection.style.display = 'block';
+                    if (ytBulkInputSection) ytBulkInputSection.style.display = 'none';
+                });
+
+                ytTabBulkModeBtn.addEventListener('click', function () {
+                    ytTabBulkModeBtn.className = 'btn btn-sm btn-primary';
+                    ytTabPlaylistModeBtn.className = 'btn btn-sm btn-outline';
+                    if (ytPlaylistInputSection) ytPlaylistInputSection.style.display = 'none';
+                    if (ytBulkInputSection) ytBulkInputSection.style.display = 'block';
+                });
+            }
+
+            const parseYtBulkBtn = document.getElementById('parseYtBulkBtn');
+            if (parseYtBulkBtn) {
+                parseYtBulkBtn.addEventListener('click', parseBulkYtVideos);
+            }
+
+            const fetchYtPlaylistBtn = document.getElementById('fetchYtPlaylistBtn');
+            if (fetchYtPlaylistBtn) {
+                fetchYtPlaylistBtn.addEventListener('click', fetchYtPlaylistVideos);
+            }
+
+            const ytPlaylistUrlInput = document.getElementById('ytPlaylistUrlInput');
+            if (ytPlaylistUrlInput) {
+                ytPlaylistUrlInput.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') fetchYtPlaylistVideos();
+                });
+            }
+
+            const ytToggleSelectBtn = document.getElementById('ytToggleSelectBtn');
+            if (ytToggleSelectBtn) {
+                ytToggleSelectBtn.addEventListener('click', toggleYtSelectAll);
+            }
+
+            const ytConfirmImportBtn = document.getElementById('ytConfirmImportBtn');
+            if (ytConfirmImportBtn) {
+                ytConfirmImportBtn.addEventListener('click', confirmYtImport);
+            }
+
+            const ytCancelPreviewBtn = document.getElementById('ytCancelPreviewBtn');
+            if (ytCancelPreviewBtn) {
+                ytCancelPreviewBtn.addEventListener('click', function () {
+                    const container = document.getElementById('ytPreviewContainer');
+                    if (container) container.style.display = 'none';
+                    fetchedYtVideos = [];
+                });
+            }
+
+            setupAuth();
+            fetchAdminActiveUsers();
+            setInterval(fetchAdminActiveUsers, 12000);
+            console.log('✅ Admin panel loaded');
+        })();
+    </script>
+</body>
+
+</html>

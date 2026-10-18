@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: spider-classes
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 20.18.0
+      - key: WORKER_TARGET
+        value: https://video-play-api.newstreamcp.workers.dev/api
+      - key: STREAM_SECRET
+        value: spider_classes_master_vault_key_2026

@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://video-play-api.newstreamcp.workers.dev/api/$1" },
+    { "source": "/player", "destination": "/player.html" },
+    { "source": "/admin", "destination": "/admin.html" },
+    { "source": "/login", "destination": "/login.html" }
+  ]
+}

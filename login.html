@@ -1,0 +1,1595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Spider Portal — Secure Student & Admin Login and Registration for Video Lectures.">
+  <title>Spider Portal — Student Login & Registration</title>
+  <script>
+    if (window.location.protocol === 'file:') {
+      const page = window.location.pathname.split('/').pop() || 'login.html';
+      const targetUrl = 'http://localhost:8085/' + page + window.location.search + window.location.hash;
+      try { window.location.replace(targetUrl); } catch(e) { window.location.href = targetUrl; }
+    }
+  </script>
+  <!-- Google Fonts: Outfit & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Lottie Animation Players (Supports .json & .lottie) -->
+  <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+  <script src="https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.mjs" type="module"></script>
+
+  <style>
+    /* =========================================================
+       CLEAN WHITE, BLACK & RELAXING CALM BLUE THEME — SPIDER PORTAL
+       ========================================================= */
+    :root {
+      --bg-page: #f8fafc;
+      --bg-mesh-1: rgba(37, 99, 235, 0.04);
+      --bg-mesh-2: rgba(59, 130, 246, 0.03);
+      --bg-card: #ffffff;
+      --border-card: #e2e8f0;
+      --border-subtle: #f1f5f9;
+      --shadow-card: 0 4px 20px rgba(15, 23, 42, 0.06);
+
+      --text-main: #0f172a;
+      --text-sub: #334155;
+      --text-muted: #64748b;
+      --text-light: #94a3b8;
+
+      --primary-red: #ef4444;
+      --primary-red-dark: #dc2626;
+      --primary-orange: #2563eb;
+      --primary-orange-dark: #1d4ed8;
+      --gradient-fire: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      --gradient-fire-hover: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+      --gradient-warm-soft: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+
+      --input-bg: #ffffff;
+      --input-border: #e2e8f0;
+      --input-border-focus: #2563eb;
+      --input-text: #0f172a;
+
+      --nav-bg: rgba(255, 255, 255, 0.94);
+      --nav-border: #e2e8f0;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: row;
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
+
+    /* TOPBAR */
+    .portal-navbar {
+      background: var(--nav-bg);
+      backdrop-filter: blur(14px) saturate(180%);
+      -webkit-backdrop-filter: blur(14px) saturate(180%);
+      border-bottom: 1.5px solid var(--nav-border);
+      padding: 12px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      box-shadow: 0 2px 10px rgba(239, 68, 68, 0.04);
+    }
+
+    .portal-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text-main);
+    }
+
+    .portal-brand-badge {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: var(--gradient-fire);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+      color: #ffffff;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    .portal-brand-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .portal-brand-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.28rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #0f172a;
+      line-height: 1.2;
+    }
+
+    .portal-brand-subtitle {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.02em;
+    }
+
+    .portal-nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 18px;
+      border-radius: 30px;
+      font-size: 0.84rem;
+      font-weight: 700;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-admin-nav {
+      background: var(--gradient-fire);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
+    }
+    .btn-admin-nav:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(239, 68, 68, 0.4);
+    }
+
+    /* LIVE NOTICE HERO BANNER (White + Red + Orange) */
+    .notice-bar-container {
+      width: 100%;
+      max-width: 1080px;
+      margin: 18px auto 0;
+      padding: 0 16px;
+    }
+
+    .notice-bar {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-left: 5px solid #ef4444;
+      border-radius: 18px;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      box-shadow: 0 6px 24px rgba(249, 115, 22, 0.08);
+    }
+
+    .notice-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-sub);
+    }
+
+    .pulse-dot-red {
+      width: 10px;
+      height: 10px;
+      background: #ef4444;
+      border: 2px solid #ffffff;
+      border-radius: 50%;
+      display: inline-block;
+      animation: pulseAnim 1.6s infinite ease-in-out;
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+      flex-shrink: 0;
+    }
+
+    @keyframes pulseAnim {
+      0% { transform: scale(0.9); opacity: 0.8; }
+      50% { transform: scale(1.3); opacity: 1; }
+      100% { transform: scale(0.9); opacity: 0.8; }
+    }
+
+    .notice-highlight {
+      color: #2563eb;
+      font-weight: 700;
+      background: #f8fafc;
+      padding: 2px 8px;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .btn-telegram {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #0f172a;
+      color: #ffffff;
+      padding: 8px 18px;
+      border-radius: 30px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+    }
+    .btn-telegram:hover {
+      background: #ef4444;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3);
+    }
+
+    /* =========================================================
+       FULLSCREEN IMMERSIVE SPLIT-SCREEN AUTHENTICATION LAYOUT
+       ========================================================= */
+    .auth-fullscreen-layout {
+      display: flex;
+      width: 100vw;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* LEFT SIDE: VISUAL / ANIMATION CANVAS (53%) */
+    .auth-stage-column {
+      flex: 1.15;
+      min-height: 100vh;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 34px 44px;
+      background: radial-gradient(circle at 18% 22%, #ffffff 0%, #f8fafc 60%, #f1f5f9 100%);
+      border-right: 1px solid #e2e8f0;
+      overflow: hidden;
+    }
+
+    .stage-brand-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 10;
+    }
+
+    .stage-center-box {
+      position: relative;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: auto 0;
+      padding: 10px 0;
+    }
+
+    .stage-glow-backdrop {
+      position: absolute;
+      width: 580px;
+      height: 580px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(37, 99, 235, 0.12) 0%, rgba(59, 130, 246, 0.06) 45%, rgba(241, 245, 249, 0.02) 70%, transparent 85%);
+      filter: blur(52px);
+      pointer-events: none;
+      z-index: 0;
+      animation: pulseGlow 7s infinite alternate ease-in-out;
+    }
+
+    .stage-glow-ambient-2 {
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, rgba(37, 99, 235, 0.04) 50%, transparent 75%);
+      filter: blur(44px);
+      pointer-events: none;
+      z-index: 0;
+      top: 8%;
+      right: 12%;
+      animation: pulseGlow 9s infinite alternate-reverse ease-in-out;
+    }
+
+    /* Concentric Aesthetic Orbit Rings (Pure Graphic Design, Zero Text) */
+    .stage-orbit-ring {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .stage-ring-outer {
+      width: 640px;
+      height: 640px;
+      border: 1.5px dashed rgba(148, 163, 184, 0.35);
+      animation: rotateRing 45s linear infinite;
+    }
+
+    .stage-ring-middle {
+      width: 520px;
+      height: 520px;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      box-shadow: inset 0 0 40px rgba(226, 232, 240, 0.25);
+      animation: rotateRingRev 35s linear infinite;
+    }
+
+    .stage-ring-inner {
+      width: 410px;
+      height: 410px;
+      border: 1.5px dashed rgba(148, 163, 184, 0.2);
+    }
+
+    /* Floating Translucent Glass Geometric Nodes */
+    .stage-glass-orb {
+      position: absolute;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(241, 245, 249, 0.6) 100%);
+      border: 1.5px solid rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    .orb-1 {
+      width: 40px;
+      height: 40px;
+      top: 10%;
+      left: 12%;
+      animation: floatNode1 5s infinite alternate ease-in-out;
+    }
+
+    .orb-2 {
+      width: 26px;
+      height: 26px;
+      bottom: 12%;
+      right: 14%;
+      animation: floatNode2 6s infinite alternate ease-in-out;
+    }
+
+    .orb-3 {
+      width: 18px;
+      height: 18px;
+      top: 22%;
+      right: 18%;
+      animation: floatNode1 7s infinite alternate ease-in-out 1s;
+    }
+
+    @keyframes rotateRing {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @keyframes rotateRingRev {
+      0% { transform: rotate(360deg); }
+      100% { transform: rotate(0deg); }
+    }
+
+    @keyframes floatNode1 {
+      0% { transform: translateY(0) scale(1); }
+      100% { transform: translateY(-14px) scale(1.06); }
+    }
+
+    @keyframes floatNode2 {
+      0% { transform: translateY(0) scale(1); }
+      100% { transform: translateY(12px) scale(0.94); }
+    }
+
+    @keyframes pulseGlow {
+      0% { transform: scale(0.95); opacity: 0.65; }
+      100% { transform: scale(1.15); opacity: 0.95; }
+    }
+
+    /* Giant Animation Showcase Box */
+    .lottie-showcase-box {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 660px;
+      height: min(550px, 72vh);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.3s ease;
+    }
+
+    .lottie-showcase-box:hover {
+      transform: scale(1.015);
+    }
+
+    .lottie-showcase-box lottie-player,
+    .lottie-showcase-box dotlottie-player {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Fixed Bottom-Left Admin Gear Button (Icon Only, No Text) */
+    .admin-gear-btn {
+      position: fixed;
+      bottom: 22px;
+      left: 22px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1.5px solid #e2e8f0;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #334155;
+      text-decoration: none;
+      transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 999;
+      cursor: pointer;
+    }
+
+    .admin-gear-btn:hover {
+      color: #2563eb;
+      background: #ffffff;
+      border-color: #bfdbfe;
+      transform: scale(1.12) rotate(60deg);
+      box-shadow: 0 8px 24px rgba(37, 99, 235, 0.2);
+    }
+
+    .admin-gear-btn svg {
+      width: 22px;
+      height: 22px;
+      display: block;
+      stroke: currentColor;
+    }
+
+    /* RIGHT SIDE: AUTH FORM PANE (47%) */
+    .auth-form-column {
+      flex: 0.85;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 34px 50px;
+      background: #ffffff;
+      position: relative;
+      overflow-y: auto;
+    }
+
+    .form-pane-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      z-index: 10;
+    }
+
+    .auth-form-center-box {
+      width: 100%;
+      max-width: 410px;
+      margin: auto;
+      padding: 20px 0;
+    }
+
+    .form-pane-foot {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      z-index: 10;
+      padding-top: 12px;
+      text-align: center;
+    }
+
+    .form-pane-foot a {
+      color: #2563eb;
+      text-decoration: none;
+      font-weight: 700;
+    }
+    .form-pane-foot a:hover {
+      text-decoration: underline;
+    }
+
+    /* MOBILE / TABLET RESPONSIVE */
+    @media (max-width: 992px) {
+      .auth-fullscreen-layout {
+        flex-direction: column;
+        min-height: 100vh;
+      }
+      .auth-stage-column {
+        flex: none;
+        min-height: auto;
+        padding: 24px 20px;
+        border-right: none;
+        border-bottom: 1.5px solid #e2e8f0;
+      }
+      .lottie-showcase-box {
+        max-width: 340px;
+        height: 280px;
+      }
+      .stage-ring-outer {
+        width: 340px;
+        height: 340px;
+      }
+      .stage-ring-middle {
+        width: 280px;
+        height: 280px;
+      }
+      .auth-form-column {
+        flex: 1;
+        min-height: auto;
+        padding: 30px 20px 40px;
+      }
+      .form-pane-topbar {
+        display: none;
+      }
+    }
+
+    /* SEGMENTED SWITCHER */
+    .auth-tabs-wrap {
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 18px;
+      padding: 4px;
+      display: flex;
+      gap: 6px;
+      margin-bottom: 20px;
+    }
+
+    .auth-tab-btn {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: 8px 12px;
+      border-radius: 14px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .auth-tab-btn.active {
+      background: #ffffff;
+      color: #0f172a;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+    }
+
+    .auth-tab-btn:hover:not(.active) {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.6);
+    }
+
+    /* SECTIONS */
+    .auth-view-pane {
+      display: none;
+      animation: tabFadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .auth-view-pane.active {
+      display: block;
+    }
+
+    @keyframes tabFadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .auth-header-block {
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    .auth-badge-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: var(--gradient-warm-soft);
+      border: 1px solid #e2e8f0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      margin-bottom: 8px;
+      box-shadow: 0 4px 12px rgba(249, 115, 22, 0.1);
+    }
+
+    .auth-card-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text-main);
+    }
+
+    .auth-card-subtitle {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    /* FORMS & INPUTS */
+    .portal-form-group {
+      margin-bottom: 14px;
+    }
+
+    .portal-input-label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-sub);
+      margin-bottom: 6px;
+      margin-left: 4px;
+    }
+
+    .portal-input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      width: 100%;
+    }
+
+    .portal-input-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #94a3b8;
+      pointer-events: none;
+      z-index: 2;
+      transition: color 0.2s ease;
+    }
+
+    .portal-input-wrapper:focus-within .portal-input-icon {
+      color: #2563eb;
+    }
+
+    .portal-input {
+      width: 100%;
+      height: 48px;
+      padding: 0 16px 0 44px; /* Fix: 44px left padding so text never overlaps icon! */
+      background: #ffffff;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 14px;
+      font-size: 0.92rem;
+      font-weight: 500;
+      color: #0f172a;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .portal-input.has-toggle {
+      padding-right: 46px; /* Right padding for password eye toggle */
+    }
+
+    .portal-input:focus {
+      border-color: #2563eb;
+      background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    .password-toggle-btn {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #94a3b8;
+      transition: all 0.15s ease;
+      padding: 0;
+      z-index: 2;
+    }
+
+    .password-toggle-btn:hover {
+      color: #1e293b;
+      background: #f1f5f9;
+    }
+
+    .password-toggle-btn:active {
+      transform: translateY(-50%) scale(0.92);
+    }
+
+    .portal-btn {
+      width: 100%;
+      border-radius: 26px;
+      padding: 11.5px 20px;
+      font-size: 0.9rem;
+      font-weight: 800;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      letter-spacing: 0.01em;
+    }
+    .portal-btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-fire-primary {
+      background: #2563eb;
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+    }
+    .btn-fire-primary:hover {
+      background: #1d4ed8;
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35);
+      transform: translateY(-1px);
+    }
+
+    /* LIMITS BADGE (KEY GEN SECTION) */
+    .limits-badge-container {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 12px 14px;
+      margin-bottom: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .limits-badge-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .limit-chip {
+      background: #ffffff;
+      border: 1px solid #fdba74;
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: #c2410c;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: 0 1px 4px rgba(249, 115, 22, 0.08);
+    }
+
+    /* KEY RESULT BOX */
+    .gen-result-card {
+      background: #f0fdf4;
+      border: 1.5px solid #86efac;
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 18px;
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      animation: tabFadeIn 0.25s ease;
+    }
+
+    .gen-result-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: #15803d;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .gen-result-key-box {
+      background: #0f172a;
+      border: 1.5px dashed #4ade80;
+      border-radius: 12px;
+      padding: 11px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .gen-result-key-text {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      color: #4ade80;
+      font-size: 1.1rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      user-select: all;
+      word-break: break-all;
+    }
+
+    .btn-copy-gen {
+      background: rgba(74, 222, 128, 0.2);
+      border: 1px solid rgba(74, 222, 128, 0.4);
+      color: #bbf7d0;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+    }
+    .btn-copy-gen:hover {
+      background: rgba(74, 222, 128, 0.4);
+      color: #ffffff;
+    }
+
+    .btn-autofill-login {
+      background: var(--gradient-fire);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 10px 16px;
+      font-size: 0.88rem;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
+      transition: all 0.2s ease;
+    }
+    .btn-autofill-login:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+    }
+
+    /* FOOTER SWITCHERS */
+    .auth-switch-foot {
+      text-align: center;
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-subtle);
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    .auth-switch-link {
+      color: #2563eb;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: underline;
+      margin-left: 4px;
+    }
+    .auth-switch-link:hover {
+      color: #ef4444;
+    }
+
+    /* YOUTUBE CARD */
+    .yt-feature-card {
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 20px;
+      padding: 22px 20px;
+      text-align: center;
+    }
+
+    .btn-google-signin {
+      background: #0f172a;
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.2);
+    }
+    .btn-google-signin:hover {
+      background: #1e293b;
+      transform: translateY(-1px);
+    }
+
+    /* BANNERS (CONFLICT / ERROR / SUCCESS) */
+    .alert-banner {
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-size: 0.82rem;
+      display: none;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 16px;
+      line-height: 1.45;
+      animation: tabFadeIn 0.2s ease;
+    }
+
+    .alert-banner.show {
+      display: flex;
+    }
+
+    .banner-conflict {
+      background: #f8fafc;
+      border: 1.5px solid #2563eb;
+      color: #c2410c;
+    }
+    .banner-conflict p {
+      font-size: 0.77rem;
+      margin-top: 3px;
+      color: #9a3412;
+    }
+
+    .banner-error {
+      background: #fef2f2;
+      border: 1.5px solid #ef4444;
+      color: #b91c1c;
+    }
+
+    .banner-success {
+      background: #f0fdf4;
+      border: 1.5px solid #22c55e;
+      color: #15803d;
+    }
+
+    /* TOAST */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 99999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .toast {
+      background: #0f172a;
+      color: #ffffff;
+      border-left: 4px solid #ef4444;
+      padding: 11px 18px;
+      border-radius: 12px;
+      font-size: 0.86rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOPBAR (White, Red & Orange) -->
+  <!-- FULLSCREEN SPLIT SCREEN AUTHENTICATION -->
+  <div class="auth-fullscreen-layout">
+    
+    <!-- LEFT HALF: FULL HEIGHT ANIMATED VISUAL STAGE -->
+    <section class="auth-stage-column">
+      <!-- Top Brand Header inside Left Canvas -->
+      <div class="stage-brand-bar">
+        <a href="index.html" class="portal-brand">
+          <div class="portal-brand-badge">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+          <div class="portal-brand-text">
+            <span class="portal-brand-title">Spider Portal</span>
+            <span class="portal-brand-subtitle">Smart Video Classroom</span>
+          </div>
+        </a>
+      </div>
+
+      <!-- Center Stage: Giant Animation & Glowing Backdrop with Concentric Orbit Rings -->
+      <div class="stage-center-box">
+        <div class="stage-glow-backdrop"></div>
+        <div class="stage-glow-ambient-2"></div>
+        
+        <!-- Pure Geometric Orbit Rings (Zero Text) -->
+        <div class="stage-orbit-ring stage-ring-outer"></div>
+        <div class="stage-orbit-ring stage-ring-middle"></div>
+        <div class="stage-orbit-ring stage-ring-inner"></div>
+
+        <!-- Translucent Glass Floating Nodes -->
+        <div class="stage-glass-orb orb-1"></div>
+        <div class="stage-glass-orb orb-2"></div>
+        <div class="stage-glass-orb orb-3"></div>
+
+        <!-- Giant Animation Showcase Box -->
+        <div class="lottie-showcase-box" id="lottieContainer">
+          <lottie-player 
+            id="mainLottiePlayer"
+            src="desk-animation.json" 
+            background="transparent" 
+            speed="1" 
+            loop 
+            autoplay
+            style="width: 100%; height: 100%;"
+          ></lottie-player>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT HALF: FULL HEIGHT AUTH FORM PANE -->
+    <section class="auth-form-column">
+      <!-- Top Bar inside Right Pane -->
+      <div class="form-pane-topbar"></div>
+
+      <!-- Centered Form Card -->
+      <div class="auth-form-center-box">
+        <!-- Dedicated Tabs Switcher -->
+        <div class="auth-tabs-wrap">
+          <button type="button" class="auth-tab-btn active" id="tabBtnLogin" onclick="switchTab('login')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            <span>Sign In</span>
+          </button>
+          <button type="button" class="auth-tab-btn" id="tabBtnRegister" onclick="switchTab('register')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <line x1="19" y1="8" x2="19" y2="14"></line>
+              <line x1="22" y1="11" x2="16" y2="11"></line>
+            </svg>
+            <span>Register</span>
+          </button>
+        </div>
+
+        <!-- Device Conflict Alert -->
+        <div class="alert-banner banner-conflict" id="loginConflictBanner">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="flex-shrink:0;">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+            <line x1="8" y1="21" x2="16" y2="21"/>
+            <line x1="12" y1="17" x2="12" y2="21"/>
+          </svg>
+          <div>
+            <strong style="font-size:0.88rem; color:#9a3412;">Account Logged In On Another Device</strong>
+            <p>Your account was logged in on another device. Only one active device is allowed at a time.</p>
+          </div>
+        </div>
+
+        <!-- SECTION 1: LOGIN WITH EMAIL & PASSWORD -->
+        <div class="auth-view-pane active" id="paneLogin">
+          <div class="auth-header-block">
+            <div class="auth-badge-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            </div>
+            <h1 class="auth-card-title">Welcome Back</h1>
+            <p class="auth-card-subtitle">Sign in to access your classes</p>
+          </div>
+
+          <!-- Alerts -->
+          <div class="alert-banner banner-error" id="loginErrorBanner">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span id="loginErrorText">Invalid email or password.</span>
+          </div>
+
+          <div class="alert-banner banner-success" id="loginSuccessBanner">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            <span>Login successful! Opening portal...</span>
+          </div>
+
+          <!-- Login Form -->
+          <form id="signInForm" onsubmit="event.preventDefault(); handleSignIn();">
+            <div class="portal-form-group">
+              <label class="portal-input-label" for="loginEmail">Email</label>
+              <div class="portal-input-wrapper">
+                <span class="portal-input-icon">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                  </svg>
+                </span>
+                <input 
+                  type="email" 
+                  id="loginEmail" 
+                  class="portal-input" 
+                  placeholder="Enter your email" 
+                  required 
+                  autocomplete="email"
+                  autofocus
+                >
+              </div>
+            </div>
+
+            <div class="portal-form-group">
+              <label class="portal-input-label" for="loginPassword">Password</label>
+              <div class="portal-input-wrapper">
+                <span class="portal-input-icon">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                </span>
+                <input 
+                  type="password" 
+                  id="loginPassword" 
+                  class="portal-input has-toggle" 
+                  placeholder="Enter password" 
+                  required
+                  autocomplete="current-password"
+                  onkeydown="if(event.key==='Enter')handleSignIn()"
+                >
+                <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('loginPassword', this)" title="Show/Hide Password" aria-label="Show/Hide Password">
+                  <svg class="eye-open" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                  <svg class="eye-closed" style="display:none;" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m15 18-.722-3.25"></path>
+                    <path d="M2 8a10.645 10.645 0 0 0 20 0"></path>
+                    <path d="m20 15-1.726-2.05"></path>
+                    <path d="m4 15 1.726-2.05"></path>
+                    <path d="m9 18 .722-3.25"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" class="portal-btn btn-fire-primary" id="loginSubmitBtn">
+              <span>Sign In →</span>
+            </button>
+          </form>
+
+          <div class="auth-switch-foot">
+            <span>New student?</span>
+            <span class="auth-switch-link" onclick="switchTab('register')">Register Now →</span>
+          </div>
+        </div>
+
+        <!-- SECTION 2: STUDENT REGISTRATION -->
+        <div class="auth-view-pane" id="paneRegister">
+          <div class="auth-header-block">
+            <div class="auth-badge-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <line x1="19" y1="8" x2="19" y2="14"></line>
+                <line x1="22" y1="11" x2="16" y2="11"></line>
+              </svg>
+            </div>
+            <h2 class="auth-card-title">Create Account</h2>
+            <p class="auth-card-subtitle">Sign up to access your classes</p>
+          </div>
+
+          <div style="display:flex; align-items:center; justify-content:center; gap:8px; font-size:0.78rem; font-weight:600; color:#2563eb; background:#eff6ff; border:1px solid #bfdbfe; padding:7px 14px; border-radius:12px; margin-bottom:16px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            <span>Admin approval required after registration</span>
+          </div>
+
+          <!-- Alerts -->
+          <div class="alert-banner banner-error" id="regErrorBanner">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span id="regErrorText">Registration error.</span>
+          </div>
+
+          <div class="alert-banner banner-success" id="regSuccessBanner">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            <span id="regSuccessText">Registration submitted! Awaiting Admin approval.</span>
+          </div>
+
+          <!-- Registration Form -->
+          <form id="regForm" onsubmit="event.preventDefault(); handleRegister();">
+            <div class="portal-form-group">
+              <label class="portal-input-label" for="regName">Name</label>
+              <div class="portal-input-wrapper">
+                <span class="portal-input-icon">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                </span>
+                <input 
+                  type="text" 
+                  id="regName" 
+                  class="portal-input" 
+                  placeholder="Full name" 
+                  required 
+                  autocomplete="name"
+                >
+              </div>
+            </div>
+
+            <div class="portal-form-group">
+              <label class="portal-input-label" for="regEmail">Email</label>
+              <div class="portal-input-wrapper">
+                <span class="portal-input-icon">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                  </svg>
+                </span>
+                <input 
+                  type="email" 
+                  id="regEmail" 
+                  class="portal-input" 
+                  placeholder="Email address" 
+                  required 
+                  autocomplete="email"
+                >
+              </div>
+            </div>
+
+            <div class="portal-form-group">
+              <label class="portal-input-label" for="regPassword">Password</label>
+              <div class="portal-input-wrapper">
+                <span class="portal-input-icon">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                </span>
+                <input 
+                  type="password" 
+                  id="regPassword" 
+                  class="portal-input has-toggle" 
+                  placeholder="Password (min 4 chars)" 
+                  required 
+                  autocomplete="new-password"
+                >
+                <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('regPassword', this)" title="Show/Hide Password" aria-label="Show/Hide Password">
+                  <svg class="eye-open" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                  <svg class="eye-closed" style="display:none;" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m15 18-.722-3.25"></path>
+                    <path d="M2 8a10.645 10.645 0 0 0 20 0"></path>
+                    <path d="m20 15-1.726-2.05"></path>
+                    <path d="m4 15 1.726-2.05"></path>
+                    <path d="m9 18 .722-3.25"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="portal-form-group">
+              <label class="portal-input-label" for="regConfirmPassword">Confirm Password</label>
+              <div class="portal-input-wrapper">
+                <span class="portal-input-icon">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                </span>
+                <input 
+                  type="password" 
+                  id="regConfirmPassword" 
+                  class="portal-input has-toggle" 
+                  placeholder="Re-enter password" 
+                  required 
+                  autocomplete="new-password"
+                  onkeydown="if(event.key==='Enter')handleRegister()"
+                >
+                <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility('regConfirmPassword', this)" title="Show/Hide Password" aria-label="Show/Hide Password">
+                  <svg class="eye-open" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                  <svg class="eye-closed" style="display:none;" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m15 18-.722-3.25"></path>
+                    <path d="M2 8a10.645 10.645 0 0 0 20 0"></path>
+                    <path d="m20 15-1.726-2.05"></path>
+                    <path d="m4 15 1.726-2.05"></path>
+                    <path d="m9 18 .722-3.25"></path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" class="portal-btn btn-fire-primary" id="regSubmitBtn">
+              <span>Register Now</span>
+            </button>
+          </form>
+
+          <div class="auth-switch-foot">
+            <span>Already have an account?</span>
+            <span class="auth-switch-link" onclick="switchTab('login')">Sign In →</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Footer Info -->
+      <div class="form-pane-foot">
+        <span style="display:inline-flex; align-items:center; gap:5px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-muted);">
+            <rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          Secure 256-bit Portal
+        </span>
+        <span>•</span>
+        <a href="https://t.me/c/3831075286/1" target="_blank" rel="noopener">Need Help? Contact Admin →</a>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- BOTTOM-LEFT FLOATING ADMIN GEAR BUTTON (Icon Only, No Text) -->
+  <a href="admin.html" class="admin-gear-btn" title="Admin Console" aria-label="Admin Console">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"></circle>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+    </svg>
+  </a>
+
+  <div class="toast-container"></div>
+  <script src="store.js"></script>
+  <script>
+    // ===== TAB SWITCHING =====
+    function switchTab(tab) {
+      const isLogin = tab === 'login';
+      document.getElementById('tabBtnLogin').classList.toggle('active', isLogin);
+      document.getElementById('tabBtnRegister').classList.toggle('active', !isLogin);
+
+      document.getElementById('paneLogin').classList.toggle('active', isLogin);
+      document.getElementById('paneRegister').classList.toggle('active', !isLogin);
+
+      hideAllAlerts();
+    }
+
+    function togglePasswordVisibility(inputId, btn) {
+      const inp = document.getElementById(inputId);
+      if (!inp) return;
+      const isPass = inp.type === 'password';
+      inp.type = isPass ? 'text' : 'password';
+      const openIcon = btn.querySelector('.eye-open');
+      const closedIcon = btn.querySelector('.eye-closed');
+      if (openIcon && closedIcon) {
+        openIcon.style.display = isPass ? 'none' : 'block';
+        closedIcon.style.display = isPass ? 'block' : 'none';
+      }
+    }
+
+    // Check existing session on this device
+    (async function checkExistingSession() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isConflict = urlParams.get('reason') === 'conflict' || sessionStorage.getItem('cp_logout_reason') === 'device_conflict';
+      
+      if (isConflict) {
+        sessionStorage.removeItem('cp_logout_reason');
+        const conflictBanner = document.getElementById('loginConflictBanner');
+        if (conflictBanner) conflictBanner.classList.add('show');
+        return;
+      }
+
+      const user = DB.getCurrentUser();
+      if (user && user.email) {
+        const check = await DB.validateUserSession();
+        if (check && check.valid) {
+          const adminToken = DB.getAdminToken ? DB.getAdminToken() : '';
+          window.location.href = (user.role === 'admin' && adminToken) ? 'admin.html' : 'index.html';
+        } else if (check && !check.valid && check.reason === 'conflict') {
+          localStorage.removeItem('cp_user_session');
+          localStorage.removeItem('cp_session_id');
+          const conflictBanner = document.getElementById('loginConflictBanner');
+          if (conflictBanner) conflictBanner.classList.add('show');
+        } else if (check && !check.valid && check.reason === 'unauthorized') {
+          DB.clearAllAuthSessions();
+        }
+      }
+    })();
+
+    function hideAllAlerts() {
+      const elConflict = document.getElementById('loginConflictBanner');
+      const elErr = document.getElementById('loginErrorBanner');
+      const elSuc = document.getElementById('loginSuccessBanner');
+      const elRegErr = document.getElementById('regErrorBanner');
+      const elRegSuc = document.getElementById('regSuccessBanner');
+      if (elConflict) elConflict.classList.remove('show');
+      if (elErr) elErr.classList.remove('show');
+      if (elSuc) elSuc.classList.remove('show');
+      if (elRegErr) elRegErr.classList.remove('show');
+      if (elRegSuc) elRegSuc.classList.remove('show');
+    }
+
+    // ===== 1. LOGIN HANDLER (EMAIL + PASSWORD) =====
+    async function handleSignIn() {
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value.trim();
+      const btn = document.getElementById('loginSubmitBtn');
+      const errBanner = document.getElementById('loginErrorBanner');
+      const errText = document.getElementById('loginErrorText');
+      const successBanner = document.getElementById('loginSuccessBanner');
+
+      hideAllAlerts();
+
+      if (!email) {
+        errText.textContent = 'Please enter your email.';
+        errBanner.classList.add('show');
+        return;
+      }
+      if (!password) {
+        errText.textContent = 'Please enter your password.';
+        errBanner.classList.add('show');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = `<span>Signing In...</span>`;
+
+      try {
+        const res = await DB.loginUser(email, password);
+
+        if (res.success) {
+          successBanner.classList.add('show');
+          if (res.isAdmin) {
+            DB.showToast('Welcome Administrator! Opening Admin Panel...', 'success');
+            setTimeout(() => {
+              window.location.href = 'admin.html';
+            }, 350);
+          } else {
+            DB.showToast(`Welcome, ${res.user.name || 'Student'}!`, 'success');
+            setTimeout(() => {
+              window.location.href = 'index.html';
+            }, 400);
+          }
+        } else {
+          errText.innerHTML = (res.error || 'Invalid email or password.').replace(/\n/g, '<br>');
+          errBanner.classList.add('show');
+        }
+      } catch (err) {
+        console.error(err);
+        errText.textContent = 'Connection error. Please try again.';
+        errBanner.classList.add('show');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<span>Sign In →</span>`;
+      }
+    }
+
+    // ===== 2. STUDENT REGISTRATION HANDLER (PENDING APPROVAL) =====
+    async function handleRegister() {
+      const name = document.getElementById('regName').value.trim();
+      const email = document.getElementById('regEmail').value.trim();
+      const password = document.getElementById('regPassword').value.trim();
+      const confirmPassword = document.getElementById('regConfirmPassword').value.trim();
+      const btn = document.getElementById('regSubmitBtn');
+      const errBanner = document.getElementById('regErrorBanner');
+      const errText = document.getElementById('regErrorText');
+      const successBanner = document.getElementById('regSuccessBanner');
+      const successText = document.getElementById('regSuccessText');
+
+      hideAllAlerts();
+
+      if (!name || name.length < 2) {
+        errText.textContent = 'Please enter your name.';
+        errBanner.classList.add('show');
+        return;
+      }
+      if (!email || !email.includes('@') || !email.includes('.')) {
+        errText.textContent = 'Please enter a valid email.';
+        errBanner.classList.add('show');
+        return;
+      }
+      if (!password || password.length < 4) {
+        errText.textContent = 'Password must be at least 4 characters.';
+        errBanner.classList.add('show');
+        return;
+      }
+      if (password !== confirmPassword) {
+        errText.textContent = 'Passwords do not match.';
+        errBanner.classList.add('show');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = `<span>Registering...</span>`;
+
+      try {
+        const res = await DB.registerUser(name, email, password);
+
+        if (res.success) {
+          successText.textContent = res.message || 'Registration submitted! Awaiting admin approval.';
+          successBanner.classList.add('show');
+          DB.showToast('Registration submitted!', 'success');
+          
+          // Pre-fill email in sign-in form for user convenience
+          document.getElementById('loginEmail').value = email;
+          document.getElementById('loginPassword').value = '';
+          
+          // Clear registration inputs
+          document.getElementById('regForm').reset();
+        } else {
+          errText.textContent = res.error || 'Registration failed. Please try again.';
+          errBanner.classList.add('show');
+        }
+      } catch (err) {
+        console.error(err);
+        errText.textContent = 'Connection error. Please try again.';
+        errBanner.classList.add('show');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<span>Register Now</span>`;
+      }
+    }
+
+    // Automatically detect & load local Lottie or GIF if user places it in the project folder
+    (async function checkLocalAnimation() {
+      const candidates = [
+        'login.json',
+        'login-animation.json',
+        'login-4rlqu2p6Td.json',
+        'login.lottie',
+        'login.gif'
+      ];
+      for (const file of candidates) {
+        try {
+          const res = await fetch(file, { method: 'HEAD' });
+          if (res.ok) {
+            const player = document.getElementById('mainLottiePlayer');
+            const container = document.getElementById('lottieContainer');
+            if (file.endsWith('.gif')) {
+              container.innerHTML = `<img src="${file}" alt="Animation" style="width:100%; height:100%; object-fit:contain; border-radius:18px;">`;
+            } else if (file.endsWith('.lottie')) {
+              container.innerHTML = `<dotlottie-player src="${file}" background="transparent" speed="1" loop autoplay style="width:100%; height:100%;"></dotlottie-player>`;
+            } else if (player) {
+              player.load(file);
+            }
+            console.log('✅ Loaded local animation file:', file);
+            break;
+          }
+        } catch (e) {}
+      }
+    })();
+
+    // Admin shortcut Alt+A or Ctrl+Shift+A
+    document.addEventListener('keydown', (e) => {
+      if ((e.altKey && (e.key === 'a' || e.key === 'A')) || (e.ctrlKey && e.shiftKey && (e.key === 'A' || e.key === 'a'))) {
+        e.preventDefault();
+        window.location.href = 'admin.html';
+      }
+    });
+
+    // ===== 🛡️ ANTI-INSPECT PROTECTION =====
+    document.addEventListener('contextmenu', e => { e.preventDefault(); return false; }, false);
+    window.addEventListener('keydown', e => {
+      if (
+        e.keyCode === 123 || // F12
+        (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67 || e.keyCode === 75)) || // I, J, C, K
+        (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83)) // U, S
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+    }, true);
+  </script>
+</body>
+</html>

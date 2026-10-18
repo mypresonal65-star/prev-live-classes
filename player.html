@@ -1,0 +1,1042 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Cinema-grade HLS video player for class lectures">
+  <title>▶ Playing — Spider Player</title>
+  <script>
+    // YouTube security blocks iframes on file:/// protocol with Error 153.
+    // If opened via file:///, automatically redirect to the running local server.
+    if (window.location.protocol === 'file:') {
+      const page = window.location.pathname.split('/').pop() || 'player.html';
+      const targetUrl = 'http://localhost:8085/' + page + window.location.search + window.location.hash;
+      try {
+        window.location.replace(targetUrl);
+      } catch(e) {
+        window.location.href = targetUrl;
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>▶</text></svg>">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+</head>
+<body>
+  <!-- File Protocol Alert Bar (Shown only if opened directly from Desktop instead of http://localhost:8085) -->
+  <div id="fileProtocolNotice" style="display:none; background:#dc2626; color:#fff; padding:10px 16px; text-align:center; font-size:13px; font-weight:600; z-index:999999; position:relative; box-shadow:0 4px 12px rgba(0,0,0,0.3);">
+    ⚠️ <span>Aapne file ko seedha Desktop (file:///) se open kiya hai — is wajah se YouTube Error 153 de raha hai.</span>
+    <a id="fileProtocolLink" href="#" style="background:#fff; color:#dc2626; padding:4px 12px; border-radius:6px; text-decoration:none; margin-left:10px; font-weight:700; display:inline-block;">🚀 Yahan Click Karke http://localhost:8085 Par Kholein</a>
+  </div>
+  <script>
+    if (window.location.protocol === 'file:') {
+      const notice = document.getElementById('fileProtocolNotice');
+      const link = document.getElementById('fileProtocolLink');
+      const page = window.location.pathname.split('/').pop() || 'player.html';
+      const targetUrl = 'http://localhost:8085/' + page + window.location.search + window.location.hash;
+      if (notice && link) {
+        link.href = targetUrl;
+        notice.style.display = 'block';
+      }
+    }
+  </script>
+
+  <nav class="topbar">
+    <div class="topbar-left">
+      <a href="index.html" class="topbar-back" title="Back to All Classes" onclick="if(window.history.length>1){history.back();return false;}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+      </a>
+      <a href="index.html" class="topbar-brand">
+        <div class="topbar-logo"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>
+        <span class="topbar-name">Spider Player</span>
+      </a>
+    </div>
+    <!-- Desktop Navigation: Shown only on screens > 768px -->
+    <div class="topbar-nav desktop-nav">
+      <a href="index.html" class="topbar-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        Classes
+      </a>
+      <a href="admin.html" class="topbar-link" id="navAdminLink" style="display: none;" title="Admin Console">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Admin
+      </a>
+      <div class="topbar-user" id="userProfilePill">
+        <div class="topbar-user-avatar" id="userInitialBadge">U</div>
+        <span id="userNameBadge" style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Student</span>
+        <button class="topbar-logout-btn" onclick="DB.logoutUser()" title="Sign Out">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Hamburger Actions: Shown only on screens <= 768px -->
+    <div class="topbar-mobile-actions mobile-only">
+      <button class="topbar-hamburger-btn" id="hamburgerBtn" onclick="toggleMobileDrawer()" aria-label="Open Navigation Menu" title="Menu">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Mobile Drawer Backdrop & Sidebar -->
+  <div class="drawer-backdrop" id="drawerBackdrop" onclick="closeMobileDrawer()"></div>
+  <aside class="mobile-drawer" id="mobileDrawer" aria-label="Navigation Drawer">
+    <div class="drawer-header">
+      <div class="drawer-brand">
+        <div class="topbar-logo"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>
+        <span class="drawer-title">Spider Player</span>
+      </div>
+      <button class="drawer-close-btn" onclick="closeMobileDrawer()" aria-label="Close Menu">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <div class="drawer-user-card" id="drawerUserCard">
+      <div class="drawer-avatar" id="drawerUserInitial">U</div>
+      <div class="drawer-user-info">
+        <div class="drawer-user-name" id="drawerUserName">Student</div>
+        <div class="drawer-user-role" id="drawerUserRole">Active Student</div>
+      </div>
+    </div>
+
+    <div class="drawer-nav">
+      <a href="index.html" class="drawer-link" onclick="closeMobileDrawer()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        <span>All Classes</span>
+      </a>
+      <a href="admin.html" class="drawer-link" id="drawerAdminLink" style="display: none;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span>Admin Console</span>
+      </a>
+    </div>
+
+    <div class="drawer-footer">
+      <button class="drawer-logout-btn" onclick="DB.logoutUser()" title="Sign Out">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <span>Sign Out</span>
+      </button>
+      <div class="drawer-version">Spider Player • Cinema HLS</div>
+    </div>
+  </aside>
+
+  <div class="player-grid">
+    <div class="player-col">
+
+      <!-- Cinema -->
+      <div class="cinema" id="cinema">
+        <video id="vid" preload="metadata" playsinline disablepictureinpicture controlslist="nodownload noplaybackrate"></video>
+        <div class="spinner" id="spin"></div>
+        <div class="overlay" id="ov" onclick="togglePlay()">
+          <div class="overlay-circle"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>
+        </div>
+
+        <!-- Anti-Leak Click Shields (Prevents clicking YouTube title link & logo) -->
+        <div class="cinema-shield-top" id="cinemaShieldTop" title="Protected Player"></div>
+        <div class="cinema-shield-bottom-right" id="cinemaShieldBottom" title="Protected Player"></div>
+
+        <!-- DevTools Active Security Barrier -->
+        <div id="devtoolsSecurityBarrier" class="devtools-security-barrier" style="display: none;">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.2" style="margin-bottom:12px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <h3>🛡️ Content Security Protection Active</h3>
+          <p>Developer Tools, stream sniffing, and element inspection are strictly prohibited. Close Developer Tools to continue watching your lecture.</p>
+        </div>
+
+        <!-- Floating bar -->
+        <div class="bar" id="bar">
+          <button class="bar-btn" id="playB" onclick="togglePlay()" title="Play/Pause">
+            <svg id="pIco" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          </button>
+          <div class="bar-time"><span id="ct">0:00</span><span class="dur" id="dt">0:00</span></div>
+
+          <div class="bar-progress" id="pWrap">
+            <div class="bar-track">
+              <div class="bar-buf" id="bBuf"></div>
+              <div class="bar-fill" id="bFill"><div class="bar-thumb"></div></div>
+            </div>
+            <div class="bar-tip" id="bTip">0:00</div>
+          </div>
+
+          <div class="vol-wrap" id="vWrap">
+            <button class="bar-btn" id="vBtn" onclick="toggleMute()" title="Mute (M)">
+              <svg id="vIco" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+              </svg>
+            </button>
+            <input type="range" class="vol-slider" id="vSlider" min="0" max="1" step=".05" value="1">
+          </div>
+
+          <div style="position:relative">
+            <button class="speed-pill" id="sBtn" onclick="toggleSM()" title="Speed">
+              <span id="sLbl">1x</span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="speed-drop" id="sMenu">
+              <button class="speed-opt" data-s="0.5">0.5x</button>
+              <button class="speed-opt" data-s="0.75">0.75x</button>
+              <button class="speed-opt active" data-s="1">1x</button>
+              <button class="speed-opt" data-s="1.25">1.25x</button>
+              <button class="speed-opt" data-s="1.5">1.5x</button>
+              <button class="speed-opt" data-s="1.75">1.75x</button>
+              <button class="speed-opt" data-s="2">2x</button>
+              <button class="speed-opt" data-s="2.5">2.5x</button>
+              <button class="speed-opt" data-s="3">3x</button>
+            </div>
+          </div>
+
+          <button class="bar-btn" id="fsBtn" onclick="toggleFS()" title="Fullscreen (F)">
+            <svg id="fsIco" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Details -->
+      <div class="details-card">
+        <div class="details-left">
+          <h2 id="vTitle">Loading...</h2>
+          <div class="details-crumbs">
+            <span id="vSub">Subject</span><span>›</span><span id="vCh">Chapter</span>
+          </div>
+        </div>
+        <div class="details-actions">
+          <button class="action-btn" id="prevB" onclick="goPrev()">◀ Prev</button>
+          <button class="action-btn" id="nextB" onclick="goNext()">Next ▶</button>
+          <button class="action-btn" id="wBtn" onclick="doWatch()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <span id="wLbl">Mark Watched</span>
+          </button>
+          <button class="action-btn" id="sStarBtn" onclick="doStar()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <span id="sLblS">Star</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- YouTube Google Account Verification & Help Bar (Positioned at bottom of class) -->
+      <div id="ytPrivateHelpBar" class="yt-private-help-bar" style="display: none;">
+        <div class="yt-help-text">
+          <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"/><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"/><path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.3 0 15.2s.7 5.5 1.9 7.9l3.7-2.9z"/><path fill="#34A853" d="M12 23.5c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2-6.4-4.8L1.9 17c1.8 3.7 5.6 6.5 10.1 6.5z"/></svg>
+          <span>Private Video Access: Aapka Gmail (<b id="ytHelperUserEmail">student@gmail.com</b>) YouTube par login hona chahiye.</span>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <button type="button" class="yt-help-btn" onclick="reloadYouTubePlayer()" title="Reload Player" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff;">
+            🔄 Refresh Player
+          </button>
+          <a href="https://accounts.google.com/ServiceLogin?service=youtube" target="_blank" class="yt-help-btn" title="Check YouTube Google Sign-In">
+            🔑 YouTube Google Sign-In Check
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div>
+      <div class="side-card" id="sideCard">
+        <!-- Chapter Playlist Area -->
+        <div id="sidePlaylistSection">
+          <div class="side-head">
+            <span>Chapter Lectures</span>
+            <span class="cnt" id="plCnt">0</span>
+          </div>
+          <div class="side-list" id="plList">
+            <div style="padding:20px;text-align:center;color:var(--text-4);font-size:.82rem">Loading...</div>
+          </div>
+        </div>
+
+        <!-- Dedicated Smooth Live Chat Container -->
+        <div class="live-side-chat-wrap" id="liveSideChatWrap" style="display: none;">
+          <!-- Live Chat Stream Header -->
+          <div class="live-chat-head">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="live-pulse-dot" style="background:#ef4444;"></span>
+              <span style="font-weight: 700; color: #fff; font-size: 0.88rem;">Live Stream Discussion</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span class="status-badge live" style="font-size: 0.7rem; padding: 2px 8px; background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.25);">
+                <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#10b981;margin-right:4px;"></span>
+                <span id="liveOnlineCount">1</span> Online
+              </span>
+            </div>
+          </div>
+
+          <!-- Messages Stream with Auto-Scroll -->
+          <div class="live-chat-stream" id="liveChatStream">
+            <div style="text-align:center;padding:26px 12px;color:var(--text-4);font-size:0.78rem;">
+              💬 Welcome to Live Chat! Say hi or ask your doubts below.
+            </div>
+          </div>
+
+          <!-- Quick Emoji Reactions Bar -->
+          <div class="live-chat-emojis">
+            <button type="button" class="emoji-chip" onclick="quickSendEmoji('👏')">👏 Clap</button>
+            <button type="button" class="emoji-chip" onclick="quickSendEmoji('🔥')">🔥 Fire</button>
+            <button type="button" class="emoji-chip" onclick="quickSendEmoji('❤️')">❤️ Love</button>
+            <button type="button" class="emoji-chip" onclick="quickSendEmoji('👍')">👍 Clear</button>
+            <button type="button" class="emoji-chip" onclick="quickSendEmoji('❓')">❓ Doubt</button>
+            <button type="button" class="emoji-chip" onclick="quickSendEmoji('💡')">💡 Idea</button>
+          </div>
+
+          <!-- Live Chat Input Footer -->
+          <div class="live-chat-input-bar">
+            <input type="text" id="liveChatInput" placeholder="Chat with admin & classmates..." maxlength="300" style="background:#ffffff !important; color:#0f172a !important;" onkeydown="if(event.key==='Enter')sendLiveSideMessage()">
+            <button type="button" class="live-chat-send-btn" id="liveChatSendBtn" onclick="sendLiveSideMessage()" title="Send (Enter)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </div>
+        </div>
+
+      </div>
+      <div class="kb-box">
+        <h4>Keyboard Shortcuts</h4>
+        <div class="kb-grid">
+          <div class="kb-item"><kbd>Space</kbd> Play/Pause</div>
+          <div class="kb-item"><kbd>←</kbd> <kbd>→</kbd> Seek ±10s</div>
+          <div class="kb-item"><kbd>M</kbd> Mute</div>
+          <div class="kb-item"><kbd>F</kbd> Fullscreen</div>
+          <div class="kb-item"><kbd>&lt;</kbd> <kbd>&gt;</kbd> Speed</div>
+          <div class="kb-item"><kbd>N</kbd> / <kbd>B</kbd> Next/Prev</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container"></div>
+  <script src="store.js"></script>
+  <script>
+    // ===== AUTH GUARD & FORENSIC ANTI-PIRACY SHIELD =====
+    (function authGuard() {
+      let user = DB.getCurrentUser();
+      const adminToken = (DB.getAdminToken && typeof DB.getAdminToken === 'function') ? DB.getAdminToken() : '';
+      
+      // Layer 3: Zero-Trust Admin Check (Only genuine adminToken permits admin access)
+      const isAdmin = Boolean(adminToken);
+      
+      if (isAdmin) {
+        if (!user) {
+          user = { name: 'Admin', email: 'stackbyujjwal@gmail.com', role: 'admin', status: 'approved' };
+        } else {
+          user.name = 'Admin';
+        }
+      }
+
+      // If user claimed admin role in storage without valid token, purge and redirect
+      if (!isAdmin && user && user.role === 'admin') {
+        DB.clearAllAuthSessions();
+        window.location.href = 'login.html';
+        return;
+      }
+
+      if (!isAdmin && (!user || user.status !== 'approved')) {
+        window.location.href = 'login.html';
+        return;
+      }
+      const initial = isAdmin ? 'A' : (user.name ? user.name.charAt(0) : (user.email ? user.email.charAt(0) : 'U')).toUpperCase();
+      const displayName = isAdmin ? 'Admin' : (user.name || (user.email ? user.email.split('@')[0] : 'User'));
+
+      // Desktop topbar
+      const initialEl = document.getElementById('userInitialBadge');
+      const nameEl = document.getElementById('userNameBadge');
+      if (initialEl) initialEl.textContent = initial;
+      if (nameEl) nameEl.textContent = displayName;
+
+      // Mobile Drawer
+      const drawerInit = document.getElementById('drawerUserInitial');
+      const drawerNm = document.getElementById('drawerUserName');
+      const drawerRl = document.getElementById('drawerUserRole');
+      if (drawerInit) drawerInit.textContent = initial;
+      if (drawerNm) drawerNm.textContent = displayName;
+      if (drawerRl) drawerRl.textContent = isAdmin ? 'Admin' : 'Student Account';
+
+      if (isAdmin) {
+        const adminLink = document.getElementById('navAdminLink');
+        const drawerAdminLink = document.getElementById('drawerAdminLink');
+        if (adminLink) adminLink.style.display = 'inline-flex';
+        if (drawerAdminLink) drawerAdminLink.style.display = 'flex';
+      }
+
+      // Single-device session verification & real-time watcher (students only)
+      if (!isAdmin) {
+        DB.validateUserSession().then(res => {
+          if (!res.valid && res.reason === 'conflict') {
+            DB.handleSessionConflict();
+          } else if (!res.valid && (res.reason === 'rejected' || res.reason === 'not_approved' || res.reason === 'unauthorized')) {
+            DB.logoutUser();
+          } else {
+            DB.startSessionWatcher(() => {
+              const vid = document.getElementById('mainVideo');
+              if (vid) {
+                try { vid.pause(); } catch (e) {}
+              }
+              DB.handleSessionConflict('Your account was logged in on another device. Playback has been paused here.');
+            });
+          }
+        });
+      }
+    })();
+
+    // ===== MOBILE DRAWER CONTROLS =====
+    function toggleMobileDrawer() {
+      const drawer = document.getElementById('mobileDrawer');
+      const backdrop = document.getElementById('drawerBackdrop');
+      if (!drawer) return;
+      const isOpen = drawer.classList.contains('open');
+      if (isOpen) {
+        closeMobileDrawer();
+      } else {
+        drawer.classList.add('open');
+        if (backdrop) backdrop.classList.add('open');
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    function closeMobileDrawer() {
+      const drawer = document.getElementById('mobileDrawer');
+      const backdrop = document.getElementById('drawerBackdrop');
+      if (drawer) drawer.classList.remove('open');
+      if (backdrop) backdrop.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeMobileDrawer();
+    });
+
+    const vid=document.getElementById('vid'),cinema=document.getElementById('cinema'),
+          ov=document.getElementById('ov'),spin=document.getElementById('spin'),
+          pIco=document.getElementById('pIco'),ct=document.getElementById('ct'),
+          dt=document.getElementById('dt'),pWrap=document.getElementById('pWrap'),
+          bFill=document.getElementById('bFill'),bBuf=document.getElementById('bBuf'),
+          bTip=document.getElementById('bTip'),vIco=document.getElementById('vIco'),
+          vSlider=document.getElementById('vSlider'),sLbl=document.getElementById('sLbl'),
+          sMenu=document.getElementById('sMenu'),fsIco=document.getElementById('fsIco');
+
+    let cur=null,sibs=[],idx=-1,hls=null,hideTimer=null,dragging=false,seeking=false,isW=false,isS=false;
+    const PLAY='<path d="M8 5v14l11-7z"/>',PAUSE='<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+    const VH='<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>';
+    const VL='<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>';
+    const VM='<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>';
+    const FSE='<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>';
+    const FSX='<path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>';
+
+    async function init(){
+      const params = new URLSearchParams(location.search);
+      const isLive = params.get('live') === '1';
+      const liveId = params.get('id');
+      let liveUrl = null;
+      let liveTitle = 'Live Interactive Class';
+
+      if (isLive) {
+        // 1. Try to read from sessionStorage (secure encrypted transfer from index.html)
+        try {
+          const stored = sessionStorage.getItem('cp_active_live_stream');
+          if (stored) {
+            let jsonStr = stored;
+            if (window.DB && DB.SecurityVault) {
+              jsonStr = DB.SecurityVault.decrypt(stored);
+            }
+            const parsed = JSON.parse(jsonStr);
+            if (parsed && (!liveId || String(parsed.id) === String(liveId))) {
+              liveUrl = parsed.url;
+              liveTitle = parsed.title || liveTitle;
+            }
+            // Scrub sessionStorage immediately so it NEVER sits in browser inspection
+            sessionStorage.removeItem('cp_active_live_stream');
+          }
+        } catch(e) {}
+
+        // 2. Fallback to DB.getLiveClassById(liveId)
+        if (!liveUrl && liveId && typeof DB.getLiveClassById === 'function') {
+          const item = await DB.getLiveClassById(liveId);
+          if (item) {
+            liveUrl = item.url;
+            liveTitle = item.title || liveTitle;
+          }
+        }
+
+        // Backward compatibility (if url parameter was passed by older link)
+        if (!liveUrl && params.get('url')) {
+          liveUrl = params.get('url');
+          liveTitle = params.get('title') || liveTitle;
+        }
+
+        // Scrub any leaked URL from address bar immediately
+        if (window.history && window.history.replaceState) {
+          const cleanUrl = 'player.html?live=1' + (liveId ? '&id=' + encodeURIComponent(liveId) : '');
+          window.history.replaceState({}, '', cleanUrl);
+        }
+
+        if (liveUrl) {
+          isLiveSession = true;
+          document.getElementById('vTitle').innerHTML = `<span class="live-badge-chip" style="margin-right: 8px;"><span class="live-pulse-dot" style="background:#fff"></span> LIVE</span> ${escapeHtml(liveTitle)}`;
+          document.getElementById('vCh').textContent = 'Live Broadcast';
+          document.getElementById('vSub').textContent = '🔴 Interactive Stream';
+          document.title = `🔴 LIVE: ${liveTitle} — Spider Player`;
+
+          switchSideMode('chat');
+          loadVid(liveUrl);
+          return;
+        }
+      }
+
+      const id=params.get('id');
+      if(!id){
+        document.getElementById('vTitle').textContent='No lecture selected';
+        document.getElementById('plList').innerHTML='<div style="padding:24px 16px;text-align:center;color:var(--text-3);font-size:.82rem;">Please select a lecture from <a href="index.html" style="color:var(--orange);font-weight:600;text-decoration:underline;">All Classes</a></div>';
+        return;
+      }
+      let lec = await DB.getLectureById(id);
+      if (!lec) {
+        // Check if id is actually a chapter ID
+        try {
+          const chapLecs = await DB.getLectures(id);
+          if (chapLecs && chapLecs.length > 0) {
+            lec = await DB.getLectureById(chapLecs[0].id);
+          }
+        } catch(e) {}
+      }
+
+      if (!lec) {
+        // Fallback to first available lecture so the screen never stays blank/stuck
+        try {
+          const allL = await DB.getAllLectures();
+          if (allL && allL.length > 0) {
+            lec = await DB.getLectureById(allL[0].id);
+          }
+        } catch(e) {}
+      }
+
+      if (!lec) {
+        document.getElementById('vTitle').textContent = 'Lecture not found';
+        document.getElementById('plList').innerHTML = '<div style="padding:24px 16px;text-align:center;color:var(--text-3);font-size:.82rem;">Lecture not found. Return to <a href="index.html" style="color:var(--orange);font-weight:600;">All Classes</a></div>';
+        return;
+      }
+      const rawStreamUrl = lec.url;
+      cur = { ...lec, url: '[PROTECTED_STREAM_SOURCE]' };
+      const ch=lec.chapters,sub=ch?ch.subjects:null;
+      document.getElementById('vTitle').textContent=lec.title;
+      document.getElementById('vCh').textContent=ch?ch.name:'—';
+      document.getElementById('vSub').textContent=sub?`${sub.icon||''} ${sub.name}`:'—';
+      document.title=`▶ ${lec.title} — Spider Player`;
+      const[wl,sl]=await Promise.all([DB.getWatched(),DB.getStarred()]);
+      isW=wl.includes(id);isS=sl.includes(id);updateBtns();
+      const rawSibs = await DB.getLectures(lec.chapter_id);
+      sibs = rawSibs.map(l => ({ ...l, url: '[PROTECTED_STREAM_SOURCE]' }));
+      idx=sibs.findIndex(l=>String(l.id)===String(id));
+      document.getElementById('plCnt').textContent=sibs.length+' classes';
+      renderPL();updateNav();loadVid(rawStreamUrl);
+    }
+
+    // Real-time live sync for player playlist sidebar
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'spider_live_sync_ping' && cur) {
+        DB.getLectures(cur.chapter_id).then(newSibs => {
+          sibs = newSibs;
+          idx = sibs.findIndex(l => String(l.id) === String(cur.id));
+          document.getElementById('plCnt').textContent = sibs.length + ' classes';
+          renderPL();
+          updateNav();
+        });
+      }
+    });
+    window.addEventListener('spider_live_sync', () => {
+      if (cur) {
+        DB.getLectures(cur.chapter_id).then(newSibs => {
+          sibs = newSibs;
+          idx = sibs.findIndex(l => String(l.id) === String(cur.id));
+          document.getElementById('plCnt').textContent = sibs.length + ' classes';
+          renderPL();
+          updateNav();
+        });
+      }
+    });
+
+    function extractYouTubeVideoId(u) {
+      if (!u) return null;
+      const clean = u.trim();
+      if (/^[a-zA-Z0-9_-]{11}$/.test(clean)) return clean;
+      const match = clean.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts|live)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+      return match ? match[1] : null;
+    }
+
+    function reloadYouTubePlayer() {
+      const ytFrame = document.getElementById('ytEmbedPlayer');
+      if (ytFrame && ytFrame.src) {
+        const src = ytFrame.src;
+        ytFrame.src = '';
+        setTimeout(() => { ytFrame.src = src; }, 100);
+        if (typeof DB !== 'undefined' && DB.showToast) DB.showToast('Refreshing YouTube Player...', 'info');
+      }
+    }
+
+    async function loadVid(url){
+      if(!url) return;
+      if(hls){hls.destroy();hls=null}
+
+      const ytId = extractYouTubeVideoId(url);
+      const bar = document.getElementById('bar');
+
+      if(ytId){
+        // YouTube video playback
+        vid.pause();
+        vid.src='';
+        vid.style.display='none';
+        spin.style.display='none';
+        ov.classList.add('hidden');
+        if(bar) bar.style.display='none';
+        cinema.classList.add('is-youtube');
+
+        switchSideMode('playlist');
+
+        const ytHelp = document.getElementById('ytPrivateHelpBar');
+        if(ytHelp){
+          ytHelp.style.display = 'flex';
+          const emailEl = document.getElementById('ytHelperUserEmail');
+          const curU = (typeof DB !== 'undefined' && DB.getCurrentUser) ? DB.getCurrentUser() : null;
+          if(emailEl) emailEl.textContent = curU?.email || 'Student Gmail';
+        }
+
+        let ytFrame = document.getElementById('ytEmbedPlayer');
+        if(!ytFrame){
+          ytFrame = document.createElement('iframe');
+          ytFrame.id = 'ytEmbedPlayer';
+          ytFrame.className = 'yt-embed-player';
+          ytFrame.setAttribute('frameborder', '0');
+          ytFrame.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
+          ytFrame.setAttribute('allowfullscreen', 'true');
+          cinema.appendChild(ytFrame);
+        }
+        ytFrame.style.display = 'block';
+        ytFrame.src = `https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0&modestbranding=1&controls=1&showinfo=0&iv_load_policy=3&cc_load_policy=0`;
+        return;
+      }
+
+      // HLS or MP4 playback
+
+      const ytHelp = document.getElementById('ytPrivateHelpBar');
+      if(ytHelp) ytHelp.style.display = 'none';
+
+      const ytFrame = document.getElementById('ytEmbedPlayer');
+      if(ytFrame){
+        ytFrame.style.display='none';
+        ytFrame.src='';
+      }
+      cinema.classList.remove('is-youtube');
+      vid.style.display='block';
+      if(bar) bar.style.display='flex';
+      spin.style.display='block';
+
+      const isHls = url.toLowerCase().includes('.m3u8') || url.toLowerCase().includes('/hls/');
+      if(isHls){
+        // 🛡️ SECURE STREAM PROXY: Upstream .m3u8 is NEVER exposed to client or network sniffer
+        let streamSource = url;
+        try {
+          const res = await fetch('/api/secure-stream-token?url=' + encodeURIComponent(url));
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.secureStreamUrl) {
+              streamSource = data.secureStreamUrl;
+            }
+          }
+        } catch(e) {}
+
+        if(Hls.isSupported()){
+          hls=new Hls({
+            maxBufferLength: 30,
+            maxMaxBufferLength: 60,
+            startLevel: -1,
+            enableWorker: true
+          });
+          hls.loadSource(streamSource);
+          hls.attachMedia(vid);
+          hls.on(Hls.Events.MANIFEST_PARSED,()=>spin.style.display='none');
+          hls.on(Hls.Events.ERROR,(_,d)=>{
+            if(d.fatal){
+              if(d.type===Hls.ErrorTypes.NETWORK_ERROR){DB.showToast('Network error — retrying','error');hls.startLoad()}
+              else if(d.type===Hls.ErrorTypes.MEDIA_ERROR)hls.recoverMediaError();
+              else{DB.showToast('Stream error','error');hls.destroy()}
+            }
+          });
+        }else if(vid.canPlayType('application/vnd.apple.mpegurl')){
+          vid.src=streamSource;
+          vid.addEventListener('loadedmetadata',()=>spin.style.display='none');
+        }else{
+          DB.showToast('HLS not supported','error');
+          spin.style.display='none';
+        }
+      }else{
+        vid.src=url;
+        vid.addEventListener('loadedmetadata',()=>spin.style.display='none');
+      }
+    }
+
+    function togglePlay(){if(vid.paused||vid.ended)vid.play().then(()=>ov.classList.add('hidden')).catch(()=>{});else vid.pause()}
+
+    vid.addEventListener('play',()=>{pIco.innerHTML=PAUSE;ov.classList.add('hidden');spin.style.display='none'});
+    vid.addEventListener('pause',()=>{pIco.innerHTML=PLAY;ov.classList.remove('hidden')});
+    vid.addEventListener('ended',async()=>{pIco.innerHTML=PLAY;ov.classList.remove('hidden');if(cur&&!isW){await DB.addWatched(cur.id);isW=true;updateBtns();DB.showToast('Completed — marked watched','success')}});
+    vid.addEventListener('waiting',()=>spin.style.display='block');
+    vid.addEventListener('canplay',()=>spin.style.display='none');
+
+    vid.addEventListener('timeupdate',()=>{if(!seeking&&vid.duration){bFill.style.width=(vid.currentTime/vid.duration*100)+'%';ct.textContent=fmt(vid.currentTime);dt.textContent=fmt(vid.duration)}});
+    vid.addEventListener('progress',()=>{if(vid.buffered.length>0&&vid.duration)bBuf.style.width=(vid.buffered.end(vid.buffered.length-1)/vid.duration*100)+'%'});
+
+    pWrap.addEventListener('click',e=>{const r=pWrap.getBoundingClientRect();const p=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));if(vid.duration)vid.currentTime=p*vid.duration});
+    pWrap.addEventListener('mousemove',e=>{const r=pWrap.getBoundingClientRect();const p=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));if(vid.duration){bTip.textContent=fmt(p*vid.duration);bTip.style.left=(p*100)+'%'}});
+
+    pWrap.addEventListener('mousedown',e=>{dragging=true;seeking=true;seekE(e)});
+    document.addEventListener('mousemove',e=>{if(dragging)seekE(e)});
+    document.addEventListener('mouseup',()=>{if(dragging){dragging=false;seeking=false}});
+    function seekE(e){const r=pWrap.getBoundingClientRect();const p=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));if(vid.duration){vid.currentTime=p*vid.duration;bFill.style.width=(p*100)+'%';ct.textContent=fmt(p*vid.duration)}}
+
+    function skip(s){vid.currentTime=Math.max(0,Math.min(vid.duration||0,vid.currentTime+s));const el=s<0?document.getElementById('seekL'):document.getElementById('seekR');el.textContent=s<0?`◀◀ ${Math.abs(s)}s`:`${s}s ▶▶`;el.classList.remove('show');void el.offsetWidth;el.classList.add('show')}
+
+    cinema.addEventListener('dblclick',e=>{if(e.target.closest('.bar,.speed-drop'))return;const r=cinema.getBoundingClientRect();const x=e.clientX-r.left;if(x<r.width*.4)skip(-10);else if(x>r.width*.6)skip(10);else toggleFS()});
+
+    let prevVolume = 1;
+    vSlider.addEventListener('input', e => {
+      const val = parseFloat(e.target.value);
+      vid.volume = val;
+      vid.muted = (val === 0);
+      if (val > 0) prevVolume = val;
+      updV();
+    });
+
+    // Keep slider open when active or dragging
+    vSlider.addEventListener('mousedown', () => vSlider.classList.add('is-active'));
+    document.addEventListener('mouseup', () => vSlider.classList.remove('is-active'));
+    vSlider.addEventListener('focus', () => vSlider.classList.add('is-active'));
+    vSlider.addEventListener('blur', () => vSlider.classList.remove('is-active'));
+
+    function toggleMute() {
+      if (vid.muted || vid.volume === 0) {
+        vid.muted = false;
+        vid.volume = prevVolume > 0 ? prevVolume : 1;
+      } else {
+        prevVolume = vid.volume;
+        vid.muted = true;
+      }
+      updV();
+    }
+
+    function updV() {
+      const isMuted = (vid.muted || vid.volume === 0);
+      const val = isMuted ? 0 : vid.volume;
+      const pct = Math.round(val * 100);
+      vSlider.value = val;
+      vSlider.style.setProperty('--vol-pct', pct + '%');
+
+      if (isMuted) {
+        vIco.innerHTML = VM;
+        vBtn.title = 'Unmute (M)';
+      } else if (val < 0.5) {
+        vIco.innerHTML = VL;
+        vBtn.title = 'Mute (M)';
+      } else {
+        vIco.innerHTML = VH;
+        vBtn.title = 'Mute (M)';
+      }
+    }
+    updV();
+
+    function toggleSM(){sMenu.classList.toggle('show')}
+    document.querySelectorAll('.speed-opt').forEach(b=>b.addEventListener('click',()=>{const s=parseFloat(b.dataset.s);vid.playbackRate=s;sLbl.textContent=s+'x';document.querySelectorAll('.speed-opt').forEach(o=>o.classList.remove('active'));b.classList.add('active');sMenu.classList.remove('show')}));
+    document.addEventListener('click',e=>{if(!e.target.closest('#sBtn,#sMenu'))sMenu.classList.remove('show')});
+
+    function toggleFS(){if(!document.fullscreenElement){cinema.requestFullscreen().catch(()=>{});fsIco.innerHTML=FSX}else{document.exitFullscreen();fsIco.innerHTML=FSE}}
+    document.addEventListener('fullscreenchange',()=>fsIco.innerHTML=document.fullscreenElement?FSX:FSE);
+
+    cinema.addEventListener('mousemove',()=>{cinema.classList.add('show-ui');cinema.style.cursor='default';clearTimeout(hideTimer);hideTimer=setTimeout(()=>{if(!vid.paused){cinema.classList.remove('show-ui');cinema.style.cursor='none'}},2500)});
+    cinema.addEventListener('mouseleave',()=>{if(!vid.paused)cinema.classList.remove('show-ui')});
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function renderPL(){
+      const c=document.getElementById('plList');
+      if(!sibs.length){c.innerHTML='<div style="padding:20px;text-align:center;color:var(--text-4);font-size:.82rem">Empty chapter</div>';return}
+      c.innerHTML=sibs.map((l,i)=>{
+        const act=String(l.id)===String(cur?.id);
+        return `<a href="player.html?id=${encodeURIComponent(l.id)}" class="side-item ${act?'now':''}"><div class="side-idx">${String(i+1).padStart(2,'0')}</div><div class="side-title">${escapeHtml(l.title)}</div>${act?'<span class="side-now">Now</span>':''}</a>`
+      }).join('');
+    }
+
+    function updateNav(){
+      document.getElementById('prevB').style.opacity=idx<=0?'.35':'1';
+      document.getElementById('nextB').style.opacity=idx>=sibs.length-1?'.35':'1';
+    }
+    function goNext(){if(idx<sibs.length-1)location.href='player.html?id='+sibs[idx+1].id;else DB.showToast('Last class in chapter','info')}
+    function goPrev(){if(idx>0)location.href='player.html?id='+sibs[idx-1].id;else DB.showToast('First class in chapter','info')}
+
+    async function doWatch(){if(!cur)return;isW=await DB.toggleWatchedDB(cur.id);updateBtns();DB.showToast(isW?'Marked completed':'Unmarked',isW?'success':'info')}
+    async function doStar(){if(!cur)return;isS=await DB.toggleStarredDB(cur.id);updateBtns();DB.showToast(isS?'Starred':'Unstarred',isS?'success':'info')}
+    function updateBtns(){
+      const wb=document.getElementById('wBtn'),wl=document.getElementById('wLbl');
+      if(isW){wb.classList.add('done');wl.textContent='Completed'}else{wb.classList.remove('done');wl.textContent='Mark Watched'}
+      const sb=document.getElementById('sStarBtn'),sl=document.getElementById('sLblS');
+      if(isS){sb.style.color='var(--amber)';sl.textContent='Starred'}else{sb.style.color='';sl.textContent='Star'}
+    }
+
+    function fmt(s){if(!s||isNaN(s))return '0:00';const h=Math.floor(s/3600),m=Math.floor(s%3600/60),sec=Math.floor(s%60);return h>0?`${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`:`${m}:${String(sec).padStart(2,'0')}`}
+
+    function adjSpd(d){const ss=[.5,.75,1,1.25,1.5,1.75,2,2.5,3];let ci=ss.indexOf(vid.playbackRate);if(ci<0)ci=2;ci=Math.max(0,Math.min(ss.length-1,ci+d));vid.playbackRate=ss[ci];sLbl.textContent=ss[ci]+'x';DB.showToast('Speed: '+ss[ci]+'x','info')}
+
+    document.addEventListener('keydown',e=>{
+      if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;
+      switch(e.key.toLowerCase()){
+        case ' ':case'k':e.preventDefault();togglePlay();break;
+        case'arrowleft':case'j':e.preventDefault();skip(-10);break;
+        case'arrowright':case'l':e.preventDefault();skip(10);break;
+        case'arrowup':e.preventDefault();vid.volume=Math.min(1,vid.volume+.05);vid.muted=false;updV();break;
+        case'arrowdown':e.preventDefault();vid.volume=Math.max(0,vid.volume-.05);updV();break;
+        case'm':toggleMute();break;case'f':toggleFS();break;
+        case'n':goNext();break;case'b':goPrev();break;
+        case',':case'<':adjSpd(-1);break;case'.':case'>':adjSpd(1);break;
+        case'0':case'home':vid.currentTime=0;break;case'end':vid.currentTime=vid.duration||0;break;
+      }
+    });
+
+    window.addEventListener('beforeunload',()=>{if(cur&&vid.currentTime>0){const p=JSON.parse(localStorage.getItem('vpos')||'{}');p[cur.id]=vid.currentTime;localStorage.setItem('vpos',JSON.stringify(p))}});
+    vid.addEventListener('loadedmetadata',()=>{if(cur){const p=JSON.parse(localStorage.getItem('vpos')||'{}');if(p[cur.id]){vid.currentTime=p[cur.id];DB.showToast('Resumed from previous position','info')}}});
+
+    // Student Heartbeat for Admin Presence Monitor
+    const curUser = DB.getCurrentUser();
+    if (curUser && DB.recordStudentHeartbeat) DB.recordStudentHeartbeat(curUser);
+    setInterval(() => {
+      const u = DB.getCurrentUser();
+      if (u && DB.recordStudentHeartbeat) DB.recordStudentHeartbeat(u);
+    }, 15000);
+
+    // Escape helper
+    function escapeHtml(s) {
+      if (!s) return '';
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // ===== SIDE-BY-SIDE SMOOTH LIVE CHAT ENGINE (100% BLINK-FREE & BULLETPROOF) =====
+    let sideChatInterval = null;
+    let _lastLiveChatSig = '';
+    let isLiveSession = false;
+
+    function switchSideMode(mode) {
+      const playlistSec = document.getElementById('sidePlaylistSection');
+      const chatSec = document.getElementById('liveSideChatWrap');
+
+      if (mode === 'chat') {
+        if (playlistSec) playlistSec.style.display = 'none';
+        if (chatSec) chatSec.style.display = 'flex';
+        loadLiveSideChat(true);
+        if (!sideChatInterval) {
+          sideChatInterval = setInterval(() => loadLiveSideChat(false), 2500);
+        }
+      } else {
+        if (playlistSec) playlistSec.style.display = 'block';
+        if (chatSec) chatSec.style.display = 'none';
+        if (sideChatInterval) {
+          clearInterval(sideChatInterval);
+          sideChatInterval = null;
+        }
+      }
+    }
+
+    async function updateLiveOnlinePresence() {
+      try {
+        const onlineCountEl = document.getElementById('liveOnlineCount');
+        if (!onlineCountEl) return;
+        if (DB.getUnifiedOnlineStudents) {
+          const list = await DB.getUnifiedOnlineStudents();
+          onlineCountEl.textContent = Math.max(1, (list && list.length) || 1);
+        } else if (DB.getOnlineStudents) {
+          const list = DB.getOnlineStudents();
+          onlineCountEl.textContent = Math.max(1, (list && list.length) || 1);
+        }
+      } catch (e) {}
+    }
+
+    async function loadLiveSideChat(shouldScroll = false) {
+      if (!window.DB || !DB.getChatMessages) return;
+      try {
+        updateLiveOnlinePresence();
+        const msgs = await DB.getChatMessages('live');
+        const stream = document.getElementById('liveChatStream');
+        if (!stream) return;
+
+        if (!msgs || msgs.length === 0) {
+          if (_lastLiveChatSig !== 'empty') {
+            _lastLiveChatSig = 'empty';
+            stream.innerHTML = '<div style="text-align:center;padding:26px 12px;color:var(--text-4);font-size:0.78rem;">💬 Live Chat started! Be the first to say hi.</div>';
+          }
+          return;
+        }
+
+        const currentUser = DB.getCurrentUser() || {};
+        // Chronological order: oldest at top, newest at bottom
+        const chronological = [...msgs].sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
+
+        // Deduplicate messages by id or composite key
+        const seenIds = new Set();
+        const uniqueMsgs = [];
+        for (const m of chronological) {
+          const key = m.id || `${m.email}_${m.message}_${m.created_at}`;
+          if (!seenIds.has(key)) {
+            seenIds.add(key);
+            uniqueMsgs.push(m);
+          }
+        }
+
+        // Generate content signature: If unchanged, ZERO DOM RE-RENDER (stops 3s blink completely!)
+        const currentSig = uniqueMsgs.map(m => `${m.id || ''}:${m.message || ''}:${m.created_at || ''}`).join('|');
+        if (currentSig === _lastLiveChatSig) {
+          return; // No change = zero flickering!
+        }
+        _lastLiveChatSig = currentSig;
+
+        const isAtBottom = stream.scrollHeight - stream.scrollTop <= stream.clientHeight + 80;
+
+        stream.innerHTML = uniqueMsgs.map(m => {
+          const isMe = (currentUser.email && m.email && m.email.toLowerCase() === currentUser.email.toLowerCase());
+          const isTeacher = (
+            m.role === 'admin' || 
+            (m.sender_name && (m.sender_name.toLowerCase().includes('teacher') || m.sender_name.toLowerCase().includes('admin'))) ||
+            (m.email && m.email.toLowerCase().includes('admin'))
+          );
+          const timeStr = m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+
+          let authorHtml = '';
+          if (isTeacher) {
+            authorHtml = `<span class="live-role-badge teacher admin">👑 Admin</span>`;
+          } else {
+            let sName = (window.DB && DB.getStudentNameByEmail) ? DB.getStudentNameByEmail(m.email, m.sender_name) : (m.sender_name || 'Student');
+            authorHtml = `<strong class="live-author-name student-name">🎓 ${escapeHtml(sName)}</strong>`;
+          }
+
+          return `
+            <div class="live-stream-msg ${isMe ? 'is-me' : ''} ${isTeacher ? 'is-teacher' : ''}" data-msg-id="${escapeHtml(m.id || '')}">
+              <div class="live-msg-header">
+                <span class="live-msg-author">
+                  ${authorHtml}
+                </span>
+                <span class="live-msg-time">${timeStr}</span>
+              </div>
+              <div class="live-msg-content">${escapeHtml(m.message)}</div>
+            </div>
+          `;
+        }).join('');
+
+        if (shouldScroll || isAtBottom) {
+          stream.scrollTo({ top: stream.scrollHeight, behavior: 'smooth' });
+        }
+      } catch (err) {
+        console.error('loadLiveSideChat error:', err);
+      }
+    }
+
+    let isSendingLiveMsg = false;
+    async function sendLiveSideMessage() {
+      if (isSendingLiveMsg) return;
+      const input = document.getElementById('liveChatInput');
+      const text = input ? input.value.trim() : '';
+      if (!text) return;
+      isSendingLiveMsg = true;
+      input.value = '';
+
+      try {
+        await DB.sendChatMessage(text, null, null, 'live');
+        await loadLiveSideChat(true);
+      } catch (e) {
+        console.error('sendLiveSideMessage error:', e);
+      } finally {
+        isSendingLiveMsg = false;
+        if (input) input.focus();
+      }
+    }
+
+    function quickSendEmoji(emoji) {
+      const input = document.getElementById('liveChatInput');
+      if (input) {
+        input.value = (input.value ? input.value + ' ' : '') + emoji;
+        sendLiveSideMessage();
+      }
+    }
+
+    // ===== 🛡️ ADVANCED CONTENT SECURITY & ANTI-LEAK ENGINE =====
+    function initSecurityShield() {
+
+      // Block right-click on the cinema player and entire window
+      const cinemaEl = document.getElementById('cinema');
+      if (cinemaEl) {
+        cinemaEl.addEventListener('contextmenu', e => {
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }, true);
+      }
+      document.addEventListener('contextmenu', e => {
+        e.preventDefault();
+        return false;
+      }, false);
+
+      // Block inspect keyboard shortcuts (F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, Ctrl+U, Ctrl+S)
+      window.addEventListener('keydown', e => {
+        if (
+          e.keyCode === 123 || // F12
+          (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67 || e.keyCode === 75)) || // I, J, C, K
+          (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83)) // U, S
+        ) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (typeof DB !== 'undefined' && DB.showToast) {
+            DB.showToast('🛡️ Developer tools & inspect shortcuts are disabled on this portal', 'info');
+          }
+          return false;
+        }
+      }, true);
+
+      // DevTools Inspection detection barrier
+      const barrier = document.getElementById('devtoolsSecurityBarrier');
+      let isDevToolsActive = false;
+
+      function checkDevTools() {
+        const threshold = 160;
+        const widthDiff = window.outerWidth - window.innerWidth > threshold;
+        const heightDiff = window.outerHeight - window.innerHeight > threshold;
+        const devToolsOpen = widthDiff || heightDiff;
+
+        if (devToolsOpen && !isDevToolsActive) {
+          isDevToolsActive = true;
+          if (barrier) barrier.style.display = 'flex';
+          try {
+            vid.pause();
+            const yt = document.getElementById('ytEmbedPlayer');
+            if (yt) yt.style.opacity = '0.01';
+          } catch(e) {}
+        } else if (!devToolsOpen && isDevToolsActive) {
+          isDevToolsActive = false;
+          if (barrier) barrier.style.display = 'none';
+          try {
+            const yt = document.getElementById('ytEmbedPlayer');
+            if (yt) yt.style.opacity = '1';
+          } catch(e) {}
+        }
+
+        if (isDevToolsActive) {
+          try {
+            (function() { return false; }['constructor']('debugger')());
+          } catch(e) {}
+        }
+      }
+
+      setInterval(checkDevTools, 1200);
+      window.addEventListener('resize', checkDevTools);
+    }
+
+    init();
+    initSecurityShield();
+  </script>
+</body>
+</html>
