@@ -5,7 +5,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Cinema-grade HLS video player for class lectures">
-  <title>▶ Playing — Spider Player</title>
+  <title>▶ Playing — Study Portal</title>
+  <script>
+    (function() {
+      const t = localStorage.getItem('sp_theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+    function toggleTheme() {
+      if (window.DB && typeof window.DB.toggleTheme === 'function') {
+        return window.DB.toggleTheme();
+      }
+      var root = document.documentElement;
+      var cur = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', cur);
+      try { localStorage.setItem('sp_theme', cur); } catch(e) {}
+      return cur;
+    }
+  </script>
   <script>
     // YouTube security blocks iframes on file:/// protocol with Error 153.
     // If opened via file:///, automatically redirect to the running local server.
@@ -50,7 +66,7 @@
       </a>
       <a href="index.html" class="topbar-brand">
         <div class="topbar-logo"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>
-        <span class="topbar-name">Spider Player</span>
+        <span class="topbar-name">Study Portal</span>
       </a>
     </div>
     <!-- Desktop Navigation: Shown only on screens > 768px -->
@@ -63,6 +79,14 @@
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         Admin
       </a>
+      <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle Dark Mode" title="Toggle Theme (Dark / Light)">
+        <span class="theme-icon-sun">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </span>
+        <span class="theme-icon-moon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </span>
+      </button>
       <div class="topbar-user" id="userProfilePill">
         <div class="topbar-user-avatar" id="userInitialBadge">U</div>
         <span id="userNameBadge" style="max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Student</span>
@@ -74,6 +98,14 @@
 
     <!-- Mobile Hamburger Actions: Shown only on screens <= 768px -->
     <div class="topbar-mobile-actions mobile-only">
+      <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle Dark Mode" title="Toggle Theme (Dark / Light)">
+        <span class="theme-icon-sun">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </span>
+        <span class="theme-icon-moon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </span>
+      </button>
       <button class="topbar-hamburger-btn" id="hamburgerBtn" onclick="toggleMobileDrawer()" aria-label="Open Navigation Menu" title="Menu">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
       </button>
@@ -86,7 +118,7 @@
     <div class="drawer-header">
       <div class="drawer-brand">
         <div class="topbar-logo"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>
-        <span class="drawer-title">Spider Player</span>
+        <span class="drawer-title">Study Portal</span>
       </div>
       <button class="drawer-close-btn" onclick="closeMobileDrawer()" aria-label="Close Menu">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -110,6 +142,11 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         <span>Admin Console</span>
       </a>
+      <a href="javascript:void(0)" class="drawer-link" onclick="toggleTheme()" id="drawerThemeLink">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <span id="drawerThemeText">Dark Mode</span>
+        <span class="drawer-badge" id="drawerThemeBadge">Off</span>
+      </a>
     </div>
 
     <div class="drawer-footer">
@@ -117,7 +154,7 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
         <span>Sign Out</span>
       </button>
-      <div class="drawer-version">Spider Player • Cinema HLS</div>
+      <div class="drawer-version">Study Portal • Cinema HLS</div>
     </div>
   </aside>
 
@@ -282,7 +319,7 @@
 
           <!-- Live Chat Input Footer -->
           <div class="live-chat-input-bar">
-            <input type="text" id="liveChatInput" placeholder="Chat with admin & classmates..." maxlength="300" style="background:#ffffff !important; color:#0f172a !important;" onkeydown="if(event.key==='Enter')sendLiveSideMessage()">
+            <input type="text" id="liveChatInput" placeholder="Chat with admin & classmates..." maxlength="300" onkeydown="if(event.key==='Enter')sendLiveSideMessage()">
             <button type="button" class="live-chat-send-btn" id="liveChatSendBtn" onclick="sendLiveSideMessage()" title="Send (Enter)">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
             </button>
@@ -474,7 +511,7 @@
           document.getElementById('vTitle').innerHTML = `<span class="live-badge-chip" style="margin-right: 8px;"><span class="live-pulse-dot" style="background:#fff"></span> LIVE</span> ${escapeHtml(liveTitle)}`;
           document.getElementById('vCh').textContent = 'Live Broadcast';
           document.getElementById('vSub').textContent = '🔴 Interactive Stream';
-          document.title = `🔴 LIVE: ${liveTitle} — Spider Player`;
+          document.title = `🔴 LIVE: ${liveTitle} — Study Portal`;
 
           switchSideMode('chat');
           loadVid(liveUrl);
@@ -520,7 +557,7 @@
       document.getElementById('vTitle').textContent=lec.title;
       document.getElementById('vCh').textContent=ch?ch.name:'—';
       document.getElementById('vSub').textContent=sub?`${sub.icon||''} ${sub.name}`:'—';
-      document.title=`▶ ${lec.title} — Spider Player`;
+      document.title=`▶ ${lec.title} — Study Portal`;
       const[wl,sl]=await Promise.all([DB.getWatched(),DB.getStarred()]);
       isW=wl.includes(id);isS=sl.includes(id);updateBtns();
       const rawSibs = await DB.getLectures(lec.chapter_id);

@@ -43,6 +43,37 @@ const BLOCKED_FILES = new Set([
   'scratch_admin_old.txt'
 ]);
 
+// ===== 👥 REAL-TIME ONLINE STUDENTS PRESENCE ENGINE =====
+const activeStudentsMap = new Map();
+const PRESENCE_TIMEOUT_MS = 45000; // 45 seconds timeout (students ping every 10-15s)
+const ADMIN_EMAILS_SET = new Set(['stackbyujjwal@gmail.com', 'mj5000500@gmail.com']);
+
+function pruneInactiveStudents() {
+  const now = Date.now();
+  for (const [email, user] of activeStudentsMap.entries()) {
+    if (now - (user.lastSeen || 0) > PRESENCE_TIMEOUT_MS) {
+      activeStudentsMap.delete(email);
+    }
+  }
+}
+
+function getCleanOnlineStudents() {
+  pruneInactiveStudents();
+  const list = [];
+  for (const user of activeStudentsMap.values()) {
+    const em = (user.email || '').toLowerCase().trim();
+    if (!em || ADMIN_EMAILS_SET.has(em) || user.role === 'admin') continue;
+    list.push({
+      email: em,
+      name: user.name || em.split('@')[0],
+      role: 'student',
+      page: user.page || 'portal',
+      lastSeen: user.lastSeen
+    });
+  }
+  return list;
+}
+
 // ===== 🛡️ HLS STREAM ENCRYPTION & SECURE PROXY VAULT =====
 const STREAM_SECRET = process.env.STREAM_SECRET || 'spider_classes_master_vault_key_2026';
 const KEY_BUFFER = crypto.createHash('sha256').update(STREAM_SECRET).digest();
@@ -218,6 +249,89 @@ const server = http.createServer(async (req, res) => {
       console.error('Stream proxy error:', err.message);
       res.writeHead(502, { 'Content-Type': 'text/plain' });
       return res.end('Proxy streaming failed: ' + err.message);
+    }
+  }
+
+  // ===== 👥 PRESENCE: STUDENT ONLINE HEARTBEAT =====
+  if (req.url === '/api-local/heartbeat' || req.url === '/api/presence/heartbeat') {
+    if (req.method === 'POST') {
+      try {
+        let totalLength = 0;
+        const bodyChunks = [];
+        const MAX_PAYLOAD = 32 * 1024;
+        for await (const chunk of req) {
+          totalLength += chunk.length;
+          if (totalLength > MAX_PAYLOAD) {
+            res.writeHead(413, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ success: false, error: 'Payload too large' }));
+          }
+          bodyChunks.push(chunk);
+        }
+        const bodyStr = Buffer.concat(bodyChunks).toString('utf8');
+        const parsed = JSON.parse(bodyStr || '{}');
+        const email = (parsed.email || '').toLowerCase().trim();
+        const role = (parsed.role || 'student').toLowerCase().trim();
+
+        if (email && !ADMIN_EMAILS_SET.has(email) && role !== 'admin') {
+          activeStudentsMap.set(email, {
+            email: email,
+            name: (parsed.name || email.split('@')[0]).trim(),
+            role: 'student',
+            page: parsed.page || 'portal',
+            lastSeen: Date.now()
+          });
+        }
+        const onlineUsers = getCleanOnlineStudents();
+        res.writeHead(200, {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          'Access-Control-Allow-Origin': '*'
+        });
+        return res.end(JSON.stringify({ success: true, count: onlineUsers.length, users: onlineUsers }));
+      } catch (e) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ success: false, error: e.message }));
+      }
+    }
+  }
+
+  // ===== 👥 PRESENCE: GET ONLINE STUDENTS LIST =====
+  if (
+    req.url === '/api-local/online-students' ||
+    req.url === '/api/presence/active-users' ||
+    req.url === '/api/active-users/list' ||
+    req.url === '/api/active-users' ||
+    req.url === '/api/active-users/'
+  ) {
+    const list = getCleanOnlineStudents();
+    res.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-store, no-cache, must-revalidate',
+      'Access-Control-Allow-Origin': '*'
+    });
+    return res.end(JSON.stringify({
+      success: true,
+      activeCount: list.length,
+      count: list.length,
+      users: list
+    }));
+  }
+
+  // ===== 👥 PRESENCE: STUDENT LOGOUT / DISCONNECT =====
+  if (req.url === '/api-local/logout-student' || req.url === '/api/presence/leave') {
+    if (req.method === 'POST') {
+      try {
+        const bodyChunks = [];
+        for await (const chunk of req) bodyChunks.push(chunk);
+        const parsed = JSON.parse(Buffer.concat(bodyChunks).toString('utf8') || '{}');
+        const email = (parsed.email || '').toLowerCase().trim();
+        if (email) activeStudentsMap.delete(email);
+      } catch (e) {}
+      res.writeHead(200, {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      });
+      return res.end(JSON.stringify({ success: true }));
     }
   }
 

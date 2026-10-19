@@ -4,7 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Admin console to manage subjects, chapters, streaming video lectures and live classes">
-  <title>Admin Console — Spider Player</title>
+  <title>Admin Console — Study Portal</title>
+  <script>
+    (function() {
+      const t = localStorage.getItem('sp_theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+    function toggleTheme() {
+      if (window.DB && typeof window.DB.toggleTheme === 'function') {
+        return window.DB.toggleTheme();
+      }
+      var root = document.documentElement;
+      var cur = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', cur);
+      try { localStorage.setItem('sp_theme', cur); } catch(e) {}
+      return cur;
+    }
+  </script>
   <script>
     if (window.location.protocol === 'file:') {
       const page = window.location.pathname.split('/').pop() || 'admin.html';
@@ -86,6 +102,106 @@
       --r-pill: 9999px;
 
       --fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* =========================================================
+       DARK MODE PALETTE — ADMIN CONSOLE
+       ========================================================= */
+    :root[data-theme="dark"],
+    html[data-theme="dark"] {
+      --bg-0: #0a0d14;
+      --bg-1: #101623;
+      --bg-2: #161e30;
+      --bg-3: #1c263c;
+      --bg-4: #28354d;
+      --bg-hover: #1c263c;
+      --bg-active: #1e3a8a;
+      --bg-input: #121826;
+
+      --text-0: #f8fafc;
+      --text-1: #e2e8f0;
+      --text-2: #cbd5e1;
+      --text-3: #94a3b8;
+      --text-4: #64748b;
+
+      --blue: #3b82f6;
+      --blue-hover: #2563eb;
+      --blue-subtle: rgba(59, 130, 246, 0.16);
+      --blue-border: rgba(59, 130, 246, 0.38);
+
+      --orange: #3b82f6;
+      --orange-hover: #2563eb;
+      --orange-subtle: rgba(59, 130, 246, 0.16);
+      --orange-border: rgba(59, 130, 246, 0.38);
+
+      --red: #ef4444;
+      --red-hover: #dc2626;
+      --red-subtle: rgba(239, 68, 68, 0.18);
+      --red-border: rgba(239, 68, 68, 0.35);
+
+      --green: #10b981;
+      --green-subtle: rgba(16, 185, 129, 0.16);
+      --green-border: rgba(16, 185, 129, 0.35);
+
+      --border: rgba(255, 255, 255, 0.09);
+      --border-hover: rgba(255, 255, 255, 0.18);
+      --border-active: #3b82f6;
+
+      --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.4);
+      --shadow-md: 0 4px 18px rgba(0, 0, 0, 0.5);
+      --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.65);
+    }
+
+    /* Theme Toggle Button */
+    .theme-toggle-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--bg-1);
+      border: 1.5px solid var(--border);
+      color: var(--text-1);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+      -webkit-tap-highlight-color: transparent;
+      flex-shrink: 0;
+      padding: 0;
+      margin: 0 2px;
+    }
+    .theme-toggle-btn:hover {
+      border-color: var(--blue);
+      background: var(--bg-hover);
+      color: var(--blue);
+      transform: translateY(-1px) scale(1.06);
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+    }
+    .theme-toggle-btn:active { transform: scale(0.92); }
+    .theme-toggle-btn .theme-icon-sun,
+    .theme-toggle-btn .theme-icon-moon {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease, color 0.2s ease;
+    }
+    html:not([data-theme="dark"]) .theme-toggle-btn .theme-icon-sun {
+      opacity: 0; transform: rotate(90deg) scale(0.3); pointer-events: none;
+    }
+    html:not([data-theme="dark"]) .theme-toggle-btn .theme-icon-moon {
+      opacity: 1; transform: rotate(0deg) scale(1); color: #475569;
+    }
+    html[data-theme="dark"] .theme-toggle-btn .theme-icon-moon {
+      opacity: 0; transform: rotate(-90deg) scale(0.3); pointer-events: none;
+    }
+    html[data-theme="dark"] .theme-toggle-btn .theme-icon-sun {
+      opacity: 1; transform: rotate(0deg) scale(1); color: #fbbf24;
+      filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.5));
     }
 
     * {
@@ -628,27 +744,87 @@
       background: #f0f9ff;
       border: 1px solid #bae6fd;
       border-radius: 999px;
-      padding: 1px 7px;
+      padding: 2px 8px;
       font-size: 0.68rem;
       display: inline-flex;
       align-items: center;
-      gap: 3px;
-      transition: all var(--fast);
-      margin-left: 2px;
+      gap: 4px;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      margin-left: 3px;
       user-select: none;
+      line-height: 1.2;
     }
     .tag-sync:hover {
       background: #e0f2fe;
       color: #0369a1;
       border-color: #7dd3fc;
+      transform: translateY(-0.5px);
+    }
+    .tag-sync .sync-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.72rem;
+      line-height: 1;
+      transform-origin: center center;
+    }
+    .tag-sync.spinning {
+      background: #e0f2fe;
+      border-color: #38bdf8;
+      pointer-events: none;
+      opacity: 0.9;
+      animation: none !important;
+      transform: none !important;
+    }
+    .tag-sync.spinning .sync-icon {
+      animation: spinSync 0.75s linear infinite !important;
     }
     .spinning {
-      animation: spinSync 0.8s linear infinite !important;
+      animation: spinSync 0.75s linear infinite !important;
       display: inline-block;
+      transform-origin: center center;
     }
     @keyframes spinSync {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
+    }
+
+    /* SEGMENTED SWITCH / MODE SELECTOR TABS */
+    .segmented-switch {
+      display: flex;
+      gap: 6px;
+      background: var(--bg-3);
+      border: 1px solid var(--border);
+      padding: 4px;
+      border-radius: 12px;
+      margin-bottom: 18px;
+    }
+    .segmented-switch .switch-btn {
+      flex: 1;
+      border: none;
+      background: transparent;
+      color: var(--text-2);
+      font-weight: 600;
+      font-size: 0.84rem;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 9px 12px;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      user-select: none;
+    }
+    .segmented-switch .switch-btn:hover:not(.active) {
+      color: var(--text-0);
+      background: var(--bg-hover);
+    }
+    .segmented-switch .switch-btn.active {
+      background: var(--blue) !important;
+      color: #ffffff !important;
+      font-weight: 700 !important;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
     }
 
     /* MODAL STYLES */
@@ -1350,6 +1526,552 @@
     .toast.success { border-left: 4px solid var(--green); }
     .toast.error { border-left: 4px solid var(--red); }
     .toast.info { border-left: 4px solid var(--orange); }
+
+    /* =========================================================
+       ATOMIC INSTANT THEME SWITCHING (0ms JITTER, 60FPS)
+       ========================================================= */
+    /* Wildcard transitions on '*' removed to guarantee 1-frame atomic paint without staggered lag or jitter */
+
+    /* =========================================================
+       COMPREHENSIVE OBSIDIAN DARK THEME — ADMIN CONSOLE OVERRIDES
+       ========================================================= */
+    [data-theme="dark"] body {
+      background-color: #0a0d14 !important;
+      color: #cbd5e1 !important;
+    }
+
+    /* Topbar */
+    [data-theme="dark"] .topbar {
+      background: rgba(10, 13, 20, 0.92) !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+    }
+    [data-theme="dark"] .topbar-name { color: #f8fafc !important; }
+    [data-theme="dark"] .topbar-tag {
+      background: #162032 !important;
+      color: #94a3b8 !important;
+      border-color: rgba(255, 255, 255, 0.1) !important;
+    }
+    [data-theme="dark"] .topbar-link { color: #94a3b8 !important; }
+    [data-theme="dark"] .topbar-link:hover { color: #f8fafc !important; background: #162032 !important; }
+    [data-theme="dark"] .topbar-link.active {
+      color: #ffffff !important;
+      background: #2563eb !important;
+      border-color: #2563eb !important;
+    }
+    [data-theme="dark"] .topbar-back {
+      background: #101623 !important;
+      border-color: rgba(255, 255, 255, 0.1) !important;
+      color: #94a3b8 !important;
+    }
+    [data-theme="dark"] .topbar-back:hover {
+      background: #162032 !important;
+      color: #f8fafc !important;
+      border-color: rgba(255, 255, 255, 0.2) !important;
+    }
+
+    /* Topbar Log Out Button (Red Glass Style) */
+    [data-theme="dark"] .topbar-lock-btn {
+      background: rgba(239, 68, 68, 0.12) !important;
+      border: 1.5px solid rgba(239, 68, 68, 0.3) !important;
+      color: #f87171 !important;
+    }
+    [data-theme="dark"] .topbar-lock-btn:hover {
+      background: #dc2626 !important;
+      border-color: #dc2626 !important;
+      color: #ffffff !important;
+      box-shadow: 0 4px 14px rgba(220, 38, 38, 0.45) !important;
+    }
+
+    /* Mode Tabs Bar */
+    [data-theme="dark"] .admin-mode-tabs {
+      background: #101623 !important;
+      border: 1.5px solid rgba(255, 255, 255, 0.08) !important;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45) !important;
+    }
+    [data-theme="dark"] .admin-mode-tab {
+      color: #94a3b8 !important;
+    }
+    [data-theme="dark"] .admin-mode-tab:hover {
+      color: #f8fafc !important;
+      background: #162032 !important;
+    }
+    [data-theme="dark"] .admin-mode-tab.active {
+      background: var(--gradient-fire) !important;
+      color: #ffffff !important;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4) !important;
+    }
+
+    /* Status Pills & Badges */
+    [data-theme="dark"] .status-pill {
+      background: #141c2b !important;
+      border-color: rgba(255, 255, 255, 0.1) !important;
+      color: #cbd5e1 !important;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25) !important;
+    }
+    [data-theme="dark"] .status-pill-online,
+    [data-theme="dark"] .online-pill,
+    [data-theme="dark"] #adminOnlineBadge,
+    [data-theme="dark"] #badgeOnlineCount {
+      background: rgba(16, 185, 129, 0.14) !important;
+      border-color: rgba(16, 185, 129, 0.35) !important;
+      color: #34d399 !important;
+    }
+    [data-theme="dark"] #cloudStatus {
+      background: #141c2b !important;
+      border-color: rgba(255, 255, 255, 0.1) !important;
+      color: #94a3b8 !important;
+    }
+    [data-theme="dark"] .pill-pending,
+    [data-theme="dark"] #badgePendingCount {
+      background: rgba(234, 179, 8, 0.15) !important;
+      border-color: rgba(234, 179, 8, 0.35) !important;
+      color: #fbbf24 !important;
+    }
+    [data-theme="dark"] .pill-approved {
+      background: rgba(16, 185, 129, 0.15) !important;
+      border-color: rgba(16, 185, 129, 0.35) !important;
+      color: #34d399 !important;
+    }
+    [data-theme="dark"] .pill-blocked {
+      background: rgba(239, 68, 68, 0.15) !important;
+      border-color: rgba(239, 68, 68, 0.35) !important;
+      color: #f87171 !important;
+    }
+    [data-theme="dark"] .pill-bound {
+      background: rgba(236, 72, 153, 0.15) !important;
+      border-color: rgba(236, 72, 153, 0.35) !important;
+      color: #f472b6 !important;
+    }
+    [data-theme="dark"] .pill-ready {
+      background: rgba(16, 185, 129, 0.15) !important;
+      border-color: rgba(16, 185, 129, 0.35) !important;
+      color: #34d399 !important;
+    }
+    [data-theme="dark"] .offline-pill {
+      background: #141c2b !important;
+      border-color: rgba(255, 255, 255, 0.08) !important;
+      color: #64748b !important;
+    }
+    [data-theme="dark"] .offline-pill .status-dot {
+      background: #475569 !important;
+    }
+    [data-theme="dark"] .user-serial-badge {
+      background: #141c2b !important;
+      border-color: rgba(255, 255, 255, 0.1) !important;
+      color: #94a3b8 !important;
+    }
+    [data-theme="dark"] .student-filter-toolbar {
+      background: #101623 !important;
+      border-color: rgba(255, 255, 255, 0.1) !important;
+    }
+
+    /* Cards & Panels */
+    [data-theme="dark"] .card,
+    [data-theme="dark"] .admin-card {
+      background: #101623 !important;
+      border-color: rgba(255, 255, 255, 0.08) !important;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+    }
+    [data-theme="dark"] .card-title { color: #f8fafc !important; }
+    [data-theme="dark"] .card-desc { color: #94a3b8 !important; }
+    [data-theme="dark"] .card-head { border-color: rgba(255, 255, 255, 0.08) !important; }
+
+    /* Tables & Table Cards */
+    [data-theme="dark"] .tbl-card {
+      background: #101623 !important;
+      border-color: rgba(255, 255, 255, 0.08) !important;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45) !important;
+    }
+    [data-theme="dark"] .tbl-head {
+      background: #121927 !important;
+      border-bottom: 1.5px solid rgba(255, 255, 255, 0.08) !important;
+    }
+    [data-theme="dark"] .tbl-head-title {
+      color: #f8fafc !important;
+    }
+    [data-theme="dark"] .tbl th {
+      background: #0d131f !important;
+      color: #94a3b8 !important;
+      border-bottom: 1.5px solid rgba(255, 255, 255, 0.08) !important;
+      letter-spacing: 0.06em;
+    }
+    [data-theme="dark"] .tbl td {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+      color: #cbd5e1 !important;
+      background: transparent !important;
+    }
+    [data-theme="dark"] .tbl tr:hover td {
+      background: rgba(59, 130, 246, 0.08) !important;
+    }
+    [data-theme="dark"] .tbl td strong {
+      color: #f8fafc !important;
+    }
+
+    /* Live Toggle Checkbox Badge inside Table */
+    .live-toggle-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      padding: 5px 9px;
+      border-radius: 6px;
+      border: 1.5px solid #e2e8f0;
+      background: #f8fafc;
+      color: #64748b;
+      transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+      user-select: none;
+    }
+    .live-toggle-badge.is-live {
+      border-color: #fca5a5;
+      background: #fef2f2;
+      color: #dc2626;
+    }
+    [data-theme="dark"] .live-toggle-badge {
+      background: rgba(255, 255, 255, 0.05) !important;
+      border-color: rgba(255, 255, 255, 0.12) !important;
+      color: #94a3b8 !important;
+    }
+    [data-theme="dark"] .live-toggle-badge.is-live {
+      background: rgba(239, 68, 68, 0.16) !important;
+      border-color: rgba(239, 68, 68, 0.4) !important;
+      color: #ef4444 !important;
+    }
+    [data-theme="dark"] .live-toggle-badge span {
+      color: inherit !important;
+    }
+
+    /* Table Tools, Inputs & Controls */
+    [data-theme="dark"] .tbl-search input {
+      background: #162032 !important;
+      border-color: rgba(255, 255, 255, 0.12) !important;
+      color: #f8fafc !important;
+    }
+    [data-theme="dark"] .tbl-search input:hover {
+      border-color: rgba(255, 255, 255, 0.22) !important;
+    }
+    [data-theme="dark"] .tbl-search input:focus {
+      background: #182438 !important;
+      border-color: #3b82f6 !important;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.22) !important;
+    }
+    [data-theme="dark"] .select-sm {
+      background-color: #162032 !important;
+      border-color: rgba(255, 255, 255, 0.14) !important;
+      color: #f8fafc !important;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2360a5fa' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+      background-repeat: no-repeat !important;
+      background-position: calc(100% - 10px) center !important;
+      background-size: 12px 12px !important;
+    }
+    [data-theme="dark"] .select-sm:hover {
+      border-color: #3b82f6 !important;
+      background-color: #182438 !important;
+      background-repeat: no-repeat !important;
+      background-position: calc(100% - 10px) center !important;
+      background-size: 12px 12px !important;
+    }
+    [data-theme="dark"] .select-sm:focus {
+      border-color: #3b82f6 !important;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.22) !important;
+      background-repeat: no-repeat !important;
+      background-position: calc(100% - 10px) center !important;
+      background-size: 12px 12px !important;
+    }
+    [data-theme="dark"] .order-badge {
+      background: #162032 !important;
+      border-color: rgba(255, 255, 255, 0.1) !important;
+      color: #60a5fa !important;
+    }
+    [data-theme="dark"] .badge-sub {
+      background: rgba(59, 130, 246, 0.14) !important;
+      border-color: rgba(59, 130, 246, 0.35) !important;
+      color: #60a5fa !important;
+    }
+    [data-theme="dark"] .badge-chap {
+      background: rgba(255, 255, 255, 0.06) !important;
+      border-color: rgba(255, 255, 255, 0.1) !important;
+      color: #94a3b8 !important;
+    }
+    [data-theme="dark"] .url-clip {
+      background: #162032 !important;
+      border-color: rgba(255, 255, 255, 0.1) !important;
+      color: #94a3b8 !important;
+    }
+    [data-theme="dark"] .url-clip:hover {
+      background: #1c273e !important;
+      border-color: #3b82f6 !important;
+      color: #60a5fa !important;
+    }
+    [data-theme="dark"] .btn-icon {
+      background: #162032 !important;
+      border-color: rgba(255, 255, 255, 0.1) !important;
+      color: #cbd5e1 !important;
+    }
+    [data-theme="dark"] .btn-icon:hover {
+      background: #1e2b44 !important;
+      border-color: rgba(255, 255, 255, 0.22) !important;
+      color: #ffffff !important;
+    }
+    [data-theme="dark"] .btn-icon.primary:hover {
+      background: rgba(59, 130, 246, 0.22) !important;
+      border-color: #3b82f6 !important;
+      color: #60a5fa !important;
+    }
+    [data-theme="dark"] .btn-icon.danger:hover {
+      background: rgba(239, 68, 68, 0.22) !important;
+      border-color: #ef4444 !important;
+      color: #f87171 !important;
+    }
+
+    /* General Form Controls in Dark Mode */
+    [data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]),
+    [data-theme="dark"] select,
+    [data-theme="dark"] textarea {
+      background-color: #162032 !important;
+      border-color: rgba(255, 255, 255, 0.12) !important;
+      color: #f8fafc !important;
+    }
+    [data-theme="dark"] select {
+      background-repeat: no-repeat !important;
+      background-position: calc(100% - 10px) center !important;
+      background-size: 12px 12px !important;
+    }
+    [data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]):focus,
+    [data-theme="dark"] select:focus,
+    [data-theme="dark"] textarea:focus {
+      background: #182438 !important;
+      border-color: #3b82f6 !important;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.22) !important;
+    }
+    [data-theme="dark"] .field label {
+      color: #94a3b8 !important;
+    }
+    [data-theme="dark"] .btn-outline {
+      background: #162032 !important;
+      border-color: rgba(255, 255, 255, 0.12) !important;
+      color: #cbd5e1 !important;
+    }
+    [data-theme="dark"] .btn-outline:hover {
+      background: #1e2b44 !important;
+      border-color: #3b82f6 !important;
+      color: #ffffff !important;
+    }
+    [data-theme="dark"] .btn-edit-student {
+      border-color: rgba(59, 130, 246, 0.35) !important;
+      color: #60a5fa !important;
+      background: rgba(59, 130, 246, 0.14) !important;
+    }
+    [data-theme="dark"] .btn-edit-student:hover {
+      background: rgba(59, 130, 246, 0.25) !important;
+      color: #ffffff !important;
+    }
+
+    /* Tags & Chip Badges */
+    [data-theme="dark"] .tag {
+      background: #162032 !important;
+      border-color: rgba(255, 255, 255, 0.1) !important;
+      color: #cbd5e1 !important;
+    }
+    [data-theme="dark"] .tag:hover {
+      background: #1e2b44 !important;
+      border-color: #3b82f6 !important;
+      color: #60a5fa !important;
+    }
+    [data-theme="dark"] .tag-x { color: #60a5fa !important; }
+    [data-theme="dark"] .tag-x:hover { color: #f87171 !important; }
+    [data-theme="dark"] .tag-sync {
+      background: rgba(2, 132, 199, 0.18) !important;
+      border-color: rgba(2, 132, 199, 0.35) !important;
+      color: #38bdf8 !important;
+    }
+    [data-theme="dark"] .tag-sync:hover {
+      background: rgba(2, 132, 199, 0.3) !important;
+    }
+    [data-theme="dark"] .tag-sync.spinning {
+      background: rgba(56, 189, 248, 0.22) !important;
+      border-color: rgba(56, 189, 248, 0.5) !important;
+      color: #bae6fd !important;
+      animation: none !important;
+      transform: none !important;
+    }
+
+    /* Segmented Switch Dark Mode Overrides */
+    [data-theme="dark"] .segmented-switch {
+      background: #101623 !important;
+      border-color: rgba(255, 255, 255, 0.1) !important;
+    }
+    [data-theme="dark"] .segmented-switch .switch-btn {
+      color: #94a3b8 !important;
+    }
+    [data-theme="dark"] .segmented-switch .switch-btn:hover:not(.active) {
+      color: #f8fafc !important;
+      background: rgba(255, 255, 255, 0.06) !important;
+    }
+    [data-theme="dark"] .segmented-switch .switch-btn.active {
+      background: #2563eb !important;
+      color: #ffffff !important;
+    }
+
+    /* KPI Stat Cards */
+    [data-theme="dark"] .stat-card {
+      background: #101623 !important;
+      border-color: rgba(255, 255, 255, 0.08) !important;
+    }
+    [data-theme="dark"] .stat-card:hover {
+      border-color: rgba(255, 255, 255, 0.18) !important;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5) !important;
+    }
+    [data-theme="dark"] .stat-num { color: #f8fafc !important; }
+    [data-theme="dark"] .stat-label { color: #94a3b8 !important; }
+    [data-theme="dark"] .stat-icon {
+      background: #162032 !important;
+      border-color: rgba(255, 255, 255, 0.1) !important;
+      color: #94a3b8 !important;
+    }
+    [data-theme="dark"] .stat-icon.blue {
+      background: rgba(59, 130, 246, 0.15) !important;
+      border-color: rgba(59, 130, 246, 0.35) !important;
+      color: #60a5fa !important;
+    }
+    [data-theme="dark"] .stat-icon.violet {
+      background: rgba(168, 85, 247, 0.15) !important;
+      border-color: rgba(168, 85, 247, 0.35) !important;
+      color: #c084fc !important;
+    }
+    [data-theme="dark"] .stat-icon.green {
+      background: rgba(16, 185, 129, 0.15) !important;
+      border-color: rgba(16, 185, 129, 0.35) !important;
+      color: #34d399 !important;
+    }
+    [data-theme="dark"] .stat-icon.amber {
+      background: rgba(245, 158, 11, 0.15) !important;
+      border-color: rgba(245, 158, 11, 0.35) !important;
+      color: #fbbf24 !important;
+    }
+    [data-theme="dark"] .stat-icon.red {
+      background: rgba(239, 68, 68, 0.15) !important;
+      border-color: rgba(239, 68, 68, 0.35) !important;
+      color: #f87171 !important;
+    }
+
+    /* Modals & Dialogs */
+    [data-theme="dark"] .admin-modal-box {
+      background: #101623 !important;
+      border-color: rgba(255, 255, 255, 0.12) !important;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7) !important;
+    }
+    [data-theme="dark"] .admin-modal-head {
+      border-bottom: 1.5px solid rgba(255, 255, 255, 0.08) !important;
+    }
+    [data-theme="dark"] .admin-modal-title { color: #f8fafc !important; }
+    [data-theme="dark"] .confirm-modal-box {
+      background: #101623 !important;
+      border-color: rgba(255, 255, 255, 0.12) !important;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75) !important;
+    }
+    [data-theme="dark"] .confirm-modal-title,
+    [data-theme="dark"] .confirm-item-name {
+      color: #f8fafc !important;
+    }
+    [data-theme="dark"] .confirm-modal-desc { color: #94a3b8 !important; }
+    [data-theme="dark"] .confirm-item-card {
+      background: #141c2b !important;
+      border-color: rgba(255, 255, 255, 0.08) !important;
+    }
+    [data-theme="dark"] .confirm-item-pill {
+      background: #182438 !important;
+      border-color: rgba(255, 255, 255, 0.12) !important;
+      color: #cbd5e1 !important;
+    }
+    [data-theme="dark"] .confirm-warning-box {
+      background: rgba(239, 68, 68, 0.14) !important;
+      border-color: rgba(239, 68, 68, 0.3) !important;
+      color: #f87171 !important;
+    }
+    [data-theme="dark"] .confirm-icon-circle.danger-glow {
+      background: rgba(239, 68, 68, 0.16) !important;
+      border-color: rgba(239, 68, 68, 0.35) !important;
+      color: #ef4444 !important;
+    }
+    [data-theme="dark"] .confirm-icon-circle.neutral-glow {
+      background: rgba(59, 130, 246, 0.16) !important;
+      border-color: rgba(59, 130, 246, 0.35) !important;
+      color: #60a5fa !important;
+    }
+    [data-theme="dark"] .confirm-step-badge.step-1 {
+      background: #162032 !important;
+      color: #94a3b8 !important;
+      border-color: rgba(255, 255, 255, 0.1) !important;
+    }
+    [data-theme="dark"] .confirm-step-badge.step-2 {
+      background: rgba(239, 68, 68, 0.18) !important;
+      color: #f87171 !important;
+      border-color: rgba(239, 68, 68, 0.35) !important;
+    }
+    [data-theme="dark"] #autoNumberPreviewBox {
+      background: #141c2b !important;
+      border-color: rgba(255, 255, 255, 0.2) !important;
+      color: #f8fafc !important;
+    }
+    [data-theme="dark"] .preview-item-row {
+      background: #141c2b !important;
+      border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+    [data-theme="dark"] .btn-subtle-green {
+      background: rgba(16, 185, 129, 0.15) !important;
+      border-color: rgba(16, 185, 129, 0.35) !important;
+      color: #34d399 !important;
+    }
+    [data-theme="dark"] .btn-subtle-amber {
+      background: rgba(245, 158, 11, 0.15) !important;
+      border-color: rgba(245, 158, 11, 0.35) !important;
+      color: #fbbf24 !important;
+    }
+    [data-theme="dark"] .chk-select-all-label {
+      background: #162032 !important;
+      border-color: rgba(255, 255, 255, 0.12) !important;
+      color: #cbd5e1 !important;
+    }
+
+    /* Lock Screen */
+    [data-theme="dark"] .admin-lock-screen {
+      background: radial-gradient(circle at 50% 30%, #162032 0%, #0a0d14 70%) !important;
+    }
+    [data-theme="dark"] .auth-card {
+      background: #101623 !important;
+      border-color: rgba(255, 255, 255, 0.1) !important;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7) !important;
+    }
+    [data-theme="dark"] .auth-card h2 { color: #f8fafc !important; }
+    [data-theme="dark"] .auth-card p { color: #94a3b8 !important; }
+    [data-theme="dark"] .auth-input {
+      background: #162032 !important;
+      border-color: rgba(255, 255, 255, 0.12) !important;
+      color: #f8fafc !important;
+    }
+    [data-theme="dark"] .auth-input:focus {
+      background: #182438 !important;
+      border-color: #3b82f6 !important;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.22) !important;
+    }
+    [data-theme="dark"] .auth-badge {
+      background: rgba(239, 68, 68, 0.15) !important;
+      border-color: rgba(239, 68, 68, 0.3) !important;
+      color: #f87171 !important;
+    }
+
+    /* Toast Notifications in Dark Mode */
+    [data-theme="dark"] .toast {
+      background: #121927 !important;
+      border: 1.5px solid rgba(255, 255, 255, 0.12) !important;
+      color: #f8fafc !important;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65) !important;
+    }
+    [data-theme="dark"] .toast.success { border-left: 4px solid #10b981 !important; }
+    [data-theme="dark"] .toast.error { border-left: 4px solid #ef4444 !important; }
+    [data-theme="dark"] .toast.info { border-left: 4px solid #3b82f6 !important; }
   </style>
 </head>
 <body>
@@ -1364,7 +2086,7 @@
         <div class="topbar-logo">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
         </div>
-        <span class="topbar-name">Spider Player</span>
+        <span class="topbar-name">Study Portal</span>
         <span class="topbar-tag desktop-only">Admin</span>
       </a>
     </div>
@@ -1377,6 +2099,14 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         <span>Admin Console</span>
       </a>
+      <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle Dark Mode" title="Toggle Theme (Dark / Light)">
+        <span class="theme-icon-sun">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </span>
+        <span class="theme-icon-moon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </span>
+      </button>
       <button id="topbarLockBtn" class="topbar-lock-btn" onclick="handleLockConsole()" style="display: none;" title="Sign Out of Admin Console">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
         <span>Log Out</span>
@@ -1464,7 +2194,7 @@
         <p>Curate and manage subjects, chapter modules, and streaming lecture URLs</p>
       </div>
       <div style="display:flex; align-items:center; gap:8px;">
-        <div class="status-pill" id="adminOnlineBadge" style="border-color:#86efac; background:#f0fdf4; color:#15803d; font-weight:700; cursor:pointer;" onclick="filterStudents('online')" title="Click to view online students">
+        <div class="status-pill status-pill-online" id="adminOnlineBadge" style="cursor:pointer;" onclick="filterStudents('online')" title="Click to view online students">
           <span class="status-dot" style="background:#22c55e; animation:greenPulseDot 1.5s infinite;"></span>
           <span><span id="topbarOnlineCount">0</span> Students Online</span>
         </div>
@@ -1581,14 +2311,14 @@
         <div class="admin-panel">
 
           <!-- LECTURE MANAGEMENT CARD (BULK PLAYLIST AUTO-IMPORT & SINGLE LECTURE) -->
-          <div class="card" style="border: 1.5px solid var(--border); background: #ffffff;">
+          <div class="card">
             <!-- Header & Mode Tabs -->
             <div class="card-head" style="flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
               <div style="display:flex; align-items:center; gap:8px;">
                 <h3 class="card-title" id="lectureFormMainTitle" style="margin:0; font-size:1.05rem; color:var(--text-0);">
                   <span id="lectureFormTitle">Add & Import Lectures</span>
                 </h3>
-                <span class="status-pill" style="border-color:#86efac; background:#f0fdf4; color:#15803d; font-size:0.7rem; padding:2px 8px; font-weight:700;" title="Google YouTube Data API Active (Private & Unlisted support)">
+                <span class="status-pill status-pill-online" style="font-size:0.7rem; padding:2px 8px;" title="Google YouTube Data API Active (Private & Unlisted support)">
                   <span class="status-dot" style="background:#22c55e;"></span> YouTube API Active
                 </span>
               </div>
@@ -1598,11 +2328,11 @@
             </div>
 
             <!-- Mode Selector Switch -->
-            <div style="display:flex; gap:6px; background:#f1f5f9; padding:4px; border-radius:10px; margin-bottom:16px;">
-              <button type="button" id="tabLecAuto" class="btn btn-sm" style="flex:1; border:none; background:var(--blue); color:#ffffff; font-weight:700; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:6px; padding:9px 12px; cursor:pointer;" onclick="switchLectureTab('auto')">
+            <div class="segmented-switch">
+              <button type="button" id="tabLecAuto" class="switch-btn active" onclick="switchLectureTab('auto')">
                 <span>⚡ Auto-Import Playlist / Bulk Videos</span>
               </button>
-              <button type="button" id="tabLecSingle" class="btn btn-sm" style="flex:1; border:none; background:transparent; color:var(--text-2); font-weight:600; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:6px; padding:9px 12px; cursor:pointer;" onclick="switchLectureTab('single')">
+              <button type="button" id="tabLecSingle" class="switch-btn" onclick="switchLectureTab('single')">
                 <span>✏️ Single Lecture (Manual)</span>
               </button>
             </div>
@@ -1650,7 +2380,7 @@
                     <div id="previewPlaylistName" style="font-size:0.78rem; color:var(--text-3); margin-top:2px; font-weight:600;"></div>
                   </div>
                   <div style="display:flex; align-items:center; flex-shrink:0;">
-                    <label style="display:inline-flex; align-items:center; gap:6px; font-size:0.82rem; margin:0; cursor:pointer; font-weight:700; color:var(--text-1); white-space:nowrap; user-select:none; background:#ffffff; border:1px solid #cbd5e1; padding:5px 11px; border-radius:6px; box-shadow:0 1px 2px rgba(0,0,0,0.04);">
+                    <label class="chk-select-all-label" style="display:inline-flex; align-items:center; gap:6px; font-size:0.82rem; margin:0; cursor:pointer; font-weight:700; white-space:nowrap; user-select:none; border:1px solid var(--border); padding:5px 11px; border-radius:6px; box-shadow:0 1px 2px rgba(0,0,0,0.04);">
                       <input type="checkbox" id="chkSelectAllPreview" checked onchange="toggleSelectAllPreview(this.checked)" style="width:15px; height:15px; cursor:pointer; accent-color:var(--blue, #2563eb); margin:0;">
                       <span style="white-space:nowrap;">Select All</span>
                     </label>
@@ -1663,10 +2393,10 @@
 
                 <div style="margin-top:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                   <div style="display:flex; gap:8px; align-items:center;">
-                    <button type="button" class="btn btn-outline btn-sm" onclick="openPasteTitlesModal('preview')" style="font-size:0.78rem; padding:6px 12px; border-radius:6px; background:#f0fdf4; border-color:#86efac; color:#15803d; font-weight:700; display:inline-flex; align-items:center; gap:5px;" title="Paste real YouTube titles line by line">
+                    <button type="button" class="btn btn-outline btn-sm btn-subtle-green" onclick="openPasteTitlesModal('preview')" style="font-size:0.78rem; padding:6px 12px; border-radius:6px; font-weight:700; display:inline-flex; align-items:center; gap:5px;" title="Paste real YouTube titles line by line">
                       📋 Paste Real Titles
                     </button>
-                    <button type="button" class="btn btn-outline btn-sm" onclick="quickAutoNumberTitles()" style="font-size:0.78rem; padding:6px 12px; border-radius:6px; background:#fffbeb; border-color:#fde68a; color:#b45309; font-weight:700; display:inline-flex; align-items:center; gap:5px;" title="Auto-number all lecture titles in sequential order">
+                    <button type="button" class="btn btn-outline btn-sm btn-subtle-amber" onclick="quickAutoNumberTitles()" style="font-size:0.78rem; padding:6px 12px; border-radius:6px; font-weight:700; display:inline-flex; align-items:center; gap:5px;" title="Auto-number all lecture titles in sequential order">
                       ⚡ Auto-Number Titles
                     </button>
                   </div>
@@ -1739,11 +2469,11 @@
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
                   <span>Sync YouTube</span>
                 </button>
-                <button class="btn btn-outline btn-sm" id="btnBulkRenameChapter" onclick="openPasteTitlesModal('chapter')" style="display: none; padding: 4px 9px; font-size: 0.75rem; align-items: center; gap: 5px; background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; font-weight: 700;" title="Paste real YouTube titles for all lectures in this chapter">
+                <button class="btn btn-outline btn-sm btn-subtle-blue" id="btnBulkRenameChapter" onclick="openPasteTitlesModal('chapter')" style="display: none; padding: 4px 9px; font-size: 0.75rem; align-items: center; gap: 5px; font-weight: 700;" title="Paste real YouTube titles for all lectures in this chapter">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                   <span>📋 Set Real Titles</span>
                 </button>
-                <button class="btn btn-outline btn-sm" id="btnAutoNumberChapter" onclick="openAutoNumberModal('chapter')" style="display: none; padding: 4px 9px; font-size: 0.75rem; align-items: center; gap: 5px; background: #fffbeb; border-color: #fde68a; color: #b45309; font-weight: 700;" title="Auto-number all lectures in this chapter sequentially">
+                <button class="btn btn-outline btn-sm btn-subtle-amber" id="btnAutoNumberChapter" onclick="openAutoNumberModal('chapter')" style="display: none; padding: 4px 9px; font-size: 0.75rem; align-items: center; gap: 5px; font-weight: 700;" title="Auto-number all lectures in this chapter sequentially">
                   <span>⚡ Auto-Number</span>
                 </button>
                 <button class="btn btn-outline btn-sm" onclick="clearLectureFilters()" title="Clear all filters">
@@ -1886,18 +2616,18 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             <span style="font-weight:700;">Student Accounts</span>
             <span class="status-pill" id="badgeStudentCount" style="padding: 2px 8px; font-size: 0.72rem;">0 Students</span>
-            <span class="status-pill" id="badgePendingCount" style="border-color:#fde047; background:#fef9c3; color:#a16207; font-weight:700; padding: 2px 8px; font-size: 0.72rem; cursor:pointer;" onclick="filterStudents('pending')">
+            <span class="status-pill pill-pending" id="badgePendingCount" style="cursor:pointer;" onclick="filterStudents('pending')">
               <span style="width:7px; height:7px; border-radius:50%; background:#eab308; display:inline-block;"></span>
               <span id="badgePendingText">0 Pending</span>
             </span>
-            <span class="status-pill" id="badgeOnlineCount" style="border-color:#86efac; background:#f0fdf4; color:#15803d; font-weight:700; padding: 2px 8px; font-size: 0.72rem; cursor:pointer;" onclick="filterStudents('online')">
+            <span class="status-pill status-pill-online" id="badgeOnlineCount" style="cursor:pointer;" onclick="filterStudents('online')">
               <span class="status-dot" style="background:#22c55e; animation:greenPulseDot 1.5s infinite;"></span>
               <span id="badgeOnlineText">0 Online Now</span>
             </span>
           </div>
           <div class="tbl-tools" style="flex-wrap: wrap; gap: 8px;">
             <!-- Filter All / Pending / Approved / Online -->
-            <div style="display:inline-flex; border:1.5px solid var(--border); border-radius:var(--r-pill); overflow:hidden; background:#ffffff; padding:2px; gap:2px;">
+            <div class="student-filter-toolbar">
               <button id="btnFilterAllStudents" type="button" class="btn-sm" style="background:var(--bg-3); border:none; border-radius:var(--r-pill); font-weight:700; color:var(--text-0); padding:4px 10px; cursor:pointer; font-size:0.75rem;" onclick="filterStudents('all')">
                 All (<span id="cntAllStudents">0</span>)
               </button>
@@ -2001,7 +2731,7 @@
         <div class="field" style="margin-bottom: 14px;">
           <label style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-3); font-weight: 700;">Student ID</label>
           <div style="display: flex; gap: 8px;">
-            <input type="text" id="editStudentIdDisplay" readonly style="font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; background: #f8fafc; color: var(--text-1); cursor: default; letter-spacing: 0.02em;">
+            <input type="text" id="editStudentIdDisplay" readonly style="font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; cursor: default; letter-spacing: 0.02em;">
             <button type="button" class="btn btn-sm btn-outline" style="white-space: nowrap; font-size: 0.75rem; padding: 0 12px;" onclick="copyStudentIdFromModal()" title="Copy Student ID">📋 Copy</button>
           </div>
         </div>
@@ -2273,10 +3003,10 @@
 
   <!-- BULK REAL TITLES PASTE / BYPASS MODAL -->
   <div class="admin-modal-backdrop" id="pasteTitlesModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 10001; align-items: center; justify-content: center; padding: 16px;" role="dialog" aria-modal="true" onclick="if(event.target === this) closePasteTitlesModal()">
-    <div class="confirm-modal-box" style="max-width: 560px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 24px; text-align: left; margin: auto; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35); border-radius: 14px; background: #fff;" onclick="event.stopPropagation()">
+    <div class="confirm-modal-box" style="max-width: 560px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 24px; text-align: left; margin: auto; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35); border-radius: 14px;" onclick="event.stopPropagation()">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
         <div style="display: flex; align-items: center; gap: 10px;">
-          <div style="width: 38px; height: 38px; border-radius: 10px; background: #eff6ff; color: var(--blue); display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+          <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(59, 130, 246, 0.15); color: var(--blue); display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
             📋
           </div>
           <div>
@@ -2287,8 +3017,8 @@
         <button type="button" onclick="closePasteTitlesModal()" style="background: none; border: none; font-size: 1.2rem; color: var(--text-4); cursor: pointer; padding: 4px;">✕</button>
       </div>
 
-      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; margin-bottom: 14px; font-size: 0.8rem; color: var(--text-2); line-height: 1.45;">
-        💡 <strong>Quick Instructions:</strong> Paste real lecture names line by line (one title per line). They will automatically match in order (<code style="background:#e2e8f0; padding:1px 5px; border-radius:4px;">#1, #2, #3...</code>).
+      <div class="confirm-item-card" style="margin-bottom: 14px; font-size: 0.8rem; line-height: 1.45;">
+        💡 <strong>Quick Instructions:</strong> Paste real lecture names line by line (one title per line). They will automatically match in order (<code>#1, #2, #3...</code>).
       </div>
 
       <div class="field" style="margin-bottom: 12px;">
@@ -2318,10 +3048,10 @@
 
   <!-- AUTO-NUMBER TITLES MODAL -->
   <div class="admin-modal-backdrop" id="autoNumberModal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 10002; align-items: center; justify-content: center; padding: 16px;" role="dialog" aria-modal="true" onclick="if(event.target === this) closeAutoNumberModal()">
-    <div class="confirm-modal-box" style="max-width: 520px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 24px; text-align: left; margin: auto; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35); border-radius: 14px; background: #fff;" onclick="event.stopPropagation()">
+    <div class="confirm-modal-box" style="max-width: 520px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 24px; text-align: left; margin: auto; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35); border-radius: 14px;" onclick="event.stopPropagation()">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
         <div style="display: flex; align-items: center; gap: 10px;">
-          <div style="width: 38px; height: 38px; border-radius: 10px; background: #fef3c7; color: #d97706; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+          <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(245, 158, 11, 0.15); color: #d97706; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
             ⚡
           </div>
           <div>
@@ -2332,19 +3062,19 @@
         <button type="button" onclick="closeAutoNumberModal()" style="background: none; border: none; font-size: 1.2rem; color: var(--text-4); cursor: pointer; padding: 4px;">✕</button>
       </div>
 
-      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; margin-bottom: 14px; font-size: 0.8rem; color: var(--text-2); line-height: 1.45;">
-        💡 <strong>Instant Auto-Numbering:</strong> Prefix aur format select karein. Sabhi lectures turant <code style="background:#e2e8f0; padding:1px 5px; border-radius:4px;">01, 02, 03...</code> order me number ho jayenge.
+      <div class="confirm-item-card" style="margin-bottom: 14px; font-size: 0.8rem; line-height: 1.45;">
+        💡 <strong>Instant Auto-Numbering:</strong> Prefix aur format select karein. Sabhi lectures turant <code>01, 02, 03...</code> order me number ho jayenge.
       </div>
 
       <div class="field" style="margin-bottom: 12px;">
         <label style="margin-bottom: 6px; font-size: 0.82rem; font-weight: 700; color: var(--text-1);">Title Prefix (Chapter / Subject Name):</label>
-        <input type="text" id="autoNumberPrefix" placeholder="e.g. Cartesian System" style="width: 100%; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 9px 12px; font-size: 0.88rem; font-weight: 600; color: var(--text-0);" oninput="updateAutoNumberPreview()" onkeydown="if(event.key==='Enter'){event.preventDefault();handleApplyAutoNumber();}">
+        <input type="text" id="autoNumberPrefix" placeholder="e.g. Cartesian System" style="width: 100%; border: 1.5px solid var(--border); border-radius: 8px; padding: 9px 12px; font-size: 0.88rem; font-weight: 600;" oninput="updateAutoNumberPreview()" onkeydown="if(event.key==='Enter'){event.preventDefault();handleApplyAutoNumber();}">
       </div>
 
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
         <div class="field" style="margin-bottom: 0;">
           <label style="margin-bottom: 6px; font-size: 0.8rem; font-weight: 700; color: var(--text-1);">Separator:</label>
-          <select id="autoNumberSeparator" class="select-sm" style="width: 100%; padding: 8px; border-radius: 8px; border: 1.5px solid #cbd5e1; font-size: 0.84rem; font-weight: 600;" onchange="updateAutoNumberPreview()">
+          <select id="autoNumberSeparator" class="select-sm" style="width: 100%; padding: 8px; border-radius: 8px; border: 1.5px solid var(--border); font-size: 0.84rem; font-weight: 600;" onchange="updateAutoNumberPreview()">
             <option value=" – ">" – " (En-dash, e.g. Name – 01)</option>
             <option value=" - ">" - " (Hyphen, e.g. Name - 01)</option>
             <option value=" ">" " (Space only, e.g. Name 01)</option>
@@ -2354,7 +3084,7 @@
         </div>
         <div class="field" style="margin-bottom: 0;">
           <label style="margin-bottom: 6px; font-size: 0.8rem; font-weight: 700; color: var(--text-1);">Numbering Format:</label>
-          <select id="autoNumberDigits" class="select-sm" style="width: 100%; padding: 8px; border-radius: 8px; border: 1.5px solid #cbd5e1; font-size: 0.84rem; font-weight: 600;" onchange="updateAutoNumberPreview()">
+          <select id="autoNumberDigits" class="select-sm" style="width: 100%; padding: 8px; border-radius: 8px; border: 1.5px solid var(--border); font-size: 0.84rem; font-weight: 600;" onchange="updateAutoNumberPreview()">
             <option value="2digits">01, 02, 03... (2 Digits)</option>
             <option value="1digit">1, 2, 3... (1 Digit)</option>
             <option value="part">Part 01, Part 02...</option>
@@ -2368,7 +3098,7 @@
           <label style="margin: 0; font-size: 0.8rem; font-weight: 700; color: var(--text-1);">Live Preview:</label>
           <span id="autoNumberTargetBadge" style="font-size: 0.75rem; font-weight: 700; color: var(--blue); font-family: monospace;">Target: 0 lectures</span>
         </div>
-        <div id="autoNumberPreviewBox" style="background: #ffffff; border: 1.5px dashed #94a3b8; border-radius: 8px; padding: 10px 14px; font-family: monospace; font-size: 0.82rem; color: #0f172a; line-height: 1.6; max-height: 110px; overflow-y: auto;">
+        <div id="autoNumberPreviewBox" style="border: 1.5px dashed #94a3b8; border-radius: 8px; padding: 10px 14px; font-family: monospace; font-size: 0.82rem; line-height: 1.6; max-height: 110px; overflow-y: auto;">
           <!-- Realtime preview lines -->
         </div>
       </div>
@@ -2658,6 +3388,21 @@
         cloudStatus.innerHTML = `<span class="status-dot"></span><span>🛡️ Administrator</span>`;
       }
       loadAllAdminData();
+
+      // 👥 Kick off real-time student presence monitoring immediately
+      if (typeof updateOnlinePresence === 'function') {
+        updateOnlinePresence();
+      }
+      if (!window._presencePollingTimer) {
+        window._presencePollingTimer = setInterval(() => {
+          if (typeof updateOnlinePresence === 'function') updateOnlinePresence();
+        }, 3500);
+      }
+      if (window.DB && typeof DB.initSupabaseAdminPresence === 'function') {
+        DB.initSupabaseAdminPresence(() => {
+          if (typeof updateOnlinePresence === 'function') updateOnlinePresence();
+        });
+      }
     }
 
     function showLockScreen() {
@@ -2691,7 +3436,9 @@
             const chIdSet = new Set((allChapters || []).map(c => String(c.id)));
             allLectures = cachedLecs.filter(l => chIdSet.has(String(l.chapter_id)));
           }
-          if (cachedLive && cachedLive.length) allLiveClasses = cachedLive;
+          if (cachedLive && cachedLive.length) {
+            allLiveClasses = cachedLive.filter(c => !String(c.title || '').startsWith('__CONFIG_') && c.status !== 'config' && c.url !== 'config');
+          }
 
           updateKPIStats();
           populateSubjectDropdowns();
@@ -2717,6 +3464,9 @@
           DB.getAllLectures(true),
           DB.getLiveClasses(true)
         ]);
+        if (Array.isArray(allLiveClasses)) {
+          allLiveClasses = allLiveClasses.filter(c => !String(c.title || '').startsWith('__CONFIG_') && c.status !== 'config' && c.url !== 'config');
+        }
 
         // Automated self-healing duplicate cleanup
         if (window.DB && DB.cleanupAllLectureDuplicates) {
@@ -3010,7 +3760,7 @@
         const syncBadge = plInfo ? `
           <span class="tag-sync" id="syncTag_${c.id}" onclick="handleSyncChapter('${c.id}', event)" title="Linked to YouTube Playlist: ${escapeHtml(plInfo.playlistTitle || plInfo.playlistId)}. Click to sync now!">
             <span class="sync-icon">🔄</span>
-            <span style="font-size:0.65rem; font-weight:600;">Sync</span>
+            <span class="sync-lbl" style="font-size:0.65rem; font-weight:600;">Sync</span>
           </span>
         ` : '';
         return `
@@ -3186,7 +3936,9 @@
       if (!window.DB || !DB.syncChapterWithPlaylist) return;
       
       const tagSync = document.getElementById(`syncTag_${chapterId}`);
+      const syncLbl = tagSync ? tagSync.querySelector('.sync-lbl') : null;
       if (tagSync) tagSync.classList.add('spinning');
+      if (syncLbl) syncLbl.textContent = 'Syncing...';
       const btnSyncFiltered = document.getElementById('btnSyncFilteredChapter');
       if (btnSyncFiltered) btnSyncFiltered.disabled = true;
 
@@ -3214,6 +3966,7 @@
         DB.showToast('Sync error: ' + err.message, 'error');
       } finally {
         if (tagSync) tagSync.classList.remove('spinning');
+        if (syncLbl) syncLbl.textContent = 'Sync';
         if (btnSyncFiltered) btnSyncFiltered.disabled = false;
       }
     }
@@ -3596,27 +4349,27 @@
         if (paneAuto) paneAuto.style.display = 'none';
         if (paneSingle) paneSingle.style.display = 'block';
         if (btnSingle) {
-          btnSingle.style.background = 'var(--blue)';
-          btnSingle.style.color = '#ffffff';
-          btnSingle.style.fontWeight = '700';
+          btnSingle.classList.add('active');
+          btnSingle.style.background = '';
+          btnSingle.style.color = '';
         }
         if (btnAuto) {
-          btnAuto.style.background = 'transparent';
-          btnAuto.style.color = 'var(--text-2)';
-          btnAuto.style.fontWeight = '600';
+          btnAuto.classList.remove('active');
+          btnAuto.style.background = '';
+          btnAuto.style.color = '';
         }
       } else {
         if (paneSingle) paneSingle.style.display = 'none';
         if (paneAuto) paneAuto.style.display = 'block';
         if (btnAuto) {
-          btnAuto.style.background = 'var(--blue)';
-          btnAuto.style.color = '#ffffff';
-          btnAuto.style.fontWeight = '700';
+          btnAuto.classList.add('active');
+          btnAuto.style.background = '';
+          btnAuto.style.color = '';
         }
         if (btnSingle) {
-          btnSingle.style.background = 'transparent';
-          btnSingle.style.color = 'var(--text-2)';
-          btnSingle.style.fontWeight = '600';
+          btnSingle.classList.remove('active');
+          btnSingle.style.background = '';
+          btnSingle.style.color = '';
         }
       }
     }
@@ -4003,14 +4756,14 @@
       updateCommitCount();
 
       listContainer.innerHTML = currentFetchedVideos.map((v, idx) => `
-        <div style="display:flex; align-items:center; gap:10px; background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:8px 10px;">
+        <div class="preview-item-row" style="display:flex; align-items:center; gap:10px; border-radius:8px; padding:8px 10px;">
           <input type="checkbox" ${v.selected ? 'checked' : ''} onchange="togglePreviewItem(${idx}, this.checked)" style="width:16px; height:16px; cursor:pointer;">
           <span style="font-size:0.75rem; font-family:monospace; color:var(--text-3); width:24px; text-align:center;">#${idx + 1}</span>
-          ${v.thumbnail ? `<img src="${v.thumbnail}" style="width:52px; height:30px; object-fit:cover; border-radius:4px; flex-shrink:0;">` : `<div style="width:52px; height:30px; background:#f1f5f9; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:0.75rem; color:var(--text-3); flex-shrink:0;">🎬</div>`}
+          ${v.thumbnail ? `<img src="${v.thumbnail}" style="width:52px; height:30px; object-fit:cover; border-radius:4px; flex-shrink:0;">` : `<div style="width:52px; height:30px; background:var(--bg-3); border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:0.75rem; color:var(--text-3); flex-shrink:0;">🎬</div>`}
           <div style="flex:1; min-width:0;">
-            <input type="text" value="${escapeHtml(v.title)}" onchange="updatePreviewTitle(${idx}, this.value)" placeholder="Enter lecture title..." style="width:100%; border:1px solid #cbd5e1; border-radius:6px; padding:6px 10px; font-size:0.84rem; font-weight:600; color:var(--text-0);">
+            <input type="text" value="${escapeHtml(v.title)}" onchange="updatePreviewTitle(${idx}, this.value)" placeholder="Enter lecture title..." style="width:100%; border:1px solid var(--border); border-radius:6px; padding:6px 10px; font-size:0.84rem; font-weight:600; color:var(--text-0);">
           </div>
-          <a href="${escapeHtml(v.url)}" target="_blank" title="Preview video in new tab" style="color:var(--blue); font-size:0.78rem; text-decoration:none; padding:4px 8px; background:#eff6ff; border-radius:6px; flex-shrink:0;">▶ Preview</a>
+          <a href="${escapeHtml(v.url)}" target="_blank" title="Preview video in new tab" style="color:var(--blue); font-size:0.78rem; text-decoration:none; padding:4px 8px; background:var(--blue-subtle); border-radius:6px; flex-shrink:0;">▶ Preview</a>
           <button type="button" onclick="removePreviewItem(${idx})" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:0.85rem;" title="Remove this video">✕</button>
         </div>
       `).join('');
@@ -4147,21 +4900,22 @@
     // ===== LIVE CLASSES MANAGEMENT =====
     function renderLiveClassesTable() {
       const tbody = document.getElementById('liveTableBody');
-      if (!allLiveClasses.length) {
+      const displayClasses = (allLiveClasses || []).filter(c => !String(c.title || '').startsWith('__CONFIG_') && c.status !== 'config' && c.url !== 'config');
+      if (!displayClasses.length) {
         tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:30px; color:var(--text-4);">No live classes available</td></tr>`;
         return;
       }
 
-      tbody.innerHTML = allLiveClasses.map(c => {
+      tbody.innerHTML = displayClasses.map(c => {
         const isLiveNow = !!c.is_live_now;
-        const isVisible = c.is_visible !== 0;
+        const isVisible = (c.is_visible === 1 || c.is_visible === true || (c.is_visible === undefined && c.status !== 'hidden' && c.status !== 'ended' && c.status !== 'offline'));
         const platform = c.url.includes('youtube') ? 'YouTube' : c.url.includes('.m3u8') ? 'HLS Stream' : c.url.includes('zoom') ? 'Zoom' : 'Meet';
         return `
           <tr>
             <td style="text-align:center;">
-              <label title="Tick to set this class as LIVE NOW" style="display:inline-flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; padding:5px 9px; border-radius:6px; border:1.5px solid ${isLiveNow ? '#fca5a5' : '#e2e8f0'}; background:${isLiveNow ? '#fef2f2' : '#f8fafc'}; transition:all 0.2s;">
-                <input type="checkbox" ${isLiveNow ? 'checked' : ''} onchange="handleToggleLiveNow('${c.id}', this.checked)" style="width:17px; height:17px; accent-color:#ef4444; cursor:pointer;">
-                <span style="font-size:0.72rem; font-weight:800; color:${isLiveNow ? '#dc2626' : '#64748b'};">${isLiveNow ? 'LIVE' : 'OLD'}</span>
+              <label class="live-toggle-badge ${isLiveNow ? 'is-live' : 'is-old'}" title="Tick to set this class as LIVE NOW">
+                <input type="checkbox" ${isLiveNow ? 'checked' : ''} onchange="handleToggleLiveNow('${c.id}', this.checked)" style="width:16px; height:16px; accent-color:#ef4444; cursor:pointer;">
+                <span style="font-size:0.72rem; font-weight:800;">${isLiveNow ? 'LIVE' : 'OLD'}</span>
               </label>
             </td>
             <td><strong>${escapeHtml(c.title)}</strong></td>
@@ -4175,7 +4929,7 @@
               <div class="act-col" style="justify-content: flex-end;">
                 <button class="btn-icon primary" onclick="window.open('player.html?live=1&url=${encodeURIComponent(c.url)}&title=${encodeURIComponent(c.title)}', '_blank')" title="Watch Stream">▶</button>
                 <button class="btn-icon" onclick="editLiveClass('${c.id}')" title="Edit Live Stream">✏️</button>
-                <button class="btn-icon" onclick="toggleLiveVisibility('${c.id}', ${c.is_visible})" title="Toggle Visibility">${c.is_visible ? '👁' : '🚫'}</button>
+                <button class="btn-icon" onclick="toggleLiveVisibility('${c.id}', ${isVisible ? 1 : 0})" title="${isVisible ? 'Stream is Visible — Click to Hide from Students' : 'Stream is Hidden — Click to Make Visible to Students'}" style="${isVisible ? '' : 'background:rgba(239,68,68,0.15); border-color:#f87171;'}">${isVisible ? '👁' : '🚫'}</button>
                 <button class="btn-icon danger" onclick="handleDeleteLive('${c.id}', this, event)" title="Delete Stream">🗑</button>
               </div>
             </td>
@@ -4188,15 +4942,18 @@
       allLiveClasses.forEach(c => {
         if (isChecked) {
           // USER RULE: "jab live ka tick lagau tab hi live dikhe... jo new class add ho sirf uspe live lage niche wali off ho jaye"
-          const isTarget = (c.id === id);
+          const isTarget = isSameLiveId(c, id);
           c.is_live_now = isTarget ? 1 : 0;
-          c.status = isTarget ? (c.is_visible !== 0 ? 'live' : 'ended') : 'ended';
-        } else if (c.id === id) {
+          const isVis = (c.is_visible === 1 || c.is_visible === true || (c.is_visible === undefined && c.status !== 'hidden' && c.status !== 'ended' && c.status !== 'offline'));
+          c.status = isTarget ? (isVis ? 'live' : 'hidden') : (isVis ? 'old_live' : 'hidden');
+        } else if (isSameLiveId(c, id)) {
           // USER RULE: "...or off ho jaye"
           c.is_live_now = 0;
-          c.status = 'ended';
+          const isVis = (c.is_visible === 1 || c.is_visible === true || (c.is_visible === undefined && c.status !== 'hidden' && c.status !== 'ended' && c.status !== 'offline'));
+          c.status = isVis ? 'old_live' : 'hidden';
         }
       });
+      if (DB.compareLiveClasses) allLiveClasses.sort(DB.compareLiveClasses);
       renderLiveClassesTable(); // 0ms INSTANT
       updateKPIStats();
       DB.showToast(isChecked ? '🔴 Marked as LIVE NOW!' : 'Live turned OFF — marked as Old Live Class', 'success');
@@ -4204,12 +4961,13 @@
     }
 
     function editLiveClass(id) {
-      const item = allLiveClasses.find(c => c.id === id);
+      const item = allLiveClasses.find(c => isSameLiveId(c, id));
       if (!item) return;
       document.getElementById('editLiveId').value = item.id;
       document.getElementById('liveTitleInput').value = item.title;
       document.getElementById('liveUrlInput').value = item.url;
-      document.getElementById('liveVisibilitySelect').value = item.is_visible !== undefined ? item.is_visible : (item.status === 'live' ? '1' : '0');
+      const isVis = (item.is_visible === 1 || item.is_visible === true || (item.is_visible === undefined && item.status !== 'hidden' && item.status !== 'ended' && item.status !== 'offline'));
+      document.getElementById('liveVisibilitySelect').value = isVis ? '1' : '0';
       if (item.section) document.getElementById('liveSectionSelect').value = item.section;
       const chk = document.getElementById('liveIsActiveCheckbox');
       if (chk) chk.checked = !!item.is_live_now;
@@ -4262,22 +5020,23 @@
         if (isLiveNow) {
           // If editing and ticked as LIVE NOW: turn off all other live classes
           allLiveClasses.forEach(c => {
-            if (c.id !== editId) {
+            if (!isSameLiveId(c, editId)) {
               c.is_live_now = 0;
-              c.status = 'ended';
+              c.status = (c.is_visible === 0 || c.status === 'hidden') ? 'hidden' : 'old_live';
             }
           });
         }
-        const found = allLiveClasses.find(c => c.id === editId);
+        const found = allLiveClasses.find(c => isSameLiveId(c, editId));
         if (found) {
           found.title = title;
           found.url = url;
           found.is_visible = isVisible;
           found.section = section;
           found.is_live_now = isLiveNow ? 1 : 0;
-          found.status = isVisible ? (isLiveNow ? 'live' : 'ended') : 'ended';
+          found.status = isVisible === 0 ? 'hidden' : (isLiveNow ? 'live' : 'old_live');
         }
         cancelEditLive();
+        if (DB.compareLiveClasses) allLiveClasses.sort(DB.compareLiveClasses);
         renderLiveClassesTable(); // 0ms INSTANT
         updateKPIStats();
         DB.showToast('Live stream updated!', 'success');
@@ -4287,7 +5046,7 @@
           // USER RULE: "agar live off karna bhul jau to jo new class add ho sirf uspe live lage niche wali off ho jaye"
           allLiveClasses.forEach(c => {
             c.is_live_now = 0;
-            c.status = 'ended';
+            c.status = (c.is_visible === 0 || c.status === 'hidden') ? 'hidden' : 'old_live';
           });
         }
         const newLive = {
@@ -4297,10 +5056,11 @@
           is_visible: isVisible,
           section,
           is_live_now: isLiveNow ? 1 : 0,
-          status: isVisible ? (isLiveNow ? 'live' : 'ended') : 'ended',
+          status: isVisible === 0 ? 'hidden' : (isLiveNow ? 'live' : 'old_live'),
           created_at: new Date().toISOString()
         };
         allLiveClasses.unshift(newLive);
+        if (DB.compareLiveClasses) allLiveClasses.sort(DB.compareLiveClasses);
         document.getElementById('liveTitleInput').value = '';
         document.getElementById('liveUrlInput').value = '';
         if (document.getElementById('liveIsActiveCheckbox')) document.getElementById('liveIsActiveCheckbox').checked = false;
@@ -4315,15 +5075,15 @@
 
     async function toggleLiveVisibility(id, current) {
       const newVis = current === 1 ? 0 : 1;
-      const target = allLiveClasses.find(c => c.id === id);
+      const target = allLiveClasses.find(c => isSameLiveId(c, id));
       if (target) {
         target.is_visible = newVis;
-        target.status = newVis === 1 ? (target.is_live_now ? 'live' : 'ended') : 'ended';
+        target.status = newVis === 1 ? (target.is_live_now ? 'live' : 'old_live') : 'hidden';
       }
       renderLiveClassesTable(); // 0ms INSTANT!
       updateKPIStats();
-      DB.showToast(`Live stream ${newVis === 1 ? 'is now Visible 👁' : 'is now Hidden 🚫'}`, 'info');
-      DB.setLiveClassStatus(id, newVis === 1 ? 'live' : 'ended', newVis).catch(console.error);
+      DB.showToast(newVis === 1 ? 'Live stream is now Visible 👁 (Students can see it)' : 'Live stream is now Hidden 🚫 (Hidden from students)', newVis === 1 ? 'success' : 'info');
+      DB.setLiveClassStatus(id, newVis === 1 ? 'live' : 'hidden', newVis).catch(console.error);
     }
 
     function isSameLiveId(item, targetId) {
@@ -4392,6 +5152,7 @@
     let onlineStudentEmails = new Set();
     let presencePollingInterval = null;
     let currentAllowedSet = new Set();
+    let studentsProgressMap = {};
 
     async function loadUsersTable(silent = false) {
       const tbody = document.getElementById('usersTableBody');
@@ -4410,11 +5171,13 @@
       }
 
       try {
-        const [users, allowedList, onlineList] = await Promise.all([
+        const [users, allowedList, onlineList, progressData] = await Promise.all([
           DB.getAllUsers ? DB.getAllUsers() : [],
           DB.getAllowedEmails ? DB.getAllowedEmails() : [],
-          DB.getUnifiedOnlineStudents ? DB.getUnifiedOnlineStudents() : []
+          DB.getUnifiedOnlineStudents ? DB.getUnifiedOnlineStudents() : [],
+          DB.getAllStudentsProgress ? DB.getAllStudentsProgress() : {}
         ]);
+        studentsProgressMap = progressData || {};
         let fetchedUsers = sortStudentsLatestFirst(users || []);
 
         // Preserve optimistic status for recently approved/rejected students (prevents race-condition flicker)
@@ -4439,7 +5202,7 @@
         }
 
         allUsers = fetchedUsers;
-        onlineStudentsList = onlineList || [];
+        onlineStudentsList = (onlineList || []).filter(isStudentAccount);
         onlineStudentEmails = new Set(onlineStudentsList.map(u => (u.email || '').toLowerCase().trim()));
         currentAllowedSet = new Set((allowedList || []).map(e => (e || '').toLowerCase().trim()));
 
@@ -4452,7 +5215,7 @@
         renderUsersTableRows();
 
         if (!presencePollingInterval) {
-          presencePollingInterval = setInterval(updateOnlinePresence, 8000);
+          presencePollingInterval = setInterval(updateOnlinePresence, 3500);
         }
 
         // 🔄 Automatic background refresh (silent) every 15 seconds
@@ -4590,20 +5353,20 @@
         let statusBadge = '';
         if (status === 'pending') {
           statusBadge = `
-            <span class="status-pill" style="border-color:#fde047; background:#fef9c3; color:#a16207; font-weight:700; padding:2px 8px; font-size:0.72rem; display:inline-flex; align-items:center; gap:4px;">
+            <span class="status-pill pill-pending">
               <span style="width:6px; height:6px; border-radius:50%; background:#eab308; display:inline-block;"></span>
               <span>Pending Approval</span>
             </span>
           `;
         } else if (status === 'rejected') {
           statusBadge = `
-            <span class="status-pill" style="border-color:#fca5a5; background:#fef2f2; color:#b91c1c; font-weight:700; padding:2px 8px; font-size:0.72rem;">
+            <span class="status-pill pill-blocked">
               <span>❌ Blocked</span>
             </span>
           `;
         } else {
           statusBadge = `
-            <span class="status-pill" style="border-color:#86efac; background:#f0fdf4; color:#15803d; font-weight:700; padding:2px 8px; font-size:0.72rem;">
+            <span class="status-pill pill-approved">
               <span>✅ Approved</span>
             </span>
           `;
@@ -4613,13 +5376,13 @@
         let deviceBadge = '';
         if (u.current_session_id) {
           deviceBadge = `
-            <span class="status-pill" style="border-color:#fbcfe8; background:#fdf2f8; color:#9d174d; font-weight:700; padding:2px 8px; font-size:0.72rem;" title="Account locked to 1 device. Re-login blocked until Admin resets inside Edit.">
+            <span class="status-pill pill-bound" title="Account locked to 1 device. Re-login blocked until Admin resets inside Edit.">
               <span>🔒 Bound</span>
             </span>
           `;
         } else {
           deviceBadge = `
-            <span class="status-pill" style="border-color:#bbf7d0; background:#f0fdf4; color:#166534; font-weight:700; padding:2px 8px; font-size:0.72rem;" title="Unlocked: Student can log in once on their device.">
+            <span class="status-pill pill-ready" title="Unlocked: Student can log in once on their device.">
               <span>🟢 Ready</span>
             </span>
           `;
@@ -4629,7 +5392,7 @@
         let passBadge = '';
         if (hasPassword) {
           passBadge = `
-            <button class="btn btn-sm btn-outline" style="padding:3px 10px; font-size:0.75rem; border-color:#cbd5e1;" onclick="openSetPasswordModal('${u.id}', '${escapeHtml(name)}', '${escapeHtml(cleanEmail)}')" title="Change Password">Change</button>
+            <button class="btn btn-sm btn-outline" style="padding:3px 10px; font-size:0.75rem;" onclick="openSetPasswordModal('${u.id}', '${escapeHtml(name)}', '${escapeHtml(cleanEmail)}')" title="Change Password">Change</button>
           `;
         } else {
           passBadge = `
@@ -4640,14 +5403,17 @@
         return `
           <tr data-user-email="${escapeHtml(cleanEmail)}">
             <td style="text-align: center; width: 54px; padding: 12px 6px;">
-              <span style="display:inline-block; min-width:28px; padding:2px 6px; font-weight:700; color:#475569; font-size:0.78rem; background:#f1f5f9; border:1px solid #e2e8f0; border-radius:6px; font-variant-numeric:tabular-nums; text-align:center;">
-                ${serialNo}
-              </span>
+              <span class="user-serial-badge">${serialNo}</span>
             </td>
             <td>
               <div style="display:flex; flex-direction:column;">
                 <strong style="color:var(--text-0); font-size:0.88rem;">${escapeHtml(name)}</strong>
-                <span style="font-size:0.75rem; color:var(--text-4);">${escapeHtml(email || 'No Email')}</span>
+                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:2px;">
+                  <span style="font-size:0.75rem; color:var(--text-4);">${escapeHtml(email || 'No Email')}</span>
+                  <span class="status-pill" style="font-size:0.68rem; padding:1px 6px; font-weight:600; background:${(studentsProgressMap[cleanEmail] || 0) > 0 ? 'rgba(34, 197, 94, 0.12)' : 'var(--bg-3)'}; color:${(studentsProgressMap[cleanEmail] || 0) > 0 ? '#16a34a' : 'var(--text-3)'}; border-color:${(studentsProgressMap[cleanEmail] || 0) > 0 ? 'rgba(34, 197, 94, 0.3)' : 'var(--border)'};" title="${studentsProgressMap[cleanEmail] || 0} classes covered by this student">
+                    📖 ${studentsProgressMap[cleanEmail] || 0} Classes Covered
+                  </span>
+                </div>
               </div>
             </td>
             <td>${statusBadge}</td>
@@ -4655,13 +5421,13 @@
             <td>${passBadge}</td>
             <td class="user-presence-cell">
               ${isOnline ? `
-                <span class="status-pill online-pill" style="border-color:#86efac; background:#f0fdf4; color:#16a34a; padding:2px 8px; font-size:0.72rem; font-weight:700;">
+                <span class="status-pill online-pill">
                   <span class="status-dot" style="background:#22c55e; animation:greenPulseDot 1.5s infinite;"></span>
                   <span>Online Now</span>
                 </span>
               ` : `
-                <span class="status-pill offline-pill" style="border-color:#e2e8f0; background:#f8fafc; color:#64748b; padding:2px 8px; font-size:0.72rem; font-weight:600;">
-                  <span class="status-dot" style="background:#cbd5e1;"></span>
+                <span class="status-pill offline-pill">
+                  <span class="status-dot"></span>
                   <span>Offline</span>
                 </span>
               `}
@@ -4672,7 +5438,7 @@
                   <button class="btn btn-sm btn-green" onclick="handleApproveStudent('${u.id}', '${escapeHtml(cleanEmail)}', this)" title="Approve Student Access">✅ Approve</button>
                   <button class="btn btn-sm btn-outline btn-red" onclick="handleRejectStudent('${u.id}', '${escapeHtml(cleanEmail)}', this)" title="Reject Access">✕ Reject</button>
                 ` : ''}
-                <button class="btn btn-sm btn-outline" style="border-color:#93c5fd; color:#2563eb; background:#eff6ff;" onclick="openEditStudentModal('${u.id}', '${escapeHtml(name)}', '${escapeHtml(cleanEmail)}')" title="Edit Student Name & Email">✏️ Edit</button>
+                <button class="btn btn-sm btn-outline btn-edit-student" onclick="openEditStudentModal('${u.id}', '${escapeHtml(name)}', '${escapeHtml(cleanEmail)}')" title="Edit Student Name & Email">✏️ Edit</button>
                 <button class="btn btn-sm btn-outline btn-red" onclick="handleDeleteUser('${u.id}', '${escapeHtml(cleanEmail)}', this, event)" title="Delete Student Account">🗑 Delete</button>
               </div>
             </td>
@@ -4683,36 +5449,53 @@
 
     async function updateOnlinePresence() {
       try {
-        if (!DB.getUnifiedOnlineStudents) return;
+        if (!window.DB || typeof DB.getUnifiedOnlineStudents !== 'function') return;
         const list = await DB.getUnifiedOnlineStudents();
-        onlineStudentsList = list || [];
+        onlineStudentsList = (list || []).filter(isStudentAccount);
         onlineStudentEmails = new Set(onlineStudentsList.map(u => (u.email || '').toLowerCase().trim()));
 
         updateStudentCounts();
 
-        // In-place updates to visible rows so no re-render flicker happens
-        const rows = document.querySelectorAll('#usersTableBody tr[data-user-email]');
-        rows.forEach(row => {
-          const email = (row.getAttribute('data-user-email') || '').toLowerCase().trim();
-          const cell = row.querySelector('.user-presence-cell');
-          if (cell && email) {
-            const isOnline = onlineStudentEmails.has(email);
-            cell.innerHTML = isOnline ? `
-              <span class="status-pill online-pill" style="border-color:#86efac; background:#f0fdf4; color:#16a34a; padding:2px 8px; font-size:0.72rem; font-weight:700;">
-                <span class="status-dot" style="background:#22c55e; animation:greenPulseDot 1.5s infinite;"></span>
-                <span>Online Now</span>
-              </span>
-            ` : `
-              <span class="status-pill offline-pill" style="border-color:#e2e8f0; background:#f8fafc; color:#64748b; padding:2px 8px; font-size:0.72rem; font-weight:600;">
-                <span class="status-dot" style="background:#cbd5e1;"></span>
-                <span>Offline</span>
-              </span>
-            `;
-            if (currentStudentFilter === 'online') {
-              row.style.display = isOnline ? '' : 'none';
+        // If online filter is currently active and the set of online students changed, re-render cleanly
+        const currentSig = Array.from(onlineStudentEmails).sort().join(',');
+        if (currentStudentFilter === 'online' && window._lastOnlineSig !== currentSig) {
+          window._lastOnlineSig = currentSig;
+          renderUsersTableRows();
+        } else {
+          // In-place updates to visible rows so no re-render flicker happens
+          const rows = document.querySelectorAll('#usersTableBody tr[data-user-email]');
+          rows.forEach(row => {
+            const email = (row.getAttribute('data-user-email') || '').toLowerCase().trim();
+            const cell = row.querySelector('.user-presence-cell');
+            if (cell && email) {
+              const isOnline = onlineStudentEmails.has(email);
+              cell.innerHTML = isOnline ? `
+                <span class="status-pill online-pill">
+                  <span class="status-dot" style="background:#22c55e; animation:greenPulseDot 1.5s infinite;"></span>
+                  <span>Online Now</span>
+                </span>
+              ` : `
+                <span class="status-pill offline-pill">
+                  <span class="status-dot"></span>
+                  <span>Offline</span>
+                </span>
+              `;
+              if (currentStudentFilter === 'online') {
+                row.style.display = isOnline ? '' : 'none';
+              }
             }
-          }
+          });
+        }
+
+        // Auto-fetch if an active online student is missing from allUsers table
+        const knownEmails = new Set((allUsers || []).map(u => (u.email || '').toLowerCase().trim()));
+        let hasNewOnlineStudent = false;
+        onlineStudentEmails.forEach(em => {
+          if (!knownEmails.has(em)) hasNewOnlineStudent = true;
         });
+        if (hasNewOnlineStudent && typeof loadUsersTable === 'function' && !window._loadingUsersTableSilent) {
+          loadUsersTable(true);
+        }
       } catch (err) {
         console.warn('updateOnlinePresence notice:', err);
       }
@@ -4725,11 +5508,12 @@
       const btnApproved = document.getElementById('btnFilterApprovedStudents');
       const btnOnline = document.getElementById('btnFilterOnlineStudents');
 
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
       const tabs = [
-        { el: btnAll, id: 'all', activeBg: 'var(--bg-3)', activeColor: 'var(--text-0)', inactiveColor: 'var(--text-3)' },
-        { el: btnPending, id: 'pending', activeBg: '#fef3c7', activeColor: '#b45309', inactiveColor: '#b45309' },
-        { el: btnApproved, id: 'approved', activeBg: '#dcfce7', activeColor: '#15803d', inactiveColor: '#15803d' },
-        { el: btnOnline, id: 'online', activeBg: '#dcfce7', activeColor: '#16a34a', inactiveColor: '#16a34a' }
+        { el: btnAll, id: 'all', activeBg: isDark ? '#1c263c' : 'var(--bg-3)', activeColor: isDark ? '#f8fafc' : 'var(--text-0)', inactiveColor: isDark ? '#94a3b8' : 'var(--text-3)' },
+        { el: btnPending, id: 'pending', activeBg: isDark ? 'rgba(234, 179, 8, 0.2)' : '#fef3c7', activeColor: isDark ? '#fbbf24' : '#b45309', inactiveColor: isDark ? '#fbbf24' : '#b45309' },
+        { el: btnApproved, id: 'approved', activeBg: isDark ? 'rgba(16, 185, 129, 0.2)' : '#dcfce7', activeColor: isDark ? '#34d399' : '#15803d', inactiveColor: isDark ? '#34d399' : '#15803d' },
+        { el: btnOnline, id: 'online', activeBg: isDark ? 'rgba(34, 197, 94, 0.2)' : '#dcfce7', activeColor: isDark ? '#4ade80' : '#16a34a', inactiveColor: isDark ? '#4ade80' : '#16a34a' }
       ];
 
       tabs.forEach(t => {
@@ -5378,6 +6162,11 @@
       closeEditStudentModal();
       DB.showToast(`Updated profile for ${name}`, 'success');
 
+      // Instant optimistic sync of Chat Monitor and Online Students in Admin Panel (0ms)
+      _lastAdminChatSig = '';
+      if (typeof loadChatMessages === 'function') loadChatMessages();
+      if (typeof loadOnlineStudents === 'function') loadOnlineStudents();
+
       // 2. LIVE SYNC: Persist to Supabase & Cloudflare D1 asynchronously
       DB.updateStudentProfile(userId, {
         name,
@@ -5391,6 +6180,10 @@
         try {
           localStorage.setItem('cp_cached_users', JSON.stringify(allUsers));
         } catch (e) {}
+
+        _lastAdminChatSig = '';
+        if (typeof loadChatMessages === 'function') loadChatMessages();
+        if (typeof loadOnlineStudents === 'function') loadOnlineStudents();
 
         if (andCopy || (res && res.passwordChanged)) {
           showCredentialsModal(email, password || '(Existing password kept)', name);
@@ -5492,7 +6285,7 @@
         return;
       }
 
-      const sig = msgs.map(m => `${m.id || ''}:${m.message || ''}:${m.created_at || ''}`).join('|');
+      const sig = msgs.map(m => `${m.id || ''}:${m.sender_name || ''}:${m.message || ''}:${m.created_at || ''}`).join('|');
       if (sig === _lastAdminChatSig) return;
       _lastAdminChatSig = sig;
 

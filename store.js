@@ -368,8 +368,8 @@ const DIRECT_WORKER_API_BASE = 'https://video-play-api.newstreamcp.workers.dev/a
 const LOCAL_PROXY_API_BASE = '/api';
 
 async function workerApiCall(endpoint, options = {}) {
-  const isPort8085 = typeof window !== 'undefined' && window.location.port === '8085';
-  const primaryBase = isPort8085 ? LOCAL_PROXY_API_BASE : DIRECT_WORKER_API_BASE;
+  const isHttpHost = typeof window !== 'undefined' && window.location && window.location.protocol.startsWith('http');
+  const primaryBase = isHttpHost ? LOCAL_PROXY_API_BASE : DIRECT_WORKER_API_BASE;
   const fallbackBase = DIRECT_WORKER_API_BASE;
 
   async function executeCall(baseUrl) {
@@ -571,8 +571,18 @@ function getCachedLectures() {
 }
 
 function getCachedLiveClasses() {
-  if (typeof _cachedLiveClasses !== 'undefined' && _cachedLiveClasses && _cachedLiveClasses.length > 0) return _cachedLiveClasses;
-  return getLocalJson(CACHE_LIVE_CLASSES_KEY, []);
+  let list = [];
+  if (typeof _cachedLiveClasses !== 'undefined' && _cachedLiveClasses && _cachedLiveClasses.length > 0) {
+    list = _cachedLiveClasses;
+  } else {
+    list = getLocalJson(CACHE_LIVE_CLASSES_KEY, []);
+  }
+  return (list || []).filter(c => {
+    const t = String(c.title || '').trim();
+    const st = String(c.status || '').trim();
+    const u = String(c.url || '').trim();
+    return !t.startsWith('__CONFIG_') && !t.includes('CONFIG_CHAPTER_PLAYLISTS') && st !== 'config' && u !== 'config';
+  });
 }
 
 async function fetchWorkerPlaylists(force = false) {
@@ -1802,77 +1812,242 @@ async function addLecturesBatch(selectedLectures) {
   return { success: true, count: toCreate.length, lectures: toCreate, workerSynced };
 }
 
-// --- Watched ---
-async function getWatched() {
-  if (!checkClient()) return [];
-  const { data, error } = await sbClient.from('watched').select('lecture_id');
-  if (error) { console.error('getWatched error:', error); return []; }
-  return (data || []).map(w => w.lecture_id);
+// ===== 🎓 PERSONALIZED STUDENT PROGRESS & STARRED (100% USER ISOLATED) =====
+function getCurrentUserProgressEmail() {
+  try {
+    const u = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+    if (u && u.email) return u.email.toLowerCase().trim();
+    const tok = (typeof getAdminToken === 'function') ? getAdminToken() : null;
+    if (tok) return 'admin';
+  } catch (e) {}
+  return 'guest';
 }
 
-async function toggleWatchedDB(lectureId) {
-  if (!checkClient()) return false;
-  const { data: existing } = await sbClient
-    .from('watched')
-    .select('id')
-    .eq('lecture_id', lectureId)
-    .maybeSingle();
-  
-  if (existing) {
-    await sbClient.from('watched').delete().eq('lecture_id', lectureId);
-    return false;
-  } else {
-    await sbClient.from('watched').insert({ lecture_id: lectureId });
-    return true;
+// --- Watched (Personalized per Student) ---
+async function getWatched(userEmail) {
+  const email = (userEmail || getCurrentUserProgressEmail()).toLowerCase().trim();
+  const localKey = 'cp_watched_ids_' + email;
+  let localList = [];
+  try {
+    localList = JSON.parse(localStorage.getItem(localKey) || '[]');
+  } catch (e) {}
+
+  if (!checkClient() || email === 'guest') {
+    return localList;
+  }
+
+  try {
+    const { data, error } = await sbClient
+      .from('watched')
+      .select('lecture_id')
+      .like('lecture_id', email + ':::%');
+
+    if (!error && Array.isArray(data)) {
+      const remoteIds = data.map(w => {
+        const parts = (w.lecture_id || '').split(':::');
+        return parts.length >= 2 ? parts.slice(1).join(':::') : null;
+      }).filter(Boolean);
+
+      const merged = Array.from(new Set([...localList, ...remoteIds]));
+      try {
+        localStorage.setItem(localKey, JSON.stringify(merged));
+      } catch (e) {}
+      return merged;
+    }
+  } catch (e) {
+    console.warn('getWatched error:', e);
+  }
+  return localList;
+}
+
+async function toggleWatchedDB(lectureId, userEmail) {
+  const email = (userEmail || getCurrentUserProgressEmail()).toLowerCase().trim();
+  const compositeKey = email + ':::' + lectureId;
+  const localKey = 'cp_watched_ids_' + email;
+
+  let localList = [];
+  try {
+    localList = JSON.parse(localStorage.getItem(localKey) || '[]');
+  } catch (e) {}
+
+  const exists = localList.includes(lectureId);
+  const nextList = exists ? localList.filter(id => id !== lectureId) : [...localList, lectureId];
+  try {
+    localStorage.setItem(localKey, JSON.stringify(nextList));
+  } catch (e) {}
+
+  if (!checkClient() || email === 'guest') {
+    return !exists;
+  }
+
+  try {
+    const { data: existing } = await sbClient
+      .from('watched')
+      .select('id')
+      .eq('lecture_id', compositeKey)
+      .maybeSingle();
+
+    if (existing) {
+      await sbClient.from('watched').delete().eq('lecture_id', compositeKey);
+      return false;
+    } else {
+      await sbClient.from('watched').insert({ lecture_id: compositeKey });
+      return true;
+    }
+  } catch (e) {
+    console.error('toggleWatchedDB error:', e);
+    return !exists;
   }
 }
 
-async function markAllWatchedDB(lectureIds) {
-  if (!checkClient()) return false;
-  const watched = await getWatched();
+async function markAllWatchedDB(lectureIds, userEmail) {
+  const email = (userEmail || getCurrentUserProgressEmail()).toLowerCase().trim();
+  const localKey = 'cp_watched_ids_' + email;
+  const watched = await getWatched(email);
   const allWatched = lectureIds.every(id => watched.includes(id));
-  
+
   if (allWatched) {
-    await sbClient.from('watched').delete().in('lecture_id', lectureIds);
+    const remaining = watched.filter(id => !lectureIds.includes(id));
+    try { localStorage.setItem(localKey, JSON.stringify(remaining)); } catch(e) {}
+    if (checkClient() && email !== 'guest') {
+      const keys = lectureIds.map(id => email + ':::' + id);
+      await sbClient.from('watched').delete().in('lecture_id', keys);
+    }
     return false;
   } else {
-    const toInsert = lectureIds
-      .filter(id => !watched.includes(id))
-      .map(id => ({ lecture_id: id }));
-    if (toInsert.length > 0) {
-      await sbClient.from('watched').insert(toInsert);
+    const merged = Array.from(new Set([...watched, ...lectureIds]));
+    try { localStorage.setItem(localKey, JSON.stringify(merged)); } catch(e) {}
+    if (checkClient() && email !== 'guest') {
+      const toInsert = lectureIds
+        .filter(id => !watched.includes(id))
+        .map(id => ({ lecture_id: email + ':::' + id }));
+      if (toInsert.length > 0) {
+        await sbClient.from('watched').insert(toInsert);
+      }
     }
     return true;
   }
 }
 
-async function addWatched(lectureId) {
-  if (!checkClient()) return;
-  await sbClient.from('watched').upsert({ lecture_id: lectureId }, { onConflict: 'lecture_id' });
+async function addWatched(lectureId, userEmail) {
+  const email = (userEmail || getCurrentUserProgressEmail()).toLowerCase().trim();
+  const compositeKey = email + ':::' + lectureId;
+  const localKey = 'cp_watched_ids_' + email;
+
+  try {
+    const list = JSON.parse(localStorage.getItem(localKey) || '[]');
+    if (!list.includes(lectureId)) {
+      list.push(lectureId);
+      localStorage.setItem(localKey, JSON.stringify(list));
+    }
+  } catch (e) {}
+
+  if (!checkClient() || email === 'guest') return;
+  try {
+    await sbClient.from('watched').upsert({ lecture_id: compositeKey }, { onConflict: 'lecture_id' });
+  } catch (e) {}
 }
 
-// --- Starred ---
-async function getStarred() {
-  if (!checkClient()) return [];
-  const { data, error } = await sbClient.from('starred').select('lecture_id');
-  if (error) { console.error('getStarred error:', error); return []; }
-  return (data || []).map(s => s.lecture_id);
+// --- Starred (Personalized per Student) ---
+async function getStarred(userEmail) {
+  const email = (userEmail || getCurrentUserProgressEmail()).toLowerCase().trim();
+  const localKey = 'cp_starred_ids_' + email;
+  let localList = [];
+  try {
+    localList = JSON.parse(localStorage.getItem(localKey) || '[]');
+  } catch (e) {}
+
+  if (!checkClient() || email === 'guest') {
+    return localList;
+  }
+
+  try {
+    const { data, error } = await sbClient
+      .from('starred')
+      .select('lecture_id')
+      .like('lecture_id', email + ':::%');
+
+    if (!error && Array.isArray(data)) {
+      const remoteIds = data.map(s => {
+        const parts = (s.lecture_id || '').split(':::');
+        return parts.length >= 2 ? parts.slice(1).join(':::') : null;
+      }).filter(Boolean);
+
+      const merged = Array.from(new Set([...localList, ...remoteIds]));
+      try {
+        localStorage.setItem(localKey, JSON.stringify(merged));
+      } catch (e) {}
+      return merged;
+    }
+  } catch (e) {
+    console.warn('getStarred error:', e);
+  }
+  return localList;
 }
 
-async function toggleStarredDB(lectureId) {
-  if (!checkClient()) return false;
-  const { data: existing } = await sbClient
-    .from('starred')
-    .select('id')
-    .eq('lecture_id', lectureId)
-    .maybeSingle();
-  
-  if (existing) {
-    await sbClient.from('starred').delete().eq('lecture_id', lectureId);
-    return false;
-  } else {
-    await sbClient.from('starred').insert({ lecture_id: lectureId });
-    return true;
+async function toggleStarredDB(lectureId, userEmail) {
+  const email = (userEmail || getCurrentUserProgressEmail()).toLowerCase().trim();
+  const compositeKey = email + ':::' + lectureId;
+  const localKey = 'cp_starred_ids_' + email;
+
+  let localList = [];
+  try {
+    localList = JSON.parse(localStorage.getItem(localKey) || '[]');
+  } catch (e) {}
+
+  const exists = localList.includes(lectureId);
+  const nextList = exists ? localList.filter(id => id !== lectureId) : [...localList, lectureId];
+  try {
+    localStorage.setItem(localKey, JSON.stringify(nextList));
+  } catch (e) {}
+
+  if (!checkClient() || email === 'guest') {
+    return !exists;
+  }
+
+  try {
+    const { data: existing } = await sbClient
+      .from('starred')
+      .select('id')
+      .eq('lecture_id', compositeKey)
+      .maybeSingle();
+
+    if (existing) {
+      await sbClient.from('starred').delete().eq('lecture_id', compositeKey);
+      return false;
+    } else {
+      await sbClient.from('starred').insert({ lecture_id: compositeKey });
+      return true;
+    }
+  } catch (e) {
+    console.error('toggleStarredDB error:', e);
+    return !exists;
+  }
+}
+
+// Admin / Inspector summary: Get count of lectures watched per student
+async function getAllStudentsProgress() {
+  if (!checkClient()) return {};
+  try {
+    const { data, error } = await sbClient.from('watched').select('lecture_id');
+    if (error || !Array.isArray(data)) return {};
+    const map = {};
+    data.forEach(item => {
+      const parts = (item.lecture_id || '').split(':::');
+      if (parts.length >= 2) {
+        const em = parts[0].toLowerCase().trim();
+        const lecId = parts.slice(1).join(':::');
+        if (!map[em]) map[em] = new Set();
+        map[em].add(lecId);
+      }
+    });
+    const result = {};
+    for (const em in map) {
+      result[em] = map[em].size;
+    }
+    return result;
+  } catch (e) {
+    return {};
   }
 }
 
@@ -1937,8 +2112,12 @@ const LIVE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days (1 week) auto-delete
 
 function purgeOldLiveClasses(list) {
   if (!Array.isArray(list)) return [];
-  // Keep ALL live classes so all historical recorded sessions remain visible
-  return list;
+  return list.filter(c => {
+    const t = String(c.title || '').trim();
+    const st = String(c.status || '').trim();
+    const u = String(c.url || '').trim();
+    return !t.startsWith('__CONFIG_') && !t.includes('CONFIG_CHAPTER_PLAYLISTS') && st !== 'config' && u !== 'config';
+  });
 }
 
 function getLiveClassExpiryInfo(item) {
@@ -2110,6 +2289,37 @@ async function setActiveLiveNow(id, isLiveNow, exclusive = true) {
   return updated;
 }
 
+function isSameLiveId(item, targetId) {
+  if (!item || !targetId) return false;
+  const tStr = String(targetId).trim();
+  const tRaw = tStr.replace(/^imp_/, '');
+  const iId = String(item.id || '').trim();
+  const iRaw = item.raw_id !== undefined && item.raw_id !== null ? String(item.raw_id).trim() : iId.replace(/^imp_/, '');
+  return iId === tStr || iRaw === tRaw || iId === tRaw || ('imp_' + iRaw) === tStr || ('imp_' + iId) === tStr;
+}
+
+function compareLiveClasses(a, b) {
+  // 1. ACTIVE LIVE NOW stream always at the very top
+  if (a.is_live_now && !b.is_live_now) return -1;
+  if (!a.is_live_now && b.is_live_now) return 1;
+
+  // 2. Check timestamps: if created at different times (> 10 minutes apart)
+  const timeA = new Date(a.created_at || a.scheduled_at || 0).getTime();
+  const timeB = new Date(b.created_at || b.scheduled_at || 0).getTime();
+  if (Math.abs(timeA - timeB) > 600000) {
+    return timeB - timeA; // Newer on top
+  }
+
+  // 3. Sequential numeric IDs: higher ID = newer stream
+  const rawA = (a.raw_id !== undefined && a.raw_id !== null) ? Number(a.raw_id) : (String(a.id || '').startsWith('imp_') ? parseInt(String(a.id).replace('imp_', ''), 10) : null);
+  const rawB = (b.raw_id !== undefined && b.raw_id !== null) ? Number(b.raw_id) : (String(b.id || '').startsWith('imp_') ? parseInt(String(b.id).replace('imp_', ''), 10) : null);
+  if (rawA !== null && rawB !== null && !isNaN(rawA) && !isNaN(rawB) && rawA !== rawB) {
+    return rawB - rawA; // Higher ID on top
+  }
+
+  return timeB - timeA;
+}
+
 let _cachedLiveClasses = null;
 let _cachedLiveTime = 0;
 let _inFlightLivePromise = null;
@@ -2144,18 +2354,24 @@ async function getLiveClasses(force = false) {
       try {
         const res = await workerApiCall('/important/all');
         if (res && res.success && Array.isArray(res.items)) {
-          workerList = res.items.map(item => ({
-            id: 'imp_' + item.id,
-            raw_id: item.id,
-            title: item.title,
-            url: item.link,
-            status: item.is_visible === 1 ? 'live' : 'hidden',
-            is_visible: item.is_visible,
-            created_at: item.created_at,
-            section: 'math',
-            instructor: 'Spider Classes',
-            description: 'Live Interactive Session'
-          }));
+          workerList = res.items.map(item => {
+            const rawId = Number(item.id);
+            const isVis = (item.is_visible !== undefined && item.is_visible !== null)
+              ? (item.is_visible === 1 || item.is_visible === true ? 1 : 0)
+              : (item.status === 'hidden' || item.status === 'ended' || item.status === 'offline' ? 0 : 1);
+            return {
+              id: 'imp_' + item.id,
+              raw_id: rawId,
+              title: item.title,
+              url: item.link,
+              status: isVis === 1 ? 'live' : 'hidden',
+              is_visible: isVis,
+              created_at: item.created_at,
+              section: 'math',
+              instructor: 'Spider Classes',
+              description: 'Live Interactive Session'
+            };
+          });
         }
       } catch (e) {
         console.warn('Worker important/all fetch notice:', e.message);
@@ -2167,12 +2383,28 @@ async function getLiveClasses(force = false) {
           const sbPromise = sbClient
             .from('live_classes')
             .select('*')
-            .neq('title', '__CONFIG_ACTIVE_LIVE__')
+            .not('title', 'like', '__CONFIG_%')
+            .neq('status', 'config')
+            .neq('url', 'config')
             .order('created_at', { ascending: false });
           const timeoutPromise = new Promise(resolve => setTimeout(() => resolve({ data: null }), 1200));
           const { data, error } = await Promise.race([sbPromise, timeoutPromise]);
           if (!error && Array.isArray(data)) {
-            workerList = data;
+            workerList = data.map(item => {
+              const rawId = item.raw_id ? Number(item.raw_id) : (String(item.id).startsWith('imp_') ? parseInt(String(item.id).replace('imp_', ''), 10) : null);
+              const isVis = (item.is_visible !== undefined && item.is_visible !== null)
+                ? (item.is_visible === 1 || item.is_visible === true ? 1 : 0)
+                : (item.status === 'hidden' || item.status === 'ended' || item.status === 'offline' ? 0 : 1);
+              return {
+                ...item,
+                raw_id: rawId,
+                is_visible: isVis,
+                status: isVis === 1 ? (item.status === 'hidden' ? 'live' : (item.status || 'live')) : 'hidden',
+                section: item.section || 'math',
+                instructor: item.instructor || 'Spider Classes',
+                description: item.description || 'Live Interactive Session'
+              };
+            });
           }
         } catch (e) {}
       }
@@ -2180,24 +2412,30 @@ async function getLiveClasses(force = false) {
       // 3. Combine worker items + local items (avoid duplicate ids)
       let combined = [...workerList];
       localList.forEach(loc => {
-        if (!combined.some(w => w.id === loc.id || (w.raw_id && loc.raw_id && w.raw_id === loc.raw_id))) {
-          combined.push(loc);
+        if (!combined.some(w => isSameLiveId(w, loc.id))) {
+          const rawId = loc.raw_id ? Number(loc.raw_id) : (String(loc.id).startsWith('imp_') ? parseInt(String(loc.id).replace('imp_', ''), 10) : null);
+          const isVis = (loc.is_visible !== undefined && loc.is_visible !== null)
+            ? (loc.is_visible === 1 || loc.is_visible === true ? 1 : 0)
+            : (loc.status === 'hidden' || loc.status === 'ended' || loc.status === 'offline' ? 0 : 1);
+          combined.push({
+            ...loc,
+            raw_id: rawId,
+            is_visible: isVis,
+            status: isVis === 1 ? (loc.status === 'hidden' ? 'live' : (loc.status || 'live')) : 'hidden'
+          });
         }
       });
 
-      // Filter out internal config entries
-      combined = combined.filter(c => c.title !== '__CONFIG_ACTIVE_LIVE__');
+      // Filter out internal config entries completely
+      combined = combined.filter(c => {
+        const t = String(c.title || '').trim();
+        const st = String(c.status || '').trim();
+        const u = String(c.url || '').trim();
+        return !t.startsWith('__CONFIG_') && !t.includes('CONFIG_CHAPTER_PLAYLISTS') && st !== 'config' && u !== 'config';
+      });
 
       // Purge/clean list (keeps all classes!)
       combined = purgeOldLiveClasses(combined);
-
-      // Initial chronologic sort (newest first)
-      combined.sort((a, b) => {
-        if (a.raw_id && b.raw_id) return b.raw_id - a.raw_id;
-        const timeA = new Date(a.created_at || a.scheduled_at || 0).getTime();
-        const timeB = new Date(b.created_at || b.scheduled_at || 0).getTime();
-        return timeB - timeA;
-      });
 
       // 4. Determine currently active LIVE class (strictly controlled by admin live tick)
       let activeIds = getLocalActiveLiveIds();
@@ -2211,24 +2449,19 @@ async function getLiveClasses(force = false) {
       combined = combined.map(c => {
         const isLiveNow = activeSet.has(c.id) || 
                           (c.raw_id && (activeSet.has(String(c.raw_id)) || activeSet.has('imp_' + c.raw_id)));
-        const status = c.is_visible === 0 ? 'hidden' : (isLiveNow ? 'live' : 'old_live');
+        const isVis = (c.is_visible === 1 || c.is_visible === true || (c.is_visible === undefined && c.status !== 'hidden' && c.status !== 'ended' && c.status !== 'offline')) ? 1 : 0;
+        const status = isVis === 0 ? 'hidden' : (isLiveNow ? 'live' : 'old_live');
         return {
           ...c,
           is_live_now: !!isLiveNow,
+          is_visible: isVis,
           status: status,
-          status_label: c.is_visible === 0 ? 'OFFLINE' : (isLiveNow ? 'LIVE NOW' : 'Old Live Class')
+          status_label: isVis === 0 ? 'OFFLINE' : (isLiveNow ? 'LIVE NOW' : 'Old Live Class')
         };
       });
 
-      // Final sort: ACTIVE LIVE NOW at the very top, then newest created_at
-      combined.sort((a, b) => {
-        if (a.is_live_now && !b.is_live_now) return -1;
-        if (!a.is_live_now && b.is_live_now) return 1;
-        if (a.raw_id && b.raw_id) return b.raw_id - a.raw_id;
-        const timeA = new Date(a.created_at || a.scheduled_at || 0).getTime();
-        const timeB = new Date(b.created_at || b.scheduled_at || 0).getTime();
-        return timeB - timeA;
-      });
+      // Final sort: ACTIVE LIVE NOW at the very top, then newest streams on top
+      combined.sort(compareLiveClasses);
 
       _cachedLiveClasses = combined;
       _cachedLiveTime = now;
@@ -2245,7 +2478,7 @@ async function getLiveClasses(force = false) {
 
 async function getActiveLiveClasses() {
   const all = await getLiveClasses();
-  return all.filter(c => c.is_visible !== 0 && c.status !== 'hidden');
+  return all.filter(c => c.is_visible !== 0 && c.status !== 'hidden' && c.status !== 'ended' && c.status !== 'offline');
 }
 
 async function getLiveClassById(id) {
@@ -2401,12 +2634,31 @@ async function updateLiveClass(id, updates) {
 
   // 2. Local update
   const local = getLiveLocal().map(c => {
-    if (c.id === id || (c.raw_id && c.raw_id === rawId)) {
+    if (isSameLiveId(c, id)) {
       return { ...c, ...updates, title: newTitle, url: newUrl, is_visible: newVis, status: newVis === 1 ? (c.is_live_now ? 'live' : 'old_live') : 'hidden' };
     }
     return c;
   });
   saveLiveLocal(local);
+
+  // 2b. Sync memory cache & local storage cache (CRITICAL for instant 0ms update)
+  if (Array.isArray(_cachedLiveClasses)) {
+    _cachedLiveClasses = _cachedLiveClasses.map(c => {
+      if (isSameLiveId(c, id)) {
+        return {
+          ...c,
+          ...updates,
+          title: newTitle,
+          url: newUrl,
+          is_visible: newVis,
+          status: newVis === 1 ? (c.is_live_now ? 'live' : 'old_live') : 'hidden',
+          status_label: newVis === 0 ? 'OFFLINE' : (c.is_live_now ? 'LIVE NOW' : 'Old Live Class')
+        };
+      }
+      return c;
+    });
+    saveLocalJson(CACHE_LIVE_CLASSES_KEY, _cachedLiveClasses);
+  }
 
   // 3. Supabase update
   try {
@@ -2416,6 +2668,13 @@ async function updateLiveClass(id, updates) {
         url: newUrl,
         status: newVis === 1 ? 'live' : 'hidden'
       }).eq('id', id);
+      if (rawId && id.startsWith('imp_')) {
+        await sbClient.from('live_classes').update({
+          title: newTitle,
+          url: newUrl,
+          status: newVis === 1 ? 'live' : 'hidden'
+        }).eq('id', String(rawId));
+      }
     }
   } catch (e) {}
 
@@ -2424,7 +2683,16 @@ async function updateLiveClass(id, updates) {
 }
 
 async function setLiveClassStatus(id, status, isVisible = null) {
-  const rawId = id.startsWith('imp_') ? parseInt(id.replace('imp_', ''), 10) : null;
+  const idStr = String(id || '').trim();
+  const rawId = idStr.startsWith('imp_') 
+    ? parseInt(idStr.replace('imp_', ''), 10) 
+    : (!isNaN(Number(idStr)) && Number(idStr) > 0 ? Number(idStr) : null);
+
+  const vis = isVisible !== null 
+    ? (isVisible === 1 || isVisible === true ? 1 : 0) 
+    : (status === 'hidden' || status === 'ended' || status === 'offline' ? 0 : 1);
+  const finalStatus = vis === 1 ? 'live' : 'hidden';
+
   if (rawId) {
     try {
       await workerApiCall('/important/toggle', {
@@ -2437,19 +2705,39 @@ async function setLiveClassStatus(id, status, isVisible = null) {
   }
 
   const local = getLiveLocal().map(c => {
-    if (c.id === id || (c.raw_id && c.raw_id === rawId)) {
-      const vis = isVisible !== null ? isVisible : (status === 'live' ? 1 : 0);
-      return { ...c, status, is_visible: vis };
+    if (isSameLiveId(c, idStr)) {
+      return { ...c, status: finalStatus, is_visible: vis };
     }
     return c;
   });
   saveLiveLocal(local);
 
+  // Sync memory cache & local cache
+  if (Array.isArray(_cachedLiveClasses)) {
+    _cachedLiveClasses = _cachedLiveClasses.map(c => {
+      if (isSameLiveId(c, idStr)) {
+        return {
+          ...c,
+          status: vis === 1 ? (c.is_live_now ? 'live' : 'old_live') : 'hidden',
+          is_visible: vis,
+          status_label: vis === 0 ? 'OFFLINE' : (c.is_live_now ? 'LIVE NOW' : 'Old Live Class')
+        };
+      }
+      return c;
+    });
+    saveLocalJson(CACHE_LIVE_CLASSES_KEY, _cachedLiveClasses);
+  }
+
   try {
     if (checkClient()) {
-      await sbClient.from('live_classes').update({ status }).eq('id', id);
+      await sbClient.from('live_classes').update({ status: finalStatus }).eq('id', idStr);
+      if (rawId && idStr.startsWith('imp_')) {
+        await sbClient.from('live_classes').update({ status: finalStatus }).eq('id', String(rawId));
+      }
     }
-  } catch (e) {}
+  } catch (e) {
+    console.warn('Supabase setLiveClassStatus error:', e);
+  }
 
   return true;
 }
@@ -3345,11 +3633,32 @@ async function validateUserSession() {
       if (checkClient()) {
         const { data: dbUser } = await sbClient
           .from('app_users')
-          .select('status, current_session_id')
+          .select('name, status, current_session_id')
           .eq('email', user.email.toLowerCase().trim())
           .maybeSingle();
 
         if (dbUser) {
+          // If student name was edited by admin, sync session and page headers immediately!
+          if (dbUser.name && dbUser.name !== user.name) {
+            user.name = dbUser.name;
+            saveUserSession(user);
+            try {
+              const nameMap = JSON.parse(localStorage.getItem('sp_student_names') || '{}');
+              nameMap[user.email.toLowerCase().trim()] = dbUser.name;
+              localStorage.setItem('sp_student_names', JSON.stringify(nameMap));
+
+              const initial = (user.name ? user.name.charAt(0) : 'U').toUpperCase();
+              const initialEl = document.getElementById('userInitialBadge');
+              const nameEl = document.getElementById('userNameBadge');
+              const drawerInit = document.getElementById('drawerUserInitial');
+              const drawerNm = document.getElementById('drawerUserName');
+              if (initialEl) initialEl.textContent = initial;
+              if (nameEl) nameEl.textContent = user.name;
+              if (drawerInit) drawerInit.textContent = initial;
+              if (drawerNm) drawerNm.textContent = user.name;
+            } catch (e) {}
+          }
+
           if (dbUser.status === 'rejected') {
             return {
               valid: false,
@@ -3762,6 +4071,37 @@ async function updateStudentProfile(userId, { name, email, oldEmail, role, statu
     } catch (e) {
       console.warn('Supabase profile update exception:', e.message);
     }
+
+    // 2b. LIVE SYNC: Update all student messages in Supabase chat_messages table!
+    try {
+      // Update sender_name on all past messages sent by this student
+      await sbClient
+        .from('chat_messages')
+        .update({ sender_name: cleanName })
+        .eq('email', cleanEmail);
+
+      if (cleanOldEmail && cleanOldEmail !== cleanEmail) {
+        await sbClient
+          .from('chat_messages')
+          .update({ sender_name: cleanName, email: cleanEmail })
+          .eq('email', cleanOldEmail);
+      }
+
+      // Also update receiver_name if this student was the receiver
+      await sbClient
+        .from('chat_messages')
+        .update({ receiver_name: cleanName })
+        .eq('receiver_email', cleanEmail);
+
+      if (cleanOldEmail && cleanOldEmail !== cleanEmail) {
+        await sbClient
+          .from('chat_messages')
+          .update({ receiver_name: cleanName, receiver_email: cleanEmail })
+          .eq('receiver_email', cleanOldEmail);
+      }
+    } catch (chatErr) {
+      console.warn('Supabase chat_messages sync error:', chatErr.message);
+    }
   }
 
   // 3. LIVE SYNC: Cloudflare Worker database (/users)
@@ -3796,15 +4136,54 @@ async function updateStudentProfile(userId, { name, email, oldEmail, role, statu
     console.warn('Cloudflare Worker live sync notice:', e.message);
   }
 
-  // 4. Save in local persistent overrides
-  const overrides = JSON.parse(localStorage.getItem('sp_user_overrides') || '{}');
-  const overrideData = { id: userId, name: cleanName, email: cleanEmail, role: cleanRole, status: cleanStatus };
-  if (userId) overrides[userId] = overrideData;
-  overrides[cleanEmail] = overrideData;
-  if (cleanOldEmail && cleanOldEmail !== cleanEmail) {
-    overrides[cleanOldEmail] = overrideData;
-  }
-  localStorage.setItem('sp_user_overrides', JSON.stringify(overrides));
+  // 4. Save in local persistent overrides & global student names map
+  try {
+    const overrides = JSON.parse(localStorage.getItem('sp_user_overrides') || '{}');
+    const overrideData = { id: userId, name: cleanName, email: cleanEmail, role: cleanRole, status: cleanStatus };
+    if (userId) overrides[userId] = overrideData;
+    overrides[cleanEmail] = overrideData;
+    if (cleanOldEmail && cleanOldEmail !== cleanEmail) {
+      overrides[cleanOldEmail] = overrideData;
+    }
+    localStorage.setItem('sp_user_overrides', JSON.stringify(overrides));
+
+    const nameMap = JSON.parse(localStorage.getItem('sp_student_names') || '{}');
+    nameMap[cleanEmail] = cleanName;
+    if (cleanOldEmail && cleanOldEmail !== cleanEmail) nameMap[cleanOldEmail] = cleanName;
+    localStorage.setItem('sp_student_names', JSON.stringify(nameMap));
+
+    // Update local chat messages in sp_chat_messages
+    const localChat = getLocalChatMessages();
+    let chatChanged = false;
+    localChat.forEach(m => {
+      const em = (m.email || '').toLowerCase().trim();
+      if (em === cleanEmail || (cleanOldEmail && em === cleanOldEmail)) {
+        m.sender_name = cleanName;
+        m.email = cleanEmail;
+        chatChanged = true;
+      }
+      const rec = (m.receiver_email || '').toLowerCase().trim();
+      if (rec === cleanEmail || (cleanOldEmail && rec === cleanOldEmail)) {
+        m.receiver_name = cleanName;
+        m.receiver_email = cleanEmail;
+        chatChanged = true;
+      }
+    });
+    if (chatChanged) saveLocalChatMessages(localChat);
+
+    // Update active students list
+    const online = JSON.parse(localStorage.getItem('online_students') || '[]');
+    let onlineChanged = false;
+    online.forEach(u => {
+      const em = (u.email || '').toLowerCase().trim();
+      if (em === cleanEmail || (cleanOldEmail && em === cleanOldEmail)) {
+        u.name = cleanName;
+        u.email = cleanEmail;
+        onlineChanged = true;
+      }
+    });
+    if (onlineChanged) localStorage.setItem('online_students', JSON.stringify(online));
+  } catch (e) {}
 
   // 5. Update cached users list
   try {
@@ -3848,7 +4227,15 @@ function getStudentNameByEmail(email, fallbackName) {
     }
   } catch (e) {}
 
-  // 2. Check cached users
+  // 2. Check global student names map
+  try {
+    const nameMap = JSON.parse(localStorage.getItem('sp_student_names') || '{}');
+    if (nameMap[clean] && nameMap[clean].toLowerCase() !== 'student') {
+      return nameMap[clean];
+    }
+  } catch (e) {}
+
+  // 3. Check cached users
   try {
     const cached = JSON.parse(localStorage.getItem('cp_cached_users') || '[]');
     const found = cached.find(u => (u.email || '').toLowerCase().trim() === clean);
@@ -3857,12 +4244,20 @@ function getStudentNameByEmail(email, fallbackName) {
     }
   } catch (e) {}
 
-  // 3. Check fallback name
+  // 4. Check current active session
+  try {
+    const cur = getCurrentUser();
+    if (cur && cur.email && cur.email.toLowerCase().trim() === clean && cur.name && cur.name.toLowerCase() !== 'student') {
+      return cur.name;
+    }
+  } catch (e) {}
+
+  // 5. Check fallback name
   if (fallbackName && fallbackName.toLowerCase() !== 'student' && fallbackName.toLowerCase() !== 'administrator') {
     return fallbackName;
   }
 
-  // 4. Clean email handle (e.g. "rohit.sharma" -> "Rohit Sharma")
+  // 6. Clean email handle (e.g. "rohit.sharma" -> "Rohit Sharma")
   const prefix = clean.split('@')[0];
   if (prefix.includes('.') || prefix.includes('_')) {
     return prefix.split(/[._]/).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
@@ -4516,8 +4911,8 @@ async function syncCloudChapterPlaylists() {
 
   try {
     let cloudMap = null;
-    // 1. Try local server endpoint if on port 8085
-    if (typeof window !== 'undefined' && window.location.port === '8085') {
+    // Try server endpoint if on http/https (local or cloud)
+    if (typeof window !== 'undefined' && window.location && window.location.protocol.startsWith('http')) {
       try {
         const res = await fetch('/api-local/chapter-playlists');
         if (res.ok) {
@@ -4525,20 +4920,6 @@ async function syncCloudChapterPlaylists() {
           if (json && typeof json === 'object' && Object.keys(json).length > 0) {
             cloudMap = json;
           }
-        }
-      } catch (e) {}
-    }
-
-    // 2. Try Supabase cloud config
-    if (!cloudMap && checkClient()) {
-      try {
-        const { data, error } = await sbClient
-          .from('live_classes')
-          .select('description')
-          .eq('title', '__CONFIG_CHAPTER_PLAYLISTS__')
-          .limit(1);
-        if (!error && Array.isArray(data) && data.length > 0 && data[0].description) {
-          cloudMap = JSON.parse(data[0].description);
         }
       } catch (e) {}
     }
@@ -4566,7 +4947,7 @@ async function saveChapterPlaylistsToCloud(map) {
   if (!map || typeof map !== 'object') return;
   const jsonStr = JSON.stringify(map);
 
-  if (typeof window !== 'undefined' && window.location.port === '8085') {
+  if (typeof window !== 'undefined' && window.location && window.location.protocol.startsWith('http')) {
     try {
       fetch('/api-local/chapter-playlists', {
         method: 'POST',
@@ -4574,35 +4955,6 @@ async function saveChapterPlaylistsToCloud(map) {
         body: jsonStr
       }).catch(() => {});
     } catch (e) {}
-  }
-
-  if (checkClient()) {
-    try {
-      const { data } = await sbClient
-        .from('live_classes')
-        .select('id')
-        .eq('title', '__CONFIG_CHAPTER_PLAYLISTS__')
-        .limit(1);
-
-      if (data && data.length > 0) {
-        await sbClient
-          .from('live_classes')
-          .update({ description: jsonStr, scheduled_at: new Date().toISOString() })
-          .eq('title', '__CONFIG_CHAPTER_PLAYLISTS__');
-      } else {
-        await sbClient
-          .from('live_classes')
-          .insert({
-            title: '__CONFIG_CHAPTER_PLAYLISTS__',
-            url: 'config',
-            status: 'config',
-            description: jsonStr,
-            scheduled_at: new Date().toISOString()
-          });
-      }
-    } catch (e) {
-      console.warn('saveChapterPlaylistsToCloud notice:', e);
-    }
   }
 }
 
@@ -5068,12 +5420,16 @@ async function getChatMessages(filter = 'all') {
     messages = getLocalChatMessages();
   }
 
-  // Deduplicate by message ID to prevent any duplicate display
+  // Deduplicate by message ID to prevent any duplicate display & auto-resolve latest student names
   const seen = new Set();
   const deduped = [];
   for (const m of messages) {
     if (m && m.id && !seen.has(m.id)) {
       seen.add(m.id);
+      // Real-time student name normalization across all chat messages
+      if (m.email && m.role !== 'admin' && !m.email.toLowerCase().includes('admin')) {
+        m.sender_name = getStudentNameByEmail(m.email, m.sender_name);
+      }
       deduped.push(m);
     }
   }
@@ -5192,17 +5548,89 @@ async function clearAllChatMessages() {
   return { success: true };
 }
 
+// ===== 👥 REAL-TIME ONLINE PRESENCE ENGINE =====
+let _sbPresenceChannel = null;
+let _sbAdminPresenceChannel = null;
+let _sbPresenceUsers = [];
+const ADMIN_EMAILS_FILTER = new Set(['stackbyujjwal@gmail.com', 'mj5000500@gmail.com']);
+
+function isLegitStudent(user) {
+  if (!user || !user.email) return false;
+  const cleanEmail = (user.email || '').toLowerCase().trim();
+  const role = (user.role || '').toLowerCase().trim();
+  if (role === 'admin' || ADMIN_EMAILS_FILTER.has(cleanEmail)) return false;
+  return true;
+}
+
+function initSupabaseStudentPresence(user) {
+  if (!isLegitStudent(user)) return;
+  if (!checkClient() || _sbPresenceChannel) return;
+  try {
+    const cleanEmail = (user.email || '').toLowerCase().trim();
+    _sbPresenceChannel = sbClient.channel('study-portal-presence', {
+      config: { presence: { key: cleanEmail } }
+    });
+    _sbPresenceChannel.subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        try {
+          await _sbPresenceChannel.track({
+            email: cleanEmail,
+            name: user.name || cleanEmail.split('@')[0],
+            role: 'student',
+            onlineAt: Date.now()
+          });
+        } catch (e) {}
+      }
+    });
+  } catch (e) {}
+}
+
+function initSupabaseAdminPresence(callback) {
+  if (!checkClient() || _sbAdminPresenceChannel) return;
+  try {
+    _sbAdminPresenceChannel = sbClient.channel('study-portal-presence');
+    _sbAdminPresenceChannel.on('presence', { event: 'sync' }, () => {
+      const state = _sbAdminPresenceChannel.presenceState();
+      const users = [];
+      for (const key of Object.keys(state)) {
+        const items = state[key] || [];
+        items.forEach(it => {
+          const em = (it.email || key || '').toLowerCase().trim();
+          if (em && !ADMIN_EMAILS_FILTER.has(em) && it.role !== 'admin') {
+            users.push({
+              email: em,
+              name: it.name || em.split('@')[0],
+              role: 'student',
+              online: true,
+              source: 'supabase',
+              lastSeen: it.onlineAt || Date.now()
+            });
+          }
+        });
+      }
+      _sbPresenceUsers = users;
+      if (typeof callback === 'function') callback(users);
+    });
+    _sbAdminPresenceChannel.subscribe();
+  } catch (e) {}
+}
+
 function recordStudentHeartbeat(user) {
-  if (!user || !user.email) return;
+  if (!isLegitStudent(user)) return;
+  const cleanEmail = (user.email || '').toLowerCase().trim();
+  const now = Date.now();
+  const studentName = user.name || (typeof getStudentNameByEmail === 'function' ? getStudentNameByEmail(cleanEmail, '') : '') || cleanEmail.split('@')[0];
+  const currentPage = typeof window !== 'undefined' ? (window.location.pathname.split('/').pop() || 'portal') : 'portal';
+
+  // 1. Save to LocalStorage (Instant same-browser tab tracking)
   try {
     const list = JSON.parse(localStorage.getItem(ONLINE_STORAGE_KEY) || '[]');
-    const now = Date.now();
-    const cleanEmail = user.email.toLowerCase();
-    const existing = list.findIndex(u => u.email.toLowerCase() === cleanEmail);
+    const existing = list.findIndex(u => (u.email || '').toLowerCase() === cleanEmail);
     const item = {
-      name: user.name || cleanEmail.split('@')[0],
+      name: studentName,
       email: cleanEmail,
-      role: user.role || 'student',
+      role: 'student',
+      page: currentPage,
       lastSeen: now
     };
     if (existing >= 0) {
@@ -5210,8 +5638,48 @@ function recordStudentHeartbeat(user) {
     } else {
       list.push(item);
     }
-    const active = list.filter(u => now - u.lastSeen < 120000);
+    const active = list.filter(u => now - u.lastSeen < 60000);
     localStorage.setItem(ONLINE_STORAGE_KEY, JSON.stringify(active));
+  } catch (e) {}
+
+  // 2. Broadcast to Central Server Presence Store (Multi-browser / cross-device)
+  try {
+    if (typeof fetch !== 'undefined') {
+      const origin = (typeof window !== 'undefined' && window.location && window.location.origin && window.location.origin !== 'null' && !window.location.origin.startsWith('file')) ? window.location.origin : 'http://localhost:8085';
+      fetch(`${origin}/api-local/heartbeat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: cleanEmail,
+          name: studentName,
+          role: 'student',
+          page: currentPage
+        }),
+        keepalive: true
+      }).catch(() => {});
+    }
+  } catch (e) {}
+
+  // 3. Connect Supabase Realtime Presence channel if available
+  try {
+    initSupabaseStudentPresence(user);
+  } catch (e) {}
+
+  // 4. Supabase Cloud DB Heartbeat (Throttled to every 30s)
+  try {
+    if (typeof window !== 'undefined') {
+      if (!window._lastSbPingMap) window._lastSbPingMap = new Map();
+      const lastDbPing = window._lastSbPingMap.get(cleanEmail) || 0;
+      if (now - lastDbPing > 30000 && checkClient()) {
+        window._lastSbPingMap.set(cleanEmail, now);
+        sbClient
+          .from('app_users')
+          .update({ last_login: new Date().toISOString() })
+          .eq('email', cleanEmail)
+          .then(() => {})
+          .catch(() => {});
+      }
+    }
   } catch (e) {}
 }
 
@@ -5219,8 +5687,10 @@ function getOnlineStudents() {
   try {
     const list = JSON.parse(localStorage.getItem(ONLINE_STORAGE_KEY) || '[]');
     const now = Date.now();
-    const active = list.filter(u => now - u.lastSeen < 120000);
-    return active;
+    return list.filter(u => {
+      const em = (u.email || '').toLowerCase().trim();
+      return !ADMIN_EMAILS_FILTER.has(em) && u.role !== 'admin' && (now - (u.lastSeen || 0) < 60000);
+    });
   } catch (e) {
     return [];
   }
@@ -5229,47 +5699,165 @@ function getOnlineStudents() {
 async function getUnifiedOnlineStudents() {
   const map = new Map();
 
-  // 1. Fetch real-time active users from Cloudflare Worker
+  // 1. Fetch real-time active users from Local Server Presence Engine
   try {
-    const workerList = await getOnlineStudentsFromWorker();
-    if (Array.isArray(workerList)) {
-      workerList.forEach(u => {
-        if (u && u.email) {
-          const em = u.email.toLowerCase().trim();
-          map.set(em, {
-            email: em,
-            name: u.name || em.split('@')[0],
-            role: 'student',
-            online: true,
-            source: 'cloud'
-          });
-        }
-      });
+    const origin = (typeof window !== 'undefined' && window.location && window.location.origin && window.location.origin !== 'null' && !window.location.origin.startsWith('file')) ? window.location.origin : 'http://localhost:8085';
+    const res = await fetch(`${origin}/api-local/online-students`, { cache: 'no-store' });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.success && Array.isArray(data.users)) {
+        data.users.forEach(u => {
+          if (u && u.email) {
+            const em = u.email.toLowerCase().trim();
+            if (!ADMIN_EMAILS_FILTER.has(em) && u.role !== 'admin') {
+              map.set(em, {
+                email: em,
+                name: u.name || em.split('@')[0],
+                role: 'student',
+                page: u.page || 'portal',
+                online: true,
+                source: 'server',
+                lastSeen: u.lastSeen || Date.now()
+              });
+            }
+          }
+        });
+      }
     }
   } catch (e) {}
 
-  // 2. Merge local heartbeat active students
+  // 2. Merge Supabase Realtime Presence channel state
+  if (Array.isArray(_sbPresenceUsers) && _sbPresenceUsers.length > 0) {
+    _sbPresenceUsers.forEach(u => {
+      if (u && u.email) {
+        const em = u.email.toLowerCase().trim();
+        if (!ADMIN_EMAILS_FILTER.has(em) && u.role !== 'admin') {
+          const existing = map.get(em);
+          map.set(em, {
+            email: em,
+            name: (existing && existing.name) || u.name || em.split('@')[0],
+            role: 'student',
+            page: (existing && existing.page) || 'portal',
+            online: true,
+            source: existing ? existing.source : 'supabase_realtime',
+            lastSeen: (existing && existing.lastSeen) || Date.now()
+          });
+        }
+      }
+    });
+  }
+
+  // 3. Merge Supabase Cloud Database Active Heartbeats (last_login in last 75s)
+  try {
+    if (checkClient()) {
+      const threshold = new Date(Date.now() - 75000).toISOString();
+      const { data: recentUsers } = await sbClient
+        .from('app_users')
+        .select('id, name, email, role, last_login')
+        .gte('last_login', threshold);
+      if (Array.isArray(recentUsers)) {
+        recentUsers.forEach(u => {
+          if (u && u.email) {
+            const em = u.email.toLowerCase().trim();
+            if (!ADMIN_EMAILS_FILTER.has(em) && u.role !== 'admin') {
+              const existing = map.get(em);
+              map.set(em, {
+                email: em,
+                name: (existing && existing.name) || u.name || em.split('@')[0],
+                role: 'student',
+                page: (existing && existing.page) || 'portal',
+                online: true,
+                source: existing ? existing.source : 'supabase_cloud',
+                lastSeen: (existing && existing.lastSeen) || (u.last_login ? new Date(u.last_login).getTime() : Date.now())
+              });
+            }
+          }
+        });
+      }
+    }
+  } catch (e) {}
+
+  // 4. Merge LocalStorage active heartbeats (same-browser instant fallback)
   try {
     const local = getOnlineStudents();
     if (Array.isArray(local)) {
       local.forEach(u => {
         if (u && u.email) {
           const em = u.email.toLowerCase().trim();
-          const existing = map.get(em);
-          map.set(em, {
-            email: em,
-            name: (existing && existing.name) || u.name || em.split('@')[0],
-            role: u.role || 'student',
-            online: true,
-            source: existing ? 'both' : 'local',
-            lastSeen: u.lastSeen || Date.now()
-          });
+          if (!ADMIN_EMAILS_FILTER.has(em) && u.role !== 'admin') {
+            const existing = map.get(em);
+            map.set(em, {
+              email: em,
+              name: (existing && existing.name) || u.name || em.split('@')[0],
+              role: 'student',
+              page: (existing && existing.page) || u.page || 'portal',
+              online: true,
+              source: existing ? existing.source : 'local',
+              lastSeen: (existing && existing.lastSeen) || u.lastSeen || Date.now()
+            });
+          }
+        }
+      });
+    }
+  } catch (e) {}
+
+  // 5. Merge Cloudflare Worker active users (Optional cloud fallback if available)
+  try {
+    const workerList = await getOnlineStudentsFromWorker();
+    if (Array.isArray(workerList)) {
+      workerList.forEach(u => {
+        if (u && u.email) {
+          const em = u.email.toLowerCase().trim();
+          if (!ADMIN_EMAILS_FILTER.has(em) && u.role !== 'admin') {
+            const existing = map.get(em);
+            map.set(em, {
+              email: em,
+              name: (existing && existing.name) || u.name || em.split('@')[0],
+              role: 'student',
+              page: (existing && existing.page) || 'portal',
+              online: true,
+              source: existing ? existing.source : 'cloud',
+              lastSeen: (existing && existing.lastSeen) || Date.now()
+            });
+          }
         }
       });
     }
   } catch (e) {}
 
   return Array.from(map.values());
+}
+
+// Global automated client-side presence heartbeat loop
+if (typeof window !== 'undefined') {
+  (function initGlobalPresenceHeartbeat() {
+    function firePresencePing() {
+      try {
+        if (typeof getCurrentUser !== 'function') return;
+        const user = getCurrentUser();
+        if (user && user.email && isLegitStudent(user)) {
+          recordStudentHeartbeat(user);
+        }
+      } catch (e) {}
+    }
+
+    setTimeout(firePresencePing, 800);
+    setInterval(firePresencePing, 12000);
+
+    window.addEventListener('focus', firePresencePing);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') firePresencePing();
+    });
+
+    window.addEventListener('beforeunload', () => {
+      try {
+        const user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+        if (user && user.email && isLegitStudent(user) && navigator.sendBeacon) {
+          navigator.sendBeacon('/api-local/logout-student', JSON.stringify({ email: user.email }));
+        }
+      } catch (e) {}
+    });
+  })();
 }
 
 // ===== TOAST UTILITY =====
@@ -5320,7 +5908,7 @@ async function cleanupAllLectureDuplicates() {
     if (purgedCount > 0) {
       invalidatePlaylistsCache();
       await getAllLectures(true);
-      console.log(`[Spider Player] Cleaned up ${purgedCount} duplicate lectures.`);
+      console.log(`[Study Portal] Cleaned up ${purgedCount} duplicate lectures.`);
     }
     return { success: true, purgedCount };
   } catch (err) {
@@ -5433,6 +6021,100 @@ async function syncAllWorkerDataToSupabase(silent = true) {
   }
 }
 
+// ===== 🌓 ULTRA-PREMIUM THEME SYSTEM (DARK & LIGHT MODE) =====
+const THEME_STORAGE_KEY = 'sp_theme';
+
+function getTheme() {
+  try {
+    const saved = localStorage.getItem(THEME_STORAGE_KEY);
+    if (saved === 'dark' || saved === 'light') return saved;
+  } catch (e) {}
+  if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    return 'dark';
+  }
+  return 'light';
+}
+
+function triggerThemeTransition() {
+  // No-op: Wildcard transitions removed to guarantee 1-frame atomic paint without staggered lag or jitter
+}
+
+function setTheme(theme, isUserAction = false) {
+  const clean = theme === 'dark' ? 'dark' : 'light';
+  if (typeof document !== 'undefined' && document.documentElement) {
+    document.documentElement.setAttribute('data-theme', clean);
+  }
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, clean);
+  } catch (e) {}
+
+  updateThemeUI(clean);
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('themechange', { detail: { theme: clean } }));
+  }
+  return clean;
+}
+
+function toggleTheme() {
+  const current = (typeof document !== 'undefined' && document.documentElement.getAttribute('data-theme')) || getTheme();
+  const next = current === 'dark' ? 'light' : 'dark';
+  return setTheme(next, true);
+}
+
+function updateThemeUI(theme) {
+  if (typeof document === 'undefined' || typeof document.getElementById !== 'function') return;
+  const isDark = theme === 'dark';
+
+  const drawerText = document.getElementById('drawerThemeText');
+  const drawerBadge = document.getElementById('drawerThemeBadge');
+  if (drawerText) drawerText.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+  if (drawerBadge) {
+    drawerBadge.textContent = isDark ? 'Dark ON' : 'Off';
+    drawerBadge.style.background = isDark ? 'rgba(59, 130, 246, 0.2)' : 'var(--bg-3)';
+    drawerBadge.style.color = isDark ? '#60a5fa' : 'var(--text-3)';
+  }
+
+  document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
+    btn.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+    btn.setAttribute('title', isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode');
+  });
+}
+
+function initTheme() {
+  const current = getTheme();
+  if (typeof document !== 'undefined' && document.documentElement) {
+    document.documentElement.setAttribute('data-theme', current);
+  }
+  updateThemeUI(current);
+
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    try {
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        if (!localStorage.getItem(THEME_STORAGE_KEY)) {
+          setTheme(e.matches ? 'dark' : 'light');
+        }
+      });
+    } catch (e) {}
+  }
+}
+
+// Auto-initialize theme on load
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initTheme);
+  } else {
+    initTheme();
+  }
+}
+
+if (typeof window !== 'undefined') {
+  window.toggleTheme = toggleTheme;
+  window.setTheme = setTheme;
+  window.getTheme = getTheme;
+  window.initTheme = initTheme;
+}
+
 // Export to window
 window.DB = {
   syncAllWorkerDataToSupabase,
@@ -5441,8 +6123,10 @@ window.DB = {
   getLectures, getAllLectures, addLecture, updateLecture, deleteLectureDB, deleteLecturesByChapter, deleteLecturesByIds,
   addLecturesBatch,
   getWatched, toggleWatchedDB, markAllWatchedDB, addWatched,
-  getStarred, toggleStarredDB,
+  getStarred, toggleStarredDB, getAllStudentsProgress,
   getLectureById,
+  // Theme Controls
+  getTheme, setTheme, toggleTheme, initTheme,
   // YouTube Utilities (Synced from old admin)
   extractYouTubePlaylistId, extractYouTubeVideoId, parseBulkYouTubeVideos, fetchYouTubePlaylistVideos,
   fetchYouTubeBatchVideos, parseBulkLinksOrPlaylist, DEFAULT_YT_API_KEY, testYouTubeConnection,
@@ -5453,7 +6137,7 @@ window.DB = {
   // Cache Fast Load Getters
   getCachedSubjects, getCachedChapters, getCachedLectures, getCachedLiveClasses,
   // Live Classes
-  getLiveClasses, getActiveLiveClasses, getLiveClassById, getActiveLiveNowIds, setActiveLiveNow, addLiveClass, updateLiveClass, setLiveClassStatus, deleteLiveClass, getLiveClassExpiryInfo, LIVE_MAX_AGE_MS,
+  getLiveClasses, getActiveLiveClasses, getLiveClassById, getActiveLiveNowIds, setActiveLiveNow, addLiveClass, updateLiveClass, setLiveClassStatus, deleteLiveClass, getLiveClassExpiryInfo, LIVE_MAX_AGE_MS, compareLiveClasses, isSameLiveId,
   // User Auth, Tokens, Sessions, Passwords & Approvals
   registerUser, generateAccessKey, loginUser, getCurrentUser, logoutUser, adminLogin, adminVerifySession,
   validateUserSession, handleSessionConflict, startSessionWatcher, generateSessionId, hashPassword,
@@ -5466,6 +6150,7 @@ window.DB = {
   // Chat Monitor & Active Students (Synced from old admin)
   getChatMessages, sendChatMessage, deleteChatMessage, clearAllChatMessages, purgeOldLiveChatMessages, LIVE_CHAT_MAX_AGE_MS,
   recordStudentHeartbeat, getOnlineStudents, getUnifiedOnlineStudents,
+  initSupabaseStudentPresence, initSupabaseAdminPresence,
   showToast,
   SecurityVault,
   SpiderShield,
