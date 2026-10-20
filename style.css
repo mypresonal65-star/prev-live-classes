@@ -3237,6 +3237,221 @@ select option {
   transform: scale(1.06);
 }
 
+/* 🔴 LIVE CLASS POPUP MODAL (Auto-alert on student login) */
+.live-popup-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 99998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: livePopupFadeIn 0.25s ease-out;
+}
+
+@keyframes livePopupFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.live-popup-backdrop.hiding {
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+  pointer-events: none;
+}
+
+.live-popup-backdrop.hiding .live-popup-card {
+  transform: scale(0.92) translateY(12px);
+  transition: transform 0.3s ease-out;
+}
+
+.live-popup-card {
+  position: relative;
+  background: #ffffff;
+  border: 1.5px solid rgba(239, 68, 68, 0.35);
+  border-radius: 20px;
+  max-width: 460px;
+  width: 100%;
+  padding: 24px 22px 20px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35), 0 0 35px rgba(239, 68, 68, 0.18);
+  animation: livePopupSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+@keyframes livePopupSlideUp {
+  from { opacity: 0; transform: scale(0.92) translateY(18px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+[data-theme="dark"] .live-popup-card {
+  background: #0f172a;
+  border-color: rgba(239, 68, 68, 0.45);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7), 0 0 45px rgba(239, 68, 68, 0.25);
+}
+
+.live-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.live-popup-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 4px 11px;
+  border-radius: 20px;
+}
+
+[data-theme="dark"] .live-popup-badge {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #f87171;
+}
+
+.live-popup-close-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  padding: 4px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.live-popup-close-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+[data-theme="dark"] .live-popup-close-btn:hover {
+  background: #1e293b;
+  color: #ffffff;
+}
+
+.live-popup-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1.35;
+  color: #0f172a;
+  margin-bottom: 8px;
+}
+
+[data-theme="dark"] .live-popup-title {
+  color: #f8fafc;
+}
+
+.live-popup-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+[data-theme="dark"] .live-popup-meta {
+  color: #94a3b8;
+}
+
+.live-popup-platform {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 700;
+}
+
+[data-theme="dark"] .live-popup-platform {
+  background: #1e293b;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+
+.live-popup-desc {
+  font-size: 0.86rem;
+  color: #475569;
+  margin: 0 0 20px;
+  line-height: 1.45;
+}
+
+[data-theme="dark"] .live-popup-desc {
+  color: #94a3b8;
+}
+
+.live-popup-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn-live-popup-dismiss {
+  background: transparent;
+  border: 1.5px solid #cbd5e1;
+  color: #475569;
+  font-size: 0.86rem;
+  font-weight: 700;
+  padding: 9px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-live-popup-dismiss:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+[data-theme="dark"] .btn-live-popup-dismiss {
+  border-color: #334155;
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .btn-live-popup-dismiss:hover {
+  background: #1e293b;
+  color: #f8fafc;
+}
+
+.btn-live-popup-join {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 10px 22px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
+  transition: all 0.2s ease;
+}
+
+.btn-live-popup-join:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 22px rgba(239, 68, 68, 0.55);
+}
+
+.btn-live-popup-join:active {
+  transform: translateY(1px);
+}
+
 /* 🔴 LIVE CLASS SECTION (index.html) */
 .live-section {
   display: flex;
@@ -4172,48 +4387,57 @@ select option {
   box-shadow: 0 12px 28px rgba(37, 99, 235, 0.6);
 }
 
-/* Cute Unread Doubts Notification Badge (Cute White Circle & Blue Accent) */
+@media (max-width: 640px) {
+  .student-chat-fab {
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    padding: 0;
+    border-radius: 50% !important;
+    justify-content: center;
+  }
+  .student-chat-fab > span:not(.student-chat-badge) {
+    display: none;
+  }
+  .student-chat-badge {
+    top: -5px;
+    right: -5px;
+  }
+}
+
+/* Clean White & Blue Unread Doubts Notification Badge (Subtle, Compact & Smooth) */
 .student-chat-badge {
   position: absolute;
-  top: -8px;
-  right: -6px;
-  min-width: 23px;
-  height: 23px;
-  padding: 0 6px;
+  top: -6px;
+  right: -5px;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
   background: #ffffff;
   color: #1d4ed8;
-  border-radius: 14px;
-  font-size: 0.72rem;
-  font-weight: 900;
+  border-radius: 10px;
+  font-size: 0.68rem;
+  font-weight: 800;
   font-family: inherit;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border: 2px solid #2563eb;
-  box-shadow: 0 4px 14px rgba(29, 78, 216, 0.45), 0 0 0 2px #ffffff;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.28);
   line-height: 1;
   letter-spacing: -0.2px;
   pointer-events: none;
   z-index: 10;
   user-select: none;
   transform-origin: center;
-  animation: cuteBadgePop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), cutePulseGlow 2.5s infinite ease-in-out;
 }
 
-@keyframes cuteBadgePop {
-  0% { transform: scale(0); opacity: 0; }
-  60% { transform: scale(1.3); opacity: 1; }
-  85% { transform: scale(0.92); }
-  100% { transform: scale(1); opacity: 1; }
-}
-
-@keyframes cutePulseGlow {
-  0%, 100% {
-    box-shadow: 0 4px 14px rgba(29, 78, 216, 0.45), 0 0 0 2px #ffffff, 0 0 0 0 rgba(37, 99, 235, 0.45);
-  }
-  50% {
-    box-shadow: 0 6px 18px rgba(29, 78, 216, 0.65), 0 0 0 2px #ffffff, 0 0 0 6px rgba(37, 99, 235, 0);
-  }
+[data-theme="dark"] .student-chat-badge {
+  background: #ffffff;
+  color: #1d4ed8;
+  border-color: #3b82f6;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
 }
 
 .student-chat-drawer {

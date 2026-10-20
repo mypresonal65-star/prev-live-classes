@@ -2156,6 +2156,9 @@ function saveLiveLocal(list) {
 // --- Active Live Now Persistence (Supabase + localStorage) ---
 const ACTIVE_LIVE_KEY = 'cp_active_live_ids';
 
+let _cachedActiveLiveIds = null;
+let _cachedActiveLiveIdsTime = 0;
+
 function getLocalActiveLiveIds() {
   try {
     const raw = localStorage.getItem(ACTIVE_LIVE_KEY);
@@ -2171,41 +2174,62 @@ function setLocalActiveLiveIds(ids) {
   try {
     const arr = Array.isArray(ids) ? ids.map(String) : [];
     localStorage.setItem(ACTIVE_LIVE_KEY, JSON.stringify(arr));
+    _cachedActiveLiveIds = arr;
+    _cachedActiveLiveIdsTime = Date.now();
   } catch (e) {}
 }
 
-async function getActiveLiveNowIds() {
-  let list = getLocalActiveLiveIds();
-  if (list !== null) {
-    return list;
+async function getActiveLiveNowIds(force = false) {
+  const now = Date.now();
+  if (!force && _cachedActiveLiveIds !== null && (now - _cachedActiveLiveIdsTime < 4000)) {
+    return _cachedActiveLiveIds;
   }
+
+  // 1. Authoritative: Fetch from Supabase __CONFIG_ACTIVE_LIVE__
   if (checkClient()) {
     try {
-      const { data, error } = await sbClient
+      const sbQuery = sbClient
         .from('live_classes')
-        .select('description')
+        .select('description, scheduled_at')
         .eq('title', '__CONFIG_ACTIVE_LIVE__')
         .limit(1);
-      if (!error && Array.isArray(data) && data.length > 0 && data[0].description) {
-        try {
-          const parsed = JSON.parse(data[0].description);
-          if (Array.isArray(parsed)) {
-            list = parsed.map(String);
-            setLocalActiveLiveIds(list);
-            return list;
-          }
-        } catch (err) {}
+
+      const timeoutPromise = new Promise(resolve => setTimeout(() => resolve({ data: null, error: 'timeout' }), 1800));
+      const { data, error } = await Promise.race([sbQuery, timeoutPromise]);
+
+      if (!error && Array.isArray(data) && data.length > 0) {
+        let list = [];
+        if (data[0].description) {
+          try {
+            const parsed = JSON.parse(data[0].description);
+            if (Array.isArray(parsed)) {
+              list = parsed.map(String);
+            }
+          } catch (e) {}
+        }
+        _cachedActiveLiveIds = list;
+        _cachedActiveLiveIdsTime = now;
+        setLocalActiveLiveIds(list);
+        return list;
       }
     } catch (e) {
       console.warn('getActiveLiveNowIds sync notice:', e.message);
     }
   }
-  return list || [];
+
+  // 2. Fallback: Local storage cache (offline mode)
+  const list = getLocalActiveLiveIds();
+  if (list !== null) {
+    _cachedActiveLiveIds = list;
+    _cachedActiveLiveIdsTime = now;
+    return list;
+  }
+  return [];
 }
 
 async function setActiveLiveNow(id, isLiveNow, exclusive = true) {
   if (!id) return [];
-  const strId = String(id);
+  const strId = String(id).trim();
   const rawNum = strId.startsWith('imp_') ? strId.replace('imp_', '') : strId;
   let updated = [];
 
@@ -2213,10 +2237,11 @@ async function setActiveLiveNow(id, isLiveNow, exclusive = true) {
     // Exclusive: ONLY this class is live; any older live stream is turned off!
     updated = [strId];
     if (rawNum !== strId) updated.push(rawNum);
+    localStorage.setItem('cp_last_known_top_live_id', strId);
   } else {
     // Live turned off for this class
-    const current = (await getActiveLiveNowIds()) || [];
-    const set = new Set(current);
+    const current = (await getActiveLiveNowIds(true)) || [];
+    const set = new Set(current.map(String));
     set.delete(strId);
     set.delete(rawNum);
     set.delete('imp_' + rawNum);
@@ -2224,28 +2249,39 @@ async function setActiveLiveNow(id, isLiveNow, exclusive = true) {
   }
 
   setLocalActiveLiveIds(updated);
+  _cachedActiveLiveIds = updated;
+  _cachedActiveLiveIdsTime = Date.now();
 
   // Instantly synchronize in-memory cache and local storage so changes take effect at 0ms
-  const activeSet = new Set(updated);
+  const activeSet = new Set(updated.map(String));
+  const updateItemProps = (c) => {
+    const idStr = String(c.id || '').trim();
+    const idRaw = idStr.replace(/^imp_/, '');
+    const rawIdStr = (c.raw_id !== undefined && c.raw_id !== null) ? String(c.raw_id).trim() : '';
+
+    const match = isLiveNow && (
+      activeSet.has(idStr) ||
+      (idRaw && activeSet.has(idRaw)) ||
+      (idRaw && activeSet.has('imp_' + idRaw)) ||
+      (rawIdStr && (activeSet.has(rawIdStr) || activeSet.has('imp_' + rawIdStr)))
+    );
+
+    const isVis = (c.is_visible === 1 || c.is_visible === true || (c.is_visible === undefined && c.status !== 'hidden' && c.status !== 'ended' && c.status !== 'offline')) ? 1 : 0;
+    return {
+      ...c,
+      is_live_now: !!match,
+      is_visible: isVis,
+      status: isVis === 0 ? 'hidden' : (match ? 'live' : 'old_live'),
+      status_label: isVis === 0 ? 'OFFLINE' : (match ? 'LIVE NOW' : 'Old Live Class')
+    };
+  };
+
   if (Array.isArray(_cachedLiveClasses)) {
-    _cachedLiveClasses.forEach(c => {
-      const match = activeSet.has(String(c.id)) || (c.raw_id && (activeSet.has(String(c.raw_id)) || activeSet.has('imp_' + c.raw_id)));
-      c.is_live_now = !!match;
-      c.status = c.is_visible === 0 ? 'hidden' : (match ? 'live' : 'old_live');
-      c.status_label = c.is_visible === 0 ? 'OFFLINE' : (match ? 'LIVE NOW' : 'Old Live Class');
-    });
+    _cachedLiveClasses = _cachedLiveClasses.map(updateItemProps);
     saveLiveLocal(_cachedLiveClasses);
     saveLocalJson(CACHE_LIVE_CLASSES_KEY, _cachedLiveClasses);
   } else {
-    const local = getLiveLocal().map(c => {
-      const match = activeSet.has(String(c.id)) || (c.raw_id && (activeSet.has(String(c.raw_id)) || activeSet.has('imp_' + c.raw_id)));
-      return {
-        ...c,
-        is_live_now: !!match,
-        status: c.is_visible === 0 ? 'hidden' : (match ? 'live' : 'old_live'),
-        status_label: c.is_visible === 0 ? 'OFFLINE' : (match ? 'LIVE NOW' : 'Old Live Class')
-      };
-    });
+    const local = getLiveLocal().map(updateItemProps);
     saveLiveLocal(local);
   }
 
@@ -2437,18 +2473,22 @@ async function getLiveClasses(force = false) {
       // Purge/clean list (keeps all classes!)
       combined = purgeOldLiveClasses(combined);
 
-      // 4. Determine currently active LIVE class (strictly controlled by admin live tick)
-      let activeIds = getLocalActiveLiveIds();
-      if (activeIds === null) {
-        activeIds = await getActiveLiveNowIds();
-      }
+      // 4. Determine currently active LIVE class (strictly controlled by admin live tick in Supabase)
+      let activeIds = await getActiveLiveNowIds(force);
       if (!Array.isArray(activeIds)) activeIds = [];
 
-      const activeSet = new Set(activeIds);
+      const activeSet = new Set(activeIds.map(String));
 
       combined = combined.map(c => {
-        const isLiveNow = activeSet.has(c.id) || 
-                          (c.raw_id && (activeSet.has(String(c.raw_id)) || activeSet.has('imp_' + c.raw_id)));
+        const idStr = String(c.id || '').trim();
+        const idRaw = idStr.replace(/^imp_/, '');
+        const rawIdStr = (c.raw_id !== undefined && c.raw_id !== null) ? String(c.raw_id).trim() : '';
+
+        const isLiveNow = activeSet.has(idStr) || 
+                          (idRaw && activeSet.has(idRaw)) || 
+                          (idRaw && activeSet.has('imp_' + idRaw)) || 
+                          (rawIdStr && (activeSet.has(rawIdStr) || activeSet.has('imp_' + rawIdStr)));
+
         const isVis = (c.is_visible === 1 || c.is_visible === true || (c.is_visible === undefined && c.status !== 'hidden' && c.status !== 'ended' && c.status !== 'offline')) ? 1 : 0;
         const status = isVis === 0 ? 'hidden' : (isLiveNow ? 'live' : 'old_live');
         return {
@@ -2907,7 +2947,8 @@ async function registerUser(name, email, password) {
     }
   }
 
-  // 4. Background Sync with Cloudflare Worker
+  // 4. Background Sync with Cloudflare Worker & in-memory cache
+  setStudentNameInMemory(cleanEmail, cleanName);
   try {
     workerApiCall('/users', {
       method: 'POST',
@@ -3080,7 +3121,7 @@ async function loginUser(email, password) {
           return {
             success: false,
             isDeviceLocked: true,
-            error: '🔒 Your login is locked.\nPlease contact Admin to reset your device session.'
+            error: '📱 <strong>You are already logged in on another device.</strong>\nPlease contact Admin to reset your device session.'
           };
         }
 
@@ -3913,11 +3954,16 @@ async function getAllUsers() {
         .select('id, name, email, role, status, password_hash, current_session_id, created_at, last_login')
         .order('created_at', { ascending: false });
       if (!error && Array.isArray(data)) {
-        list = data.map(u => ({
-          ...u,
-          hasPassword: Boolean(u.password_hash),
-          current_session_id: u.current_session_id || null
-        }));
+        list = data.map(u => {
+          if (u.email && u.name) {
+            setStudentNameInMemory(u.email, u.name);
+          }
+          return {
+            ...u,
+            hasPassword: Boolean(u.password_hash),
+            current_session_id: u.current_session_id || null
+          };
+        });
       }
     } catch (e) {
       console.warn('Supabase app_users notice:', e.message);
@@ -4058,16 +4104,33 @@ async function updateStudentProfile(userId, { name, email, oldEmail, role, statu
   // 2. LIVE SYNC: Supabase app_users table
   if (checkClient()) {
     try {
-      let q = sbClient.from('app_users').update(updateData);
-      if (userId && !userId.startsWith('cf_')) {
-        q = q.eq('id', userId);
-      } else if (cleanOldEmail) {
-        q = q.eq('email', cleanOldEmail);
-      } else {
-        q = q.eq('email', cleanEmail);
+      const isUuid = typeof userId === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
+      const targetEmail = cleanOldEmail || cleanEmail;
+      let updatedInDb = false;
+
+      // Primary: Try updating by UUID if valid
+      if (isUuid) {
+        const { data: resUuid, error: errUuid } = await sbClient.from('app_users').update(updateData).eq('id', userId).select('id');
+        if (!errUuid && Array.isArray(resUuid) && resUuid.length > 0) {
+          updatedInDb = true;
+        }
       }
-      const { error } = await q;
-      if (error) console.warn('Supabase profile update warning:', error.message);
+
+      // Secondary: Update by email (matches exact student record reliably)
+      if (!updatedInDb && targetEmail) {
+        const { data: resEmail, error: errEmail } = await sbClient.from('app_users').update(updateData).eq('email', targetEmail).select('id');
+        if (!errEmail && Array.isArray(resEmail) && resEmail.length > 0) {
+          updatedInDb = true;
+        }
+      }
+
+      // Tertiary: If user does not exist in Supabase yet, upsert them!
+      if (!updatedInDb) {
+        await sbClient.from('app_users').upsert({
+          ...updateData,
+          email: cleanEmail
+        }, { onConflict: 'email' });
+      }
     } catch (e) {
       console.warn('Supabase profile update exception:', e.message);
     }
@@ -4215,49 +4278,75 @@ async function updateStudentProfile(userId, { name, email, oldEmail, role, statu
   };
 }
 
+// Global in-memory cache for fast student names mapping
+const _inMemoryStudentNames = new Map();
+
+function setStudentNameInMemory(email, name) {
+  if (!email || !name) return;
+  const clean = email.toLowerCase().trim();
+  const cleanName = name.trim();
+  if (cleanName && cleanName.toLowerCase() !== 'student') {
+    _inMemoryStudentNames.set(clean, cleanName);
+    try {
+      const nameMap = JSON.parse(localStorage.getItem('sp_student_names') || '{}');
+      nameMap[clean] = cleanName;
+      localStorage.setItem('sp_student_names', JSON.stringify(nameMap));
+    } catch (e) {}
+  }
+}
+
 function getStudentNameByEmail(email, fallbackName) {
   if (!email) return fallbackName || 'Student';
   const clean = email.toLowerCase().trim();
+  const emailPrefix = clean.split('@')[0].toLowerCase();
 
-  // 1. Check user overrides
+  // 1. In-memory live cache (instant 0ms)
+  if (_inMemoryStudentNames.has(clean)) {
+    const memName = _inMemoryStudentNames.get(clean);
+    if (memName && memName.toLowerCase() !== 'student') return memName;
+  }
+
+  // 2. Check user overrides (saved on Admin edit)
   try {
     const overrides = JSON.parse(localStorage.getItem('sp_user_overrides') || '{}');
     if (overrides[clean] && overrides[clean].name) {
-      return overrides[clean].name;
+      const oName = overrides[clean].name.trim();
+      if (oName && oName.toLowerCase() !== 'student') return oName;
     }
   } catch (e) {}
 
-  // 2. Check global student names map
+  // 3. Check global student names map
   try {
     const nameMap = JSON.parse(localStorage.getItem('sp_student_names') || '{}');
     if (nameMap[clean] && nameMap[clean].toLowerCase() !== 'student') {
-      return nameMap[clean];
+      const sName = nameMap[clean].trim();
+      if (sName) return sName;
     }
   } catch (e) {}
 
-  // 3. Check cached users
+  // 4. Check cached users
   try {
     const cached = JSON.parse(localStorage.getItem('cp_cached_users') || '[]');
     const found = cached.find(u => (u.email || '').toLowerCase().trim() === clean);
-    if (found && found.name && found.name.toLowerCase() !== 'student') {
-      return found.name;
+    if (found && found.name && found.name.toLowerCase() !== 'student' && found.name.toLowerCase() !== emailPrefix) {
+      return found.name.trim();
     }
   } catch (e) {}
 
-  // 4. Check current active session
+  // 5. Check current active session
   try {
     const cur = getCurrentUser();
-    if (cur && cur.email && cur.email.toLowerCase().trim() === clean && cur.name && cur.name.toLowerCase() !== 'student') {
-      return cur.name;
+    if (cur && cur.email && cur.email.toLowerCase().trim() === clean && cur.name && cur.name.toLowerCase() !== 'student' && cur.name.toLowerCase() !== emailPrefix) {
+      return cur.name.trim();
     }
   } catch (e) {}
 
-  // 5. Check fallback name
-  if (fallbackName && fallbackName.toLowerCase() !== 'student' && fallbackName.toLowerCase() !== 'administrator') {
-    return fallbackName;
+  // 6. Check fallback name (ONLY if it is a real name, NOT raw email prefix or generic student)
+  if (fallbackName && fallbackName.toLowerCase() !== 'student' && fallbackName.toLowerCase() !== 'administrator' && fallbackName.toLowerCase() !== emailPrefix) {
+    return fallbackName.trim();
   }
 
-  // 6. Clean email handle (e.g. "rohit.sharma" -> "Rohit Sharma")
+  // 7. Clean email handle (formatted title case: "rohit.sharma" -> "Rohit Sharma")
   const prefix = clean.split('@')[0];
   if (prefix.includes('.') || prefix.includes('_')) {
     return prefix.split(/[._]/).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
@@ -4397,45 +4486,68 @@ async function updateUserRole(userId, role) {
 }
 
 async function deleteUser(userId, email) {
-  // 1. Delete from Worker API
+  const cleanEmail = (email || '').toLowerCase().trim();
+  let workerUserId = (userId && typeof userId === 'string' && userId.startsWith('usr_')) ? userId : null;
+
+  // 1. If we don't have a Worker usr_... ID, look it up in worker users by email
+  if (!workerUserId && cleanEmail) {
+    try {
+      const cfData = await workerApiCall('/users');
+      if (cfData && Array.isArray(cfData.users)) {
+        const found = cfData.users.find(u => (u.email || '').toLowerCase().trim() === cleanEmail);
+        if (found && found.id) workerUserId = found.id;
+      }
+    } catch (e) {}
+  }
+
+  // 2. Delete from Worker API
   try {
     await workerApiCall('/users', {
       method: 'DELETE',
-      body: JSON.stringify({ userId })
+      body: JSON.stringify({ userId: workerUserId || userId, email: cleanEmail })
     });
   } catch (e) {
     console.warn('Worker deleteUser notice:', e.message);
   }
 
-  // 1b. Also remove from allowed whitelist if email is known
-  if (email) {
+  // 3. Also remove from allowed whitelist if email is known
+  if (cleanEmail) {
     try {
-      await deleteAllowedEmail(email);
+      await deleteAllowedEmail(cleanEmail, true);
     } catch (e) {}
   }
 
-  // 2. Delete from Supabase
+  // 4. Delete from Supabase app_users table
   if (checkClient()) {
     try {
-      if (email) {
+      if (cleanEmail) {
         await sbClient
           .from('app_users')
           .delete()
-          .eq('email', email.toLowerCase().trim());
-      } else {
+          .eq('email', cleanEmail);
+      }
+      if (userId && !userId.startsWith('usr_') && !userId.startsWith('cf_')) {
         await sbClient
           .from('app_users')
           .delete()
           .eq('id', userId);
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn('Supabase deleteUser error:', e);
+    }
   }
 
-  // 3. Clear from local cached users
+  // 5. Clear from local cached users & overrides
   try {
     const cached = JSON.parse(localStorage.getItem('cp_cached_users') || '[]');
-    const filtered = cached.filter(u => u.id !== userId);
+    const filtered = cached.filter(u => u.id !== userId && (u.email || '').toLowerCase().trim() !== cleanEmail);
     localStorage.setItem('cp_cached_users', JSON.stringify(filtered));
+  } catch (e) {}
+  try {
+    const overrides = JSON.parse(localStorage.getItem('sp_user_overrides') || '{}');
+    if (userId) delete overrides[userId];
+    if (cleanEmail) delete overrides[cleanEmail];
+    localStorage.setItem('sp_user_overrides', JSON.stringify(overrides));
   } catch (e) {}
 
   showToast('User deleted from database', 'info');
@@ -4500,7 +4612,12 @@ function parseBulkYouTubeVideos(text) {
   return videos;
 }
 
-const DEFAULT_YT_API_KEY = 'AIzaSyAwG4U5R9L1CTY-cu-kVApqsq8LwjkmQq4';
+const DEFAULT_YT_API_KEY = 'AIzaSyB8Xe0Oj__bHwc2mlNB4w_OLrIu9vN4Uzw';
+try {
+  if (localStorage.getItem('yt_api_key') === 'AIzaSyAwG4U5R9L1CTY-cu-kVApqsq8LwjkmQq4') {
+    localStorage.removeItem('yt_api_key');
+  }
+} catch (e) {}
 
 async function fetchYouTubePlaylistVideos(playlistId, apiKey = '', oauthToken = '') {
   let videos = [];
@@ -5366,6 +5483,18 @@ function saveLocalChatMessages(msgs) {
   } catch (e) {}
 }
 
+function addIncomingChatMessage(msg) {
+  if (!msg || !msg.id) return;
+  try {
+    const local = getLocalChatMessages();
+    if (!local.some(m => m.id === msg.id)) {
+      local.unshift(msg);
+      if (local.length > 200) local.pop();
+      saveLocalChatMessages(local);
+    }
+  } catch(e) {}
+}
+
 // ===== ⚡ LIVE CHAT AUTO-PURGE (CLEARS EVERY 2-3 HOURS, DOUBTS REMAIN PERMANENT) =====
 const LIVE_CHAT_MAX_AGE_MS = 2.5 * 60 * 60 * 1000; // 2.5 hours
 
@@ -5959,20 +6088,38 @@ async function syncAllWorkerDataToSupabase(silent = true) {
       }
     }
 
-    // 3. Sync Users
+    // 3. Sync Users from Worker (Never overwrite existing student names!)
     try {
       const uResp = await workerApiCall('/users');
       if (uResp && uResp.success && Array.isArray(uResp.users)) {
+        const { data: dbUsers } = await sbClient.from('app_users').select('id, name, email');
+        const existingMap = new Map((dbUsers || []).map(u => [(u.email || '').toLowerCase().trim(), u]));
+
         for (const u of uResp.users) {
           if (!u.email) continue;
-          try {
-            await sbClient.from('app_users').upsert({
-              name: u.name || u.email.split('@')[0],
-              email: u.email.toLowerCase().trim(),
-              role: u.role || 'student',
-              status: u.status || 'approved'
-            }, { onConflict: 'email' });
-          } catch (e) {}
+          const cleanEmail = u.email.toLowerCase().trim();
+          const existing = existingMap.get(cleanEmail);
+
+          if (!existing) {
+            // User does not exist in Supabase yet: safely insert!
+            const cleanName = u.name || cleanEmail.split('@')[0];
+            try {
+              await sbClient.from('app_users').insert({
+                name: cleanName,
+                email: cleanEmail,
+                role: u.role || 'student',
+                status: u.status || 'approved'
+              });
+            } catch (e) {}
+          } else {
+            // User ALREADY exists in Supabase:
+            // 🛡️ CRITICAL RULE: NEVER overwrite existing student name with email handle!
+            if (u.name && u.name.trim() && u.name !== cleanEmail.split('@')[0] && u.name !== existing.name) {
+              try {
+                await sbClient.from('app_users').update({ name: u.name.trim() }).eq('id', existing.id);
+              } catch (e) {}
+            }
+          }
         }
       }
     } catch (e) {}
@@ -6022,17 +6169,15 @@ async function syncAllWorkerDataToSupabase(silent = true) {
 }
 
 // ===== 🌓 ULTRA-PREMIUM THEME SYSTEM (DARK & LIGHT MODE) =====
-const THEME_STORAGE_KEY = 'sp_theme';
+// Default is clean Light Mode. Dark Mode is activated only when user manually toggles it.
+const THEME_STORAGE_KEY = 'sp_theme_pref';
 
 function getTheme() {
   try {
     const saved = localStorage.getItem(THEME_STORAGE_KEY);
     if (saved === 'dark' || saved === 'light') return saved;
   } catch (e) {}
-  if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    return 'dark';
-  }
-  return 'light';
+  return 'light'; // Always default to Light Mode unless manually set by user
 }
 
 function triggerThemeTransition() {
@@ -6087,16 +6232,6 @@ function initTheme() {
     document.documentElement.setAttribute('data-theme', current);
   }
   updateThemeUI(current);
-
-  if (typeof window !== 'undefined' && window.matchMedia) {
-    try {
-      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-        if (!localStorage.getItem(THEME_STORAGE_KEY)) {
-          setTheme(e.matches ? 'dark' : 'light');
-        }
-      });
-    } catch (e) {}
-  }
 }
 
 // Auto-initialize theme on load
@@ -6144,11 +6279,11 @@ window.DB = {
   adminApproveStudent, adminRejectStudent, resetStudentDeviceSession, adminSetStudentPassword, adminGeneratePasswordForStudent, adminAddStudent, syncCloudflareStudents,
   setAdminPassword, getAdminAccounts, getSqlForAdminReset, ensureDefaultAdminsInDatabase,
   getAdminToken, setAdminToken, clearAdminToken, clearAllAuthSessions,
-  getAllUsers, addUser, getUserKeys, generateUserKey, resetUser, resetUserAndKey, updateStudentProfile, getStudentNameByEmail, getOnlineStudentsFromWorker, updateUserStatus, updateUserRole, deleteUser,
+  getAllUsers, addUser, getUserKeys, generateUserKey, resetUser, resetUserAndKey, updateStudentProfile, getStudentNameByEmail, setStudentNameInMemory, getOnlineStudentsFromWorker, updateUserStatus, updateUserRole, deleteUser,
   // Allowed Emails (Synced from old admin)
   getAllowedEmails, addAllowedEmail, deleteAllowedEmail, isEmailAllowed, getLocalAllowedEmails,
   // Chat Monitor & Active Students (Synced from old admin)
-  getChatMessages, sendChatMessage, deleteChatMessage, clearAllChatMessages, purgeOldLiveChatMessages, LIVE_CHAT_MAX_AGE_MS,
+  getChatMessages, sendChatMessage, addIncomingChatMessage, deleteChatMessage, clearAllChatMessages, purgeOldLiveChatMessages, LIVE_CHAT_MAX_AGE_MS,
   recordStudentHeartbeat, getOnlineStudents, getUnifiedOnlineStudents,
   initSupabaseStudentPresence, initSupabaseAdminPresence,
   showToast,

@@ -130,16 +130,26 @@ const STANDARD_SUBJECTS = [
     console.warn('Worker /users error:', e.message);
   }
   console.log(`Fetched ${usersList.length} users from Cloudflare Worker.`);
+  // Fetch existing Supabase users first
+  const { data: dbExistingUsers } = await sbRequest('app_users', 'GET', null, '?select=id,name,email');
+  const existingUsersMap = new Map((Array.isArray(dbExistingUsers) ? dbExistingUsers : []).map(x => [(x.email || '').toLowerCase().trim(), x]));
+
   for (const u of usersList) {
     if (!u.email) continue;
-    const userData = {
-      name: u.name || u.email.split('@')[0],
-      email: u.email.toLowerCase().trim(),
-      role: u.role || 'student',
-      status: u.status || 'approved'
-    };
-    const uRes = await sbRequest('app_users', 'POST', userData);
-    console.log(`  User "${userData.email}": status ${uRes.status}`);
+    const cleanEmail = u.email.toLowerCase().trim();
+    const existing = existingUsersMap.get(cleanEmail);
+    if (!existing) {
+      const userData = {
+        name: u.name || cleanEmail.split('@')[0],
+        email: cleanEmail,
+        role: u.role || 'student',
+        status: u.status || 'approved'
+      };
+      const uRes = await sbRequest('app_users', 'POST', userData);
+      console.log(`  Inserted User "${userData.email}": status ${uRes.status}`);
+    } else {
+      console.log(`  Kept existing User "${cleanEmail}" (Name: "${existing.name}")`);
+    }
   }
 
   // 4. Fetch Allowed Emails from Worker

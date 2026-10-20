@@ -378,6 +378,131 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  // ===== 👥 CLOUDFLARE USERS & NAMES BRIDGING JUGAD =====
+  if (req.url === '/api/users' || req.url.startsWith('/api/users?')) {
+    const metaPath = path.join(__dirname, 'students_metadata.json');
+    let namesMap = {};
+    try {
+      if (fs.existsSync(metaPath)) {
+        namesMap = JSON.parse(fs.readFileSync(metaPath, 'utf8') || '{}');
+      }
+    } catch (e) {}
+
+    if (req.method === 'GET') {
+      try {
+        const proxyRes = await fetch(WORKER_TARGET + '/users', {
+          method: 'GET',
+          headers: { 'Origin': 'null', 'Content-Type': 'application/json' }
+        });
+        const cfData = await proxyRes.json();
+        if (cfData && Array.isArray(cfData.users)) {
+          cfData.users = cfData.users.map(u => {
+            const em = (u.email || '').toLowerCase().trim();
+            const realName = namesMap[em] || u.name;
+            return {
+              ...u,
+              name: realName || (em.split('@')[0])
+            };
+          });
+        }
+        res.writeHead(200, {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        });
+        return res.end(JSON.stringify(cfData));
+      } catch (err) {
+        // Fallback to standard proxy below
+      }
+    }
+
+    if (req.method === 'POST') {
+      try {
+        const bodyChunks = [];
+        for await (const chunk of req) bodyChunks.push(chunk);
+        const parsed = JSON.parse(Buffer.concat(bodyChunks).toString('utf8') || '{}');
+        const em = (parsed.email || '').toLowerCase().trim();
+        const nm = (parsed.name || '').trim();
+        if (em && nm) {
+          namesMap[em] = nm;
+          try { fs.writeFileSync(metaPath, JSON.stringify(namesMap, null, 2), 'utf8'); } catch (e) {}
+        }
+        // Forward to Cloudflare Worker (best-effort)
+        fetch(WORKER_TARGET + '/users', {
+          method: 'POST',
+          headers: { 'Origin': 'null', 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: em })
+        }).catch(() => {});
+
+        res.writeHead(200, {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        });
+        return res.end(JSON.stringify({ success: true, message: 'Student profile synced with Cloudflare', name: nm, email: em }));
+      } catch (err) {
+        // Fallback to standard proxy below
+      }
+    }
+
+    if (req.method === 'DELETE') {
+      try {
+        const bodyChunks = [];
+        for await (const chunk of req) bodyChunks.push(chunk);
+        const parsed = JSON.parse(Buffer.concat(bodyChunks).toString('utf8') || '{}');
+        const em = (parsed.email || '').toLowerCase().trim();
+        let targetWorkerId = parsed.userId;
+
+        // 1. Remove from local students_metadata.json
+        if (em && namesMap[em]) {
+          delete namesMap[em];
+          try { fs.writeFileSync(metaPath, JSON.stringify(namesMap, null, 2), 'utf8'); } catch (e) {}
+        }
+
+        // 2. If targetWorkerId is not a Worker ID (usr_...) or missing, lookup by email from Worker
+        if ((!targetWorkerId || !targetWorkerId.startsWith('usr_')) && em) {
+          try {
+            const listRes = await fetch(WORKER_TARGET + '/users', {
+              method: 'GET',
+              headers: { 'Origin': 'null', 'Content-Type': 'application/json' }
+            });
+            const listData = await listRes.json();
+            if (listData && Array.isArray(listData.users)) {
+              const matched = listData.users.find(u => (u.email || '').toLowerCase().trim() === em);
+              if (matched && matched.id) {
+                targetWorkerId = matched.id;
+              }
+            }
+          } catch (e) {}
+        }
+
+        // 3. Delete from Worker /users
+        if (targetWorkerId && targetWorkerId.startsWith('usr_')) {
+          await fetch(WORKER_TARGET + '/users', {
+            method: 'DELETE',
+            headers: { 'Origin': 'null', 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: targetWorkerId })
+          }).catch(() => {});
+        }
+
+        // 4. Delete from Worker /allowed-emails
+        if (em) {
+          fetch(WORKER_TARGET + '/allowed-emails', {
+            method: 'DELETE',
+            headers: { 'Origin': 'null', 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: em })
+          }).catch(() => {});
+        }
+
+        res.writeHead(200, {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        });
+        return res.end(JSON.stringify({ success: true, message: 'Student deleted from Worker and metadata' }));
+      } catch (err) {
+        // Fallback to standard proxy below
+      }
+    }
+  }
+
   // Proxy /api/* requests to Cloudflare Worker with Origin: null
   if (req.url.startsWith('/api/')) {
     const targetUrl = WORKER_TARGET + req.url.substring(4);

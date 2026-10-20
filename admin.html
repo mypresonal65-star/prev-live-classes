@@ -7,7 +7,7 @@
   <title>Admin Console — Study Portal</title>
   <script>
     (function() {
-      const t = localStorage.getItem('sp_theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      const t = localStorage.getItem('sp_theme_pref') || 'light';
       document.documentElement.setAttribute('data-theme', t);
     })();
     function toggleTheme() {
@@ -17,7 +17,7 @@
       var root = document.documentElement;
       var cur = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
       root.setAttribute('data-theme', cur);
-      try { localStorage.setItem('sp_theme', cur); } catch(e) {}
+      try { localStorage.setItem('sp_theme_pref', cur); } catch(e) {}
       return cur;
     }
   </script>
@@ -3113,7 +3113,7 @@
   </div>
 
   <div class="toast-container"></div>
-  <script src="store.js"></script>
+  <script src="store.js?v=2.8"></script>
 
   <script>
     // ===== STATE =====
@@ -4957,7 +4957,11 @@
       renderLiveClassesTable(); // 0ms INSTANT
       updateKPIStats();
       DB.showToast(isChecked ? '🔴 Marked as LIVE NOW!' : 'Live turned OFF — marked as Old Live Class', 'success');
-      DB.setActiveLiveNow(id, isChecked, true).catch(console.error);
+      try {
+        await DB.setActiveLiveNow(id, isChecked, true);
+      } catch (err) {
+        console.error('setActiveLiveNow error:', err);
+      }
     }
 
     function editLiveClass(id) {
@@ -5989,7 +5993,8 @@
         setTimeout(() => { try { tr.remove(); } catch(e) {} }, 180);
       }
       // Optimistic instant delete from UI (0ms!)
-      allUsers = allUsers.filter(u => u.id !== userId && (u.email || '').toLowerCase() !== (email || '').toLowerCase());
+      const cEmail = (email || '').toLowerCase().trim();
+      allUsers = allUsers.filter(u => u.id !== userId && (u.email || '').toLowerCase().trim() !== cEmail);
       updateStudentCounts();
       renderUsersTableRows();
       DB.showToast(`Deleted ${email}`, 'info');
@@ -6156,6 +6161,10 @@
         targetUser.status = status;
         if (password) targetUser.hasPassword = true;
         if (resetSession) targetUser.current_session_id = null;
+      }
+      if (window.DB && DB.setStudentNameInMemory) {
+        DB.setStudentNameInMemory(email, name);
+        if (oldEmail && oldEmail !== email) DB.setStudentNameInMemory(oldEmail, name);
       }
       updateStudentCounts();
       renderUsersTableRows();

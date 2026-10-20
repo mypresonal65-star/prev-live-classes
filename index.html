@@ -7,7 +7,7 @@
   <title>Study Portal — Online Learning Classes</title>
   <script>
     (function() {
-      const t = localStorage.getItem('sp_theme') || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      const t = localStorage.getItem('sp_theme_pref') || 'light';
       document.documentElement.setAttribute('data-theme', t);
     })();
     function toggleTheme() {
@@ -17,7 +17,7 @@
       var root = document.documentElement;
       var cur = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
       root.setAttribute('data-theme', cur);
-      try { localStorage.setItem('sp_theme', cur); } catch(e) {}
+      try { localStorage.setItem('sp_theme_pref', cur); } catch(e) {}
       return cur;
     }
   </script>
@@ -32,7 +32,7 @@
       }
     }
   </script>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=2.6">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>▶</text></svg>">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -203,8 +203,40 @@
 
   <div class="toast-container"></div>
 
+  <!-- 🔴 LIVE CLASS POPUP MODAL (Pops up automatically for student if live class is running) -->
+  <div id="liveClassModal" class="live-popup-backdrop" style="display:none;" onclick="handleLiveModalBackdropClick(event)">
+    <div class="live-popup-card" role="dialog" aria-modal="true" aria-labelledby="liveModalTitle">
+      <div class="live-popup-header">
+        <div class="live-popup-badge">
+          <span class="live-pulse-dot" style="background:#ef4444; width:8px; height:8px; display:inline-block;"></span>
+          <span>LIVE CLASS IN PROGRESS</span>
+        </div>
+        <button class="live-popup-close-btn" onclick="dismissLiveClassPopup()" title="Close popup" aria-label="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
 
-  <script src="store.js"></script>
+      <div class="live-popup-body">
+        <div class="live-popup-title" id="liveModalTitle">Live Class</div>
+        <div class="live-popup-meta">
+          <span class="live-popup-platform" id="liveModalPlatform">🔴 Live Stream</span>
+          <span class="live-popup-teacher">👨‍🏫 Spider Classes • Streaming Now</span>
+        </div>
+        <p class="live-popup-desc">Your live class is currently in progress. Click 'Join Live Class Now' to tune in immediately!</p>
+      </div>
+
+      <div class="live-popup-footer">
+        <button class="btn-live-popup-dismiss" onclick="dismissLiveClassPopup()">Later</button>
+        <button class="btn-live-popup-join" id="liveModalJoinBtn" onclick="joinLiveFromPopup()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          <span>Join Live Class Now</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <script src="store.js?v=2.8"></script>
   <script>
     // ===== AUTH GUARD & ZERO-TRUST SESSION CHECK =====
     (function authGuard() {
@@ -419,14 +451,24 @@
       });
     });
 
+    let _activePopupLiveClassId = null;
+
     function renderLiveHeroBanner(activeLiveList) {
       const heroArea = document.getElementById('liveHeroArea');
       if (!heroArea) return;
-      if (!activeLiveList || !activeLiveList.length || sessionStorage.getItem('cp_dismiss_live_hero')) {
+      if (!activeLiveList || !activeLiveList.length) {
         heroArea.innerHTML = '';
         return;
       }
       const curLive = activeLiveList[0];
+      const curId = String(curLive.id);
+
+      // Only dismiss if explicitly dismissed for this exact stream id
+      if (sessionStorage.getItem('cp_dismiss_live_hero_' + curId) === '1') {
+        heroArea.innerHTML = '';
+        return;
+      }
+
       const platform = detectPlatform(curLive.url);
 
       heroArea.innerHTML = `
@@ -448,7 +490,7 @@
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
               <span>Watch Live</span>
             </button>
-            <button class="btn-hero-close" onclick="dismissLiveHeroBanner()" title="Dismiss banner" aria-label="Dismiss banner">
+            <button class="btn-hero-close" onclick="dismissLiveHeroBanner('${curLive.id}')" title="Dismiss banner" aria-label="Dismiss banner">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
@@ -456,10 +498,102 @@
       `;
     }
 
-    function dismissLiveHeroBanner() {
-      sessionStorage.setItem('cp_dismiss_live_hero', '1');
+    function dismissLiveHeroBanner(streamId) {
+      if (streamId) {
+        sessionStorage.setItem('cp_dismiss_live_hero_' + String(streamId), '1');
+      } else {
+        sessionStorage.setItem('cp_dismiss_live_hero', '1');
+      }
       const heroArea = document.getElementById('liveHeroArea');
       if (heroArea) heroArea.innerHTML = '';
+    }
+
+    let _livePopupAutoDismissTimer = null;
+
+    function checkAndShowLivePopup(activeLiveList) {
+      const modal = document.getElementById('liveClassModal');
+      if (!modal) return;
+
+      const list = activeLiveList || (liveClasses || []).filter(c => !String(c.title || '').startsWith('__CONFIG_') && c.status !== 'config' && c.url !== 'config' && c.is_visible !== 0 && c.status !== 'hidden' && c.status !== 'ended' && c.status !== 'offline' && !!c.is_live_now);
+
+      if (!list || !list.length) {
+        if (_livePopupAutoDismissTimer) {
+          clearTimeout(_livePopupAutoDismissTimer);
+          _livePopupAutoDismissTimer = null;
+        }
+        modal.style.display = 'none';
+        modal.classList.remove('hiding');
+        _activePopupLiveClassId = null;
+        return;
+      }
+
+      const curLive = list[0];
+      const curId = String(curLive.id);
+
+      const isDismissed = sessionStorage.getItem('cp_dismiss_live_popup_' + curId) === '1';
+      const justLoggedIn = sessionStorage.getItem('cp_just_logged_in') === '1';
+
+      if (justLoggedIn || !isDismissed) {
+        sessionStorage.removeItem('cp_just_logged_in');
+        _activePopupLiveClassId = curLive.id;
+
+        const titleEl = document.getElementById('liveModalTitle');
+        const platEl = document.getElementById('liveModalPlatform');
+        const platform = detectPlatform(curLive.url);
+
+        if (titleEl) titleEl.textContent = curLive.title || 'Live Interactive Class';
+        if (platEl) platEl.textContent = `${platform.icon} ${platform.name}`;
+
+        modal.classList.remove('hiding');
+        modal.style.display = 'flex';
+
+        // Auto-dismiss popup after 3 seconds as requested
+        if (_livePopupAutoDismissTimer) {
+          clearTimeout(_livePopupAutoDismissTimer);
+          _livePopupAutoDismissTimer = null;
+        }
+        _livePopupAutoDismissTimer = setTimeout(() => {
+          dismissLiveClassPopup();
+        }, 3000);
+      }
+    }
+
+    function dismissLiveClassPopup(immediate = false) {
+      if (_livePopupAutoDismissTimer) {
+        clearTimeout(_livePopupAutoDismissTimer);
+        _livePopupAutoDismissTimer = null;
+      }
+      const modal = document.getElementById('liveClassModal');
+      if (!modal) return;
+
+      if (_activePopupLiveClassId) {
+        sessionStorage.setItem('cp_dismiss_live_popup_' + String(_activePopupLiveClassId), '1');
+      }
+
+      if (immediate) {
+        modal.style.display = 'none';
+        modal.classList.remove('hiding');
+      } else {
+        modal.classList.add('hiding');
+        setTimeout(() => {
+          modal.style.display = 'none';
+          modal.classList.remove('hiding');
+        }, 300);
+      }
+    }
+
+    function joinLiveFromPopup() {
+      const targetId = _activePopupLiveClassId;
+      dismissLiveClassPopup(true);
+      if (targetId) {
+        openLiveClass(targetId);
+      }
+    }
+
+    function handleLiveModalBackdropClick(e) {
+      if (e.target && e.target.id === 'liveClassModal') {
+        dismissLiveClassPopup();
+      }
     }
 
     function renderPills(){
@@ -472,7 +606,7 @@
       const isAdmin = currentUser && currentUser.role === 'admin';
 
       const visibleLiveClasses = (liveClasses || []).filter(c => !String(c.title || '').startsWith('__CONFIG_') && c.status !== 'config' && c.url !== 'config' && c.is_visible !== 0 && c.status !== 'hidden' && c.status !== 'ended' && c.status !== 'offline');
-      const activeLiveList = visibleLiveClasses.filter(cls => cls.is_live_now || cls.status === 'live');
+      const activeLiveList = visibleLiveClasses.filter(cls => !!cls.is_live_now);
       const scheduledList = visibleLiveClasses.filter(cls => cls.status === 'scheduled');
 
       // Topbar and Drawer badges
@@ -508,8 +642,9 @@
         }
       }
 
-      // Render top Hero Live Alert Banner
+      // Render top Hero Live Alert Banner & Auto-Popup
       renderLiveHeroBanner(activeLiveList);
+      checkAndShowLivePopup(activeLiveList);
 
       if(!subjects.length && !visibleLiveClasses.length){
         c.innerHTML = isAdmin 
@@ -1039,7 +1174,13 @@
     }
 
     function openLiveClass(id) {
-      const item = (liveClasses || []).find(c => String(c.id) === String(id) || String(c.raw_id) === String(id));
+      const sId = String(id || '').trim();
+      const sRaw = sId.replace(/^imp_/, '');
+      const item = (liveClasses || []).find(c => {
+        const cId = String(c.id || '').trim();
+        const cRaw = (c.raw_id !== undefined && c.raw_id !== null) ? String(c.raw_id).trim() : cId.replace(/^imp_/, '');
+        return cId === sId || cId === ('imp_' + sRaw) || cRaw === sId || cRaw === sRaw;
+      });
       if (!item || !item.url) {
         DB.showToast('Live stream not found', 'error');
         return;
@@ -1069,6 +1210,73 @@
       window.location.href = `player.html?live=1&id=${encodeURIComponent(item.id)}`;
     }
 
+    function initRealtimeSync() {
+      try {
+        if (typeof sbClient !== 'undefined' && sbClient && typeof sbClient.channel === 'function') {
+          // 1. Live stream events
+          const liveCh = sbClient.channel('student-live-channel-' + Math.random().toString(36).substr(2, 6));
+          liveCh.on('postgres_changes', { event: '*', schema: 'public', table: 'live_classes' }, async (payload) => {
+            console.log('⚡ Realtime live stream event received from Admin:', payload);
+            try {
+              liveClasses = await DB.getLiveClasses(true);
+              renderPills();
+              if (activeSub === '_live') {
+                renderAll();
+              }
+            } catch (err) {}
+          }).subscribe();
+
+          // 2. Chat message events (Instant Realtime Doubt Notification!)
+          if (_chatRealtimeChannel) {
+            try { sbClient.removeChannel(_chatRealtimeChannel); } catch(e) {}
+          }
+          _chatRealtimeChannel = sbClient.channel('global-doubts-chat')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, (payload) => {
+              handleIncomingRealtimeChatMsg(payload);
+            })
+            .subscribe((status, err) => {
+              if (status === 'SUBSCRIBED') {
+                console.log('⚡ Realtime Doubts Chat Channel Subscribed & Active');
+              } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+                console.warn('Realtime chat channel reconnecting...', status, err);
+                setTimeout(initRealtimeSync, 3000);
+              }
+            });
+
+          // 3. Student profile name sync (Instantly updates student topbar & chat if admin changes name!)
+          const userCh = sbClient.channel('student-profile-sync-' + Math.random().toString(36).substr(2, 6));
+          userCh.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_users' }, (payload) => {
+            const updated = payload && payload.new;
+            if (updated && updated.email) {
+              const uEmail = (updated.email || '').toLowerCase().trim();
+              if (window.DB && DB.setStudentNameInMemory && updated.name) {
+                DB.setStudentNameInMemory(uEmail, updated.name);
+              }
+              const curUser = DB.getCurrentUser();
+              if (curUser && curUser.email && curUser.email.toLowerCase().trim() === uEmail && updated.name) {
+                curUser.name = updated.name;
+                DB.saveUserSession(curUser);
+                const initial = updated.name.charAt(0).toUpperCase();
+                const initialEl = document.getElementById('userInitialBadge');
+                const nameEl = document.getElementById('userNameBadge');
+                const drawerInit = document.getElementById('drawerUserInitial');
+                const drawerNm = document.getElementById('drawerUserName');
+                if (initialEl) initialEl.textContent = initial;
+                if (nameEl) nameEl.textContent = updated.name;
+                if (drawerInit) drawerInit.textContent = initial;
+                if (drawerNm) drawerNm.textContent = updated.name;
+              }
+              _lastStudentChatSig = '';
+              const drawer = document.getElementById('studentChatDrawer');
+              if (drawer && drawer.classList.contains('open')) {
+                loadStudentChat(false);
+              }
+            }
+          }).subscribe();
+        }
+      } catch (e) {}
+    }
+
     async function init(){
       // 1. Instant Cache Paint (0ms load time!)
       loadFromCache();
@@ -1080,26 +1288,29 @@
       renderPills();
       renderAll();
 
-      // Auto-refresh live classes so students see new live classes automatically
+      // Auto-refresh live classes so students see new live classes automatically (8-second loop)
       setInterval(async () => {
         try {
-          liveClasses = await DB.getLiveClasses();
+          liveClasses = await DB.getLiveClasses(true);
           renderPills();
           if (activeSub === '_live') {
             renderAll();
           }
         } catch (e) {}
-      }, 20000);
+      }, 8000);
 
       window.addEventListener('focus', async () => {
         try {
-          liveClasses = await DB.getLiveClasses();
+          liveClasses = await DB.getLiveClasses(true);
           renderPills();
           if (activeSub === '_live') {
             renderAll();
           }
         } catch (e) {}
       });
+
+      // Start realtime push notifications for both live classes & chats
+      initRealtimeSync();
 
       // Record student online heartbeat for admin monitor
       const curUser = DB.getCurrentUser();
@@ -1109,43 +1320,126 @@
         if (u && DB.recordStudentHeartbeat) DB.recordStudentHeartbeat(u);
       }, 15000);
 
-      // Unread Doubts Notification Badge Polling
+      // Unread Doubts Notification Badge Polling (fast 2.5s loop & focus)
       checkDoubtChatUnread();
-      setInterval(checkDoubtChatUnread, 4500);
+      setInterval(checkDoubtChatUnread, 2500);
       window.addEventListener('focus', checkDoubtChatUnread);
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) checkDoubtChatUnread();
+      });
+      window.addEventListener('storage', (e) => {
+        if (e.key && e.key.includes('cp_doubt_chat_')) {
+          checkDoubtChatUnread();
+        }
+      });
     }
     init();
 
-    // ===== STUDENT DOUBTS & STUDY CHAT (WITH CUTE UNREAD COUNT BADGE) =====
+    // ===== STUDENT DOUBTS & STUDY CHAT (INSTANT REALTIME UNREAD COUNT & BADGE) =====
     let studentChatInterval = null;
     let _lastStudentChatSig = '';
+    let _lastKnownUnreadCount = 0;
+    let _chatRealtimeChannel = null;
+
+    function handleIncomingRealtimeChatMsg(payload) {
+      const newMsg = payload && payload.new;
+      if (!newMsg || newMsg.chat_type === 'live') return;
+
+      // Add to local cache immediately
+      if (window.DB && typeof DB.addIncomingChatMessage === 'function') {
+        DB.addIncomingChatMessage(newMsg);
+      }
+
+      const currentUser = (window.DB && DB.getCurrentUser && DB.getCurrentUser()) || {};
+      const myEmail = (currentUser.email || '').toLowerCase().trim();
+      const senderEmail = (newMsg.email || '').toLowerCase().trim();
+      const isFromMe = myEmail && senderEmail && (myEmail === senderEmail);
+
+      const drawer = document.getElementById('studentChatDrawer');
+      const isOpen = drawer && drawer.classList.contains('open');
+
+      if (isOpen) {
+        // Drawer is open -> immediately reload and mark seen
+        loadStudentChat(true);
+        markDoubtChatAsSeen([newMsg]);
+        updateDoubtChatBadge(0);
+      } else {
+        if (!isFromMe) {
+          // ⚡ INSTANT 0ms BADGE INCREMENT ON CHAT CIRCLE!
+          _lastKnownUnreadCount = Math.max(0, parseInt(_lastKnownUnreadCount, 10) || 0) + 1;
+          updateDoubtChatBadge(_lastKnownUnreadCount);
+        }
+        // Also perform background query to keep unread count 100% synchronized
+        checkDoubtChatUnread();
+      }
+    }
+
+    function getDoubtChatStorageKey(suffix) {
+      if (typeof getUserStorageKey === 'function') {
+        return getUserStorageKey('cp_doubt_chat_' + suffix);
+      }
+      return 'cp_doubt_chat_' + suffix;
+    }
 
     function updateDoubtChatBadge(count) {
       const badge = document.getElementById('studentChatBadge');
       if (!badge) return;
-      if (count <= 0) {
+      _lastKnownUnreadCount = Math.max(0, parseInt(count, 10) || 0);
+
+      if (_lastKnownUnreadCount <= 0) {
         badge.style.display = 'none';
         badge.textContent = '0';
-        badge.classList.remove('badge-pop-anim');
       } else {
         badge.style.display = 'inline-flex';
-        badge.textContent = count > 99 ? '99+' : String(count);
-        badge.classList.remove('badge-pop-anim');
-        void badge.offsetWidth; // trigger reflow for smooth re-animation
-        badge.classList.add('badge-pop-anim');
+        badge.textContent = _lastKnownUnreadCount > 99 ? '99+' : String(_lastKnownUnreadCount);
       }
     }
 
     function markDoubtChatAsSeen(msgs = null) {
-      let latestTs = Date.now();
-      if (Array.isArray(msgs) && msgs.length > 0 && msgs[0].created_at) {
-        const mTime = new Date(msgs[0].created_at).getTime();
-        if (!isNaN(mTime) && mTime > latestTs) {
-          latestTs = mTime;
+      // 1. Instantly hide badge (numbering gayab)
+      updateDoubtChatBadge(0);
+
+      const timeKey = getDoubtChatStorageKey('last_seen_time');
+      const idKey = getDoubtChatStorageKey('last_seen_id');
+      const readIdsKey = getDoubtChatStorageKey('read_ids');
+
+      let latestTs = 0;
+      let latestId = '';
+      const readIds = new Set();
+
+      try {
+        const raw = localStorage.getItem(readIdsKey);
+        if (raw) {
+          const arr = JSON.parse(raw);
+          if (Array.isArray(arr)) arr.forEach(id => readIds.add(String(id)));
+        }
+      } catch (e) {}
+
+      if (Array.isArray(msgs) && msgs.length > 0) {
+        for (const m of msgs) {
+          if (!m || m.chat_type === 'live') continue;
+          if (m.id) readIds.add(String(m.id));
+          const mTime = new Date(m.created_at || 0).getTime();
+          if (!isNaN(mTime) && mTime > latestTs) {
+            latestTs = mTime;
+            latestId = String(m.id || '');
+          }
         }
       }
-      localStorage.setItem('cp_doubt_chat_last_seen_time', new Date(latestTs).toISOString());
-      updateDoubtChatBadge(0);
+
+      if (latestTs > 0) {
+        localStorage.setItem(timeKey, new Date(latestTs).toISOString());
+      } else {
+        localStorage.setItem(timeKey, new Date().toISOString());
+      }
+      if (latestId) {
+        localStorage.setItem(idKey, latestId);
+      }
+
+      try {
+        const arr = Array.from(readIds).slice(-400);
+        localStorage.setItem(readIdsKey, JSON.stringify(arr));
+      } catch (e) {}
     }
 
     async function checkDoubtChatUnread() {
@@ -1154,35 +1448,61 @@
         const drawer = document.getElementById('studentChatDrawer');
         const isOpen = drawer && drawer.classList.contains('open');
 
-        // If drawer is currently open, user is actively seeing the messages!
+        // While drawer is open, user is actively reading messages! Badge stays 0/hidden!
         if (isOpen) {
-          markDoubtChatAsSeen();
-          return;
-        }
-
-        const msgs = await DB.getChatMessages('doubts');
-        if (!Array.isArray(msgs)) return;
-
-        let lastSeen = localStorage.getItem('cp_doubt_chat_last_seen_time');
-        if (!lastSeen) {
-          // Initialize on fresh session to current time so count starts at 0
-          localStorage.setItem('cp_doubt_chat_last_seen_time', new Date().toISOString());
           updateDoubtChatBadge(0);
           return;
         }
 
-        const lastSeenTs = new Date(lastSeen).getTime();
+        const msgs = await DB.getChatMessages('doubts');
+        if (!Array.isArray(msgs) || msgs.length === 0) {
+          updateDoubtChatBadge(0);
+          return;
+        }
+
+        const timeKey = getDoubtChatStorageKey('last_seen_time');
+        const idKey = getDoubtChatStorageKey('last_seen_id');
+        const readIdsKey = getDoubtChatStorageKey('read_ids');
+
+        let lastSeenTime = localStorage.getItem(timeKey);
+        let lastSeenId = localStorage.getItem(idKey) || '';
+
+        // Load read IDs set
+        let readIdsSet = new Set();
+        try {
+          const raw = localStorage.getItem(readIdsKey);
+          if (raw) {
+            const arr = JSON.parse(raw);
+            if (Array.isArray(arr)) readIdsSet = new Set(arr.map(String));
+          }
+        } catch (e) {}
+
         const currentUser = (DB.getCurrentUser && DB.getCurrentUser()) || {};
         const myEmail = (currentUser.email || '').toLowerCase().trim();
+
+        // Baseline timestamp: if user has a stored last_seen_time, use it!
+        // If user has NEVER opened chat, look back at the last 24 hours so any recent message is NOT lost!
+        let lastSeenTs = lastSeenTime ? new Date(lastSeenTime).getTime() : 0;
+        if (isNaN(lastSeenTs) || lastSeenTs <= 0) {
+          lastSeenTs = Date.now() - (24 * 60 * 60 * 1000);
+        }
 
         let unread = 0;
         for (const m of msgs) {
           if (!m || m.chat_type === 'live') continue;
-          const msgTs = new Date(m.created_at || 0).getTime();
+          const msgId = String(m.id || '');
           const senderEmail = (m.email || '').toLowerCase().trim();
           const isMe = myEmail && senderEmail && (senderEmail === myEmail);
 
-          if (msgTs > lastSeenTs && !isMe) {
+          // If message was sent by current student, it is never unread for them
+          if (isMe) continue;
+
+          // If message is already marked read by ID, ignore
+          if (msgId && (readIdsSet.has(msgId) || msgId === lastSeenId)) continue;
+
+          const msgTs = new Date(m.created_at || 0).getTime();
+          // If message is newer than the last seen timestamp
+          if (!isNaN(msgTs) && msgTs > lastSeenTs) {
             unread++;
           }
         }
@@ -1199,10 +1519,10 @@
       const isOpen = drawer.classList.contains('open');
       if (isOpen) {
         drawer.classList.remove('open');
-        markDoubtChatAsSeen();
         if (studentChatInterval) clearInterval(studentChatInterval);
       } else {
         drawer.classList.add('open');
+        // When opening drawer: immediately clear badge and mark messages as seen!
         markDoubtChatAsSeen();
         loadStudentChat(true);
         if (studentChatInterval) clearInterval(studentChatInterval);
@@ -1235,7 +1555,7 @@
         }
       }
 
-      // If drawer is currently open, continuously mark as seen
+      // If drawer is currently open, continuously mark all loaded messages as seen
       const drawer = document.getElementById('studentChatDrawer');
       if (drawer && drawer.classList.contains('open')) {
         markDoubtChatAsSeen(uniqueMsgs);
@@ -1284,7 +1604,6 @@
       input.value = '';
       try {
         await DB.sendChatMessage(text, null, null, 'doubt');
-        markDoubtChatAsSeen();
         await loadStudentChat(true);
       } catch (e) {
         console.error('sendStudentMsg error:', e);
@@ -1301,7 +1620,6 @@
       if (drawer && drawer.classList.contains('open')) {
         if (!drawer.contains(e.target) && !fab.contains(e.target)) {
           drawer.classList.remove('open');
-          markDoubtChatAsSeen();
           if (studentChatInterval) clearInterval(studentChatInterval);
         }
       }

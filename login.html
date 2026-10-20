@@ -16,8 +16,7 @@
   <script>
     (function() {
       try {
-        var saved = localStorage.getItem('sp_theme');
-        var theme = saved || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        var theme = localStorage.getItem('sp_theme_pref') || 'light';
         document.documentElement.setAttribute('data-theme', theme);
       } catch (e) {}
     })();
@@ -28,7 +27,7 @@
       var root = document.documentElement;
       var cur = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
       root.setAttribute('data-theme', cur);
-      try { localStorage.setItem('sp_theme', cur); } catch(e) {}
+      try { localStorage.setItem('sp_theme_pref', cur); } catch(e) {}
       return cur;
     }
   </script>
@@ -1601,7 +1600,7 @@
   </a>
 
   <div class="toast-container"></div>
-  <script src="store.js"></script>
+  <script src="store.js?v=2.8"></script>
   <script>
     // ===== TAB SWITCHING =====
     function switchTab(tab) {
@@ -1645,7 +1644,12 @@
         const check = await DB.validateUserSession();
         if (check && check.valid) {
           const adminToken = DB.getAdminToken ? DB.getAdminToken() : '';
-          window.location.href = (user.role === 'admin' && adminToken) ? 'admin.html' : 'index.html';
+          if (user.role === 'admin' && adminToken) {
+            window.location.href = 'admin.html';
+          } else {
+            try { sessionStorage.setItem('cp_just_logged_in', '1'); } catch(e) {}
+            window.location.href = 'index.html';
+          }
         } else if (check && !check.valid && check.reason === 'conflict') {
           localStorage.removeItem('cp_user_session');
           localStorage.removeItem('cp_session_id');
@@ -1707,9 +1711,18 @@
             }, 350);
           } else {
             DB.showToast(`Welcome, ${res.user.name || 'Student'}!`, 'success');
+            try {
+              sessionStorage.removeItem('cp_dismiss_live_hero');
+              sessionStorage.removeItem('cp_dismiss_live_hero_id');
+              sessionStorage.removeItem('cp_dismiss_live_popup');
+              sessionStorage.removeItem('cp_dismissed_live_id');
+              sessionStorage.setItem('cp_just_logged_in', '1');
+              localStorage.removeItem('cp_cached_live_classes');
+              localStorage.removeItem('cp_active_live_ids');
+            } catch(e) {}
             setTimeout(() => {
               window.location.href = 'index.html';
-            }, 400);
+            }, 300);
           }
         } else {
           errText.innerHTML = (res.error || 'Invalid email or password.').replace(/\n/g, '<br>');

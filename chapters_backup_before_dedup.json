@@ -1,0 +1,134 @@
+[
+  {
+    "id": "pl_mum8z4why908",
+    "name": "Coding Decoding",
+    "subject_id": "subj_reasoning",
+    "created_at": "2026-10-17T21:20:47.080651+00:00"
+  },
+  {
+    "id": "pl_murybzflkdgh",
+    "name": "Digital Fundamentals",
+    "subject_id": "subj_computer",
+    "created_at": "2026-10-17T21:20:48.159916+00:00"
+  },
+  {
+    "id": "pl_mv15cw7kuaa2",
+    "name": "Odering",
+    "subject_id": "subj_reasoning",
+    "created_at": "2026-10-17T21:20:48.817764+00:00"
+  },
+  {
+    "id": "pl_mv2g9kc3p3lu",
+    "name": "Ranking",
+    "subject_id": "subj_reasoning",
+    "created_at": "2026-10-17T21:20:49.499779+00:00"
+  },
+  {
+    "id": "pl_mv5e3smoavvi",
+    "name": "Alphabet Series",
+    "subject_id": "subj_reasoning",
+    "created_at": "2026-10-17T21:20:50.136424+00:00"
+  },
+  {
+    "id": "pl_mvb1x1jy8pna",
+    "name": "Direction and Distance",
+    "subject_id": "subj_reasoning",
+    "created_at": "2026-10-17T21:20:50.789238+00:00"
+  },
+  {
+    "id": "pl_mvb2erbjznef",
+    "name": "Blood Relation",
+    "subject_id": "subj_reasoning",
+    "created_at": "2026-10-17T21:20:51.865176+00:00"
+  },
+  {
+    "id": "pl_mvc6npglbaz2",
+    "name": "Cartesian Syatem 2027",
+    "subject_id": "subj_math",
+    "created_at": "2026-10-17T21:20:52.512675+00:00"
+  },
+  {
+    "id": "pl_mvc6qydam00f",
+    "name": "Inequality 2027",
+    "subject_id": "subj_math",
+    "created_at": "2026-10-17T21:20:53.181735+00:00"
+  },
+  {
+    "id": "pl_mvc70dsdyg9i",
+    "name": "Graph 2027",
+    "subject_id": "subj_math",
+    "created_at": "2026-10-17T21:20:53.842462+00:00"
+  },
+  {
+    "id": "pl_mvc79q6a78u5",
+    "name": "Logarithms 2027",
+    "subject_id": "subj_math",
+    "created_at": "2026-10-17T21:20:54.64736+00:00"
+  },
+  {
+    "id": "pl_mvc7plcp7b0p",
+    "name": "Matrix 2027",
+    "subject_id": "subj_math",
+    "created_at": "2026-10-17T21:20:55.309229+00:00"
+  },
+  {
+    "id": "pl_mvcixzuui2vb",
+    "name": "Determinant 2027",
+    "subject_id": "subj_math",
+    "created_at": "2026-10-17T21:20:55.960674+00:00"
+  },
+  {
+    "id": "pl_mvd0spsbw5nl",
+    "name": "Trigonometry Classes 2027",
+    "subject_id": "subj_math",
+    "created_at": "2026-10-17T23:21:03.179283+00:00"
+  },
+  {
+    "id": "pl_mvd128gga8le",
+    "name": "Sequence and Series",
+    "subject_id": "subj_math",
+    "created_at": "2026-10-17T23:28:27.026486+00:00"
+  },
+  {
+    "id": "pl_mvd14g5oxvie",
+    "name": "Binomial Theorem",
+    "subject_id": "subj_math",
+    "created_at": "2026-10-17T23:30:10.691243+00:00"
+  },
+  {
+    "id": "pl_mvd18m15b80j",
+    "name": "Set Theory",
+    "subject_id": "subj_math",
+    "created_at": "2026-10-17T23:33:24.455203+00:00"
+  },
+  {
+    "id": "pl_mvd1a16y10ci",
+    "name": "Relation",
+    "subject_id": "subj_math",
+    "created_at": "2026-10-17T23:34:30.934426+00:00"
+  },
+  {
+    "id": "pl_mvd1b5yypsco",
+    "name": "Statistics",
+    "subject_id": "subj_math",
+    "created_at": "2026-10-17T23:35:23.614166+00:00"
+  },
+  {
+    "id": "pl_mvd1cv7me008",
+    "name": "Enquation , Inequality And Quadratic Equation",
+    "subject_id": "subj_math",
+    "created_at": "2026-10-17T23:36:43.308727+00:00"
+  },
+  {
+    "id": "pl_mvd1egp3d0nf",
+    "name": "Permutation and Combination",
+    "subject_id": "subj_math",
+    "created_at": "2026-10-19T18:48:02.971443+00:00"
+  },
+  {
+    "id": "pl_mvfm2gzg9ydw",
+    "name": "Permutation and Combination",
+    "subject_id": "subj_math",
+    "created_at": "2026-10-19T18:52:02.222901+00:00"
+  }
+]
