@@ -189,41 +189,6 @@
       letter-spacing: 0.02em;
     }
 
-    /* SWITCH TO OLD WEBSITE BUTTON STYLES */
-    .btn-switch-old {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 0.78rem;
-      font-weight: 700;
-      color: #2563eb;
-      background: #eff6ff;
-      border: 1px solid #bfdbfe;
-      text-decoration: none;
-      transition: all 0.2s ease;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    .btn-switch-old:hover {
-      background: #2563eb;
-      color: #ffffff;
-      border-color: #2563eb;
-      box-shadow: 0 3px 10px rgba(37, 99, 235, 0.25);
-      transform: translateY(-1px);
-    }
-    :root[data-theme="dark"] .btn-switch-old {
-      background: rgba(37, 99, 235, 0.15);
-      border-color: rgba(59, 130, 246, 0.35);
-      color: #60a5fa;
-    }
-    :root[data-theme="dark"] .btn-switch-old:hover {
-      background: #2563eb;
-      color: #ffffff;
-      border-color: #2563eb;
-    }
-
     .portal-nav-actions {
       display: flex;
       align-items: center;
@@ -568,10 +533,8 @@
     .form-pane-topbar {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 12px;
+      justify-content: flex-end;
       z-index: 10;
-      width: 100%;
     }
 
     .auth-form-center-box {
@@ -769,7 +732,7 @@
     .portal-input {
       width: 100%;
       height: 48px;
-      padding: 0 16px 0 44px;
+      padding: 0 16px 0 44px; /* Fix: 44px left padding so text never overlaps icon! */
       background: #ffffff;
       border: 1.5px solid #e2e8f0;
       border-radius: 14px;
@@ -781,7 +744,7 @@
     }
 
     .portal-input.has-toggle {
-      padding-right: 46px;
+      padding-right: 46px; /* Right padding for password eye toggle */
     }
 
     .portal-input:focus {
@@ -1237,6 +1200,7 @@
 </head>
 <body>
 
+  <!-- TOPBAR (White, Red & Orange) -->
   <!-- FULLSCREEN SPLIT SCREEN AUTHENTICATION -->
   <div class="auth-fullscreen-layout">
     
@@ -1253,33 +1217,22 @@
             <span class="portal-brand-subtitle">Smart Video Classroom</span>
           </div>
         </a>
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <!-- Switch to old Website Button (Mobile/Left Bar) -->
-          <a href="https://videoportal-4xxa.onrender.com" target="_self" class="btn-switch-old" title="Switch to old Website">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-              <polyline points="15 3 21 3 21 9"></polyline>
-              <line x1="10" y1="14" x2="21" y2="3"></line>
-            </svg>
-            <span>Switch to old Website</span>
-          </a>
-          <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode" aria-label="Toggle theme">
-            <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="5"></circle>
-              <line x1="12" y1="1" x2="12" y2="3"></line>
-              <line x1="12" y1="21" x2="12" y2="23"></line>
-              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-              <line x1="1" y1="12" x2="3" y2="12"></line>
-              <line x1="21" y1="12" x2="23" y2="12"></line>
-              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-            </svg>
-            <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-            </svg>
-          </button>
-        </div>
+        <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode" aria-label="Toggle theme">
+          <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg class="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
       </div>
 
       <!-- Center Stage: Giant Animation & Glowing Backdrop with Concentric Orbit Rings -->
@@ -1316,16 +1269,6 @@
     <section class="auth-form-column">
       <!-- Top Bar inside Right Pane -->
       <div class="form-pane-topbar">
-        <!-- Switch to old Website Button (Desktop Form Top) -->
-        <a href="https://videoportal-4xxa.onrender.com" target="_self" class="btn-switch-old" title="Switch to old Website">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-            <polyline points="15 3 21 3 21 9"></polyline>
-            <line x1="10" y1="14" x2="21" y2="3"></line>
-          </svg>
-          <span>Switch to old Website</span>
-        </a>
-
         <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode" aria-label="Toggle theme">
           <svg class="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="5"></circle>
@@ -1699,7 +1642,7 @@
       const user = DB.getCurrentUser();
       if (user && user.email) {
         const check = await DB.validateUserSession();
-        if (check && check.valid) {
+        if (check && (check.valid || check.offline)) {
           const adminToken = DB.getAdminToken ? DB.getAdminToken() : '';
           if (user.role === 'admin' && adminToken) {
             window.location.href = 'admin.html';
@@ -1708,8 +1651,6 @@
             window.location.href = 'index.html';
           }
         } else if (check && !check.valid && check.reason === 'conflict') {
-          localStorage.removeItem('cp_user_session');
-          localStorage.removeItem('cp_session_id');
           const conflictBanner = document.getElementById('loginConflictBanner');
           if (conflictBanner) conflictBanner.classList.add('show');
         } else if (check && !check.valid && check.reason === 'unauthorized') {

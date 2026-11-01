@@ -261,6 +261,10 @@
         return;
       }
 
+      if (!isAdmin && user && user.email && (!user.status || user.status === 'active')) {
+        user.status = 'approved';
+      }
+
       if (!isAdmin && (!user || user.status !== 'approved')) {
         window.location.href = 'login.html';
         return;
@@ -379,7 +383,7 @@
         if (embedMatch) id = embedMatch[1];
       }
       if (id) {
-        return `https://www.youtube.com/embed/${id}?autoplay=1&rel=0&modestbranding=1&controls=1&showinfo=0&iv_load_policy=3&cc_load_policy=0`;
+        return `https://www.youtube.com/embed/${id}?enablejsapi=1&autoplay=1&rel=0&modestbranding=1&controls=1&showinfo=0&iv_load_policy=3`;
       }
       return null;
     }
@@ -399,6 +403,7 @@
         if (typeof DB.getCachedLectures === 'function') lectures = DB.getCachedLectures() || [];
         if (typeof DB.getCachedLiveClasses === 'function') {
           liveClasses = (DB.getCachedLiveClasses() || []).filter(c => !String(c.title || '').startsWith('__CONFIG_') && c.status !== 'config' && c.url !== 'config');
+          if (window.DB && DB.compareLiveClasses) liveClasses.sort(DB.compareLiveClasses);
         }
 
         // Purge legacy global keys if present to prevent cross-user progress contamination
@@ -426,7 +431,13 @@
         lectures = results[2] || [];
         watchedIds = results[3] || [];
         starredIds = results[4] || [];
-        liveClasses = (results[5] || []).filter(c => !String(c.title || '').startsWith('__CONFIG_') && c.status !== 'config' && c.url !== 'config');
+        const fetchedLive = (results[5] || []).filter(c => !String(c.title || '').startsWith('__CONFIG_') && c.status !== 'config' && c.url !== 'config');
+        if (fetchedLive.length > 0) {
+          liveClasses = fetchedLive;
+        } else if (!liveClasses || liveClasses.length === 0) {
+          liveClasses = (typeof DB.getCachedLiveClasses === 'function') ? DB.getCachedLiveClasses() : [];
+        }
+        if (window.DB && DB.compareLiveClasses) liveClasses.sort(DB.compareLiveClasses);
         localStorage.setItem(getUserStorageKey('cp_watched_ids'), JSON.stringify(watchedIds));
         localStorage.setItem(getUserStorageKey('cp_starred_ids'), JSON.stringify(starredIds));
         if (subjects.length > 0 && (!activeSub || !subjects.some(s => s.id === activeSub))) activeSub = subjects[0].id;
@@ -514,7 +525,10 @@
       const modal = document.getElementById('liveClassModal');
       if (!modal) return;
 
-      const list = activeLiveList || (liveClasses || []).filter(c => !String(c.title || '').startsWith('__CONFIG_') && c.status !== 'config' && c.url !== 'config' && c.is_visible !== 0 && c.status !== 'hidden' && c.status !== 'ended' && c.status !== 'offline' && !!c.is_live_now);
+      let list = activeLiveList || (liveClasses || []).filter(c => !String(c.title || '').startsWith('__CONFIG_') && c.status !== 'config' && c.url !== 'config' && c.is_visible !== 0 && c.status !== 'hidden' && c.status !== 'ended' && c.status !== 'offline' && !!c.is_live_now);
+      if (Array.isArray(list) && window.DB && DB.compareLiveClasses) {
+        list = [...list].sort(DB.compareLiveClasses);
+      }
 
       if (!list || !list.length) {
         if (_livePopupAutoDismissTimer) {
@@ -606,8 +620,11 @@
       const isAdmin = currentUser && currentUser.role === 'admin';
 
       const visibleLiveClasses = (liveClasses || []).filter(c => !String(c.title || '').startsWith('__CONFIG_') && c.status !== 'config' && c.url !== 'config' && c.is_visible !== 0 && c.status !== 'hidden' && c.status !== 'ended' && c.status !== 'offline');
-      const activeLiveList = visibleLiveClasses.filter(cls => !!cls.is_live_now);
-      const scheduledList = visibleLiveClasses.filter(cls => cls.status === 'scheduled');
+      if (window.DB && DB.compareLiveClasses) visibleLiveClasses.sort(DB.compareLiveClasses);
+      // USER RULE: Top 7 live visible rahe student ko
+      const studentLiveList = isAdmin ? visibleLiveClasses : visibleLiveClasses.slice(0, 7);
+      const activeLiveList = studentLiveList.filter(cls => !!cls.is_live_now);
+      const scheduledList = studentLiveList.filter(cls => cls.status === 'scheduled');
 
       // Topbar and Drawer badges
       const topLiveDot = document.getElementById('topbarLiveDot');
@@ -632,9 +649,9 @@
         if (topLiveBadge) topLiveBadge.style.display = 'none';
         if (drawerLiveDot) drawerLiveDot.style.display = 'none';
         if (drawerLiveBadge) {
-          if (visibleLiveClasses.length > 0) {
+          if (studentLiveList.length > 0) {
             drawerLiveBadge.style.display = 'inline-flex';
-            drawerLiveBadge.textContent = `${visibleLiveClasses.length}`;
+            drawerLiveBadge.textContent = `${studentLiveList.length}`;
             drawerLiveBadge.style.background = 'var(--bg-3)';
           } else {
             drawerLiveBadge.style.display = 'none';
@@ -655,7 +672,7 @@
       }
 
       const tabs=[
-        ...(visibleLiveClasses.length > 0 || isAdmin ? [{ id: '_live', name: 'Live Classes', icon: '🔴', isLive: true }] : []),
+        { id: '_live', name: 'Live Classes', icon: '🔴', isLive: true },
         ...subjects,
         { id: '_star', name: 'Starred', icon: '★' }
       ];
@@ -669,7 +686,7 @@
             n = `${activeLiveList.length} LIVE`;
             isLiveBadge = true;
           } else {
-            n = visibleLiveClasses.length;
+            n = studentLiveList.length;
           }
         }
         else{const ch=chapters.filter(c=>String(c.subject_id)===String(s.id)).map(c=>String(c.id));n=lectures.filter(l=>ch.includes(String(l.chapter_id))).length}
@@ -1058,6 +1075,19 @@
       const isAdmin = currentUser && currentUser.role === 'admin';
 
       let filtered = (liveClasses || []).filter(c => !String(c.title || '').startsWith('__CONFIG_') && c.status !== 'config' && c.url !== 'config' && c.is_visible !== 0 && c.status !== 'hidden' && c.status !== 'ended' && c.status !== 'offline');
+      if (!filtered.length && !search) {
+        const cachedFallback = (typeof DB.getCachedLiveClasses === 'function') ? DB.getCachedLiveClasses() : [];
+        const recovered = (cachedFallback || []).filter(c => !String(c.title || '').startsWith('__CONFIG_') && c.status !== 'config' && c.url !== 'config' && c.is_visible !== 0 && c.status !== 'hidden' && c.status !== 'ended' && c.status !== 'offline');
+        if (recovered.length > 0) {
+          liveClasses = cachedFallback;
+          filtered = recovered;
+        }
+      }
+      if (window.DB && DB.compareLiveClasses) filtered.sort(DB.compareLiveClasses);
+      // USER RULE: "top 7 live visible rahe student ko, baki nayi class add ho to piche wali hide ho jaye"
+      if (!isAdmin) {
+        filtered = filtered.slice(0, 7);
+      }
       if (search) {
         filtered = filtered.filter(c =>
           (c.title && c.title.toLowerCase().includes(search.toLowerCase())) ||
@@ -1207,7 +1237,15 @@
         const encData = (window.DB && DB.SecurityVault) ? DB.SecurityVault.encrypt(rawJson) : rawJson;
         sessionStorage.setItem('cp_active_live_stream', encData);
       } catch(e) {}
-      window.location.href = `player.html?live=1&id=${encodeURIComponent(item.id)}`;
+      // Prime audio permission on user gesture
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) {
+          const actx = new AudioCtx();
+          if (actx.state === 'suspended') actx.resume();
+        }
+      } catch(e) {}
+      window.location.href = `player.html?live=1&id=${encodeURIComponent(item.id)}&sound=1`;
     }
 
     function initRealtimeSync() {
@@ -1218,10 +1256,14 @@
           liveCh.on('postgres_changes', { event: '*', schema: 'public', table: 'live_classes' }, async (payload) => {
             console.log('⚡ Realtime live stream event received from Admin:', payload);
             try {
-              liveClasses = await DB.getLiveClasses(true);
-              renderPills();
-              if (activeSub === '_live') {
-                renderAll();
+              const fresh = await DB.getLiveClasses(true);
+              if (Array.isArray(fresh) && fresh.length > 0) {
+                liveClasses = fresh.filter(c => !String(c.title || '').startsWith('__CONFIG_') && c.status !== 'config' && c.url !== 'config');
+                if (window.DB && DB.compareLiveClasses) liveClasses.sort(DB.compareLiveClasses);
+                renderPills();
+                if (activeSub === '_live') {
+                  renderAll();
+                }
               }
             } catch (err) {}
           }).subscribe();
@@ -1250,7 +1292,7 @@
             if (updated && updated.email) {
               const uEmail = (updated.email || '').toLowerCase().trim();
               if (window.DB && DB.setStudentNameInMemory && updated.name) {
-                DB.setStudentNameInMemory(uEmail, updated.name);
+                DB.setStudentNameInMemory(uEmail, updated.name, true);
               }
               const curUser = DB.getCurrentUser();
               if (curUser && curUser.email && curUser.email.toLowerCase().trim() === uEmail && updated.name) {
@@ -1291,20 +1333,38 @@
       // Auto-refresh live classes so students see new live classes automatically (8-second loop)
       setInterval(async () => {
         try {
-          liveClasses = await DB.getLiveClasses(true);
-          renderPills();
-          if (activeSub === '_live') {
-            renderAll();
+          const fresh = await DB.getLiveClasses(true);
+          if (Array.isArray(fresh) && fresh.length > 0) {
+            const valid = fresh.filter(c => !String(c.title || '').startsWith('__CONFIG_') && c.status !== 'config' && c.url !== 'config');
+            if (valid.length > 0) {
+              const prevSummary = (liveClasses || []).map(c => `${c.id}:${c.status}:${c.is_visible}:${c.is_live_now}`).join('|');
+              const newSummary = valid.map(c => `${c.id}:${c.status}:${c.is_visible}:${c.is_live_now}`).join('|');
+              if (prevSummary !== newSummary) {
+                liveClasses = valid;
+                if (window.DB && DB.compareLiveClasses) liveClasses.sort(DB.compareLiveClasses);
+                renderPills();
+                if (activeSub === '_live') {
+                  renderAll();
+                }
+              }
+            }
           }
         } catch (e) {}
       }, 8000);
 
       window.addEventListener('focus', async () => {
         try {
-          liveClasses = await DB.getLiveClasses(true);
-          renderPills();
-          if (activeSub === '_live') {
-            renderAll();
+          const fresh = await DB.getLiveClasses(true);
+          if (Array.isArray(fresh) && fresh.length > 0) {
+            const valid = fresh.filter(c => !String(c.title || '').startsWith('__CONFIG_') && c.status !== 'config' && c.url !== 'config');
+            if (valid.length > 0) {
+              liveClasses = valid;
+              if (window.DB && DB.compareLiveClasses) liveClasses.sort(DB.compareLiveClasses);
+              renderPills();
+              if (activeSub === '_live') {
+                renderAll();
+              }
+            }
           }
         } catch (e) {}
       });

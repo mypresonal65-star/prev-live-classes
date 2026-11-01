@@ -169,9 +169,18 @@
           <div class="overlay-circle"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>
         </div>
 
-        <!-- Anti-Leak Click Shields (Prevents clicking YouTube title link & logo) -->
+        <!-- Floating Unmute Audio Pill (shown only when browser policy forced muted autoplay) -->
+        <button id="unmuteNoticeBtn" class="cinema-unmute-chip" onclick="unmuteAudio(event)" title="Click to Unmute Sound" style="display:none;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+            <line x1="23" y1="9" x2="17" y2="15"></line>
+            <line x1="17" y1="9" x2="23" y2="15"></line>
+          </svg>
+          <span>Tap for Sound 🔊</span>
+        </button>
+
+        <!-- Anti-Leak Click Shields (Prevents clicking YouTube title link) -->
         <div class="cinema-shield-top" id="cinemaShieldTop" title="Protected Player"></div>
-        <div class="cinema-shield-bottom-right" id="cinemaShieldBottom" title="Protected Player"></div>
 
         <!-- DevTools Active Security Barrier -->
         <div id="devtoolsSecurityBarrier" class="devtools-security-barrier" style="display: none;">
@@ -257,14 +266,19 @@
       <div id="ytPrivateHelpBar" class="yt-private-help-bar" style="display: none;">
         <div class="yt-help-text">
           <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"/><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"/><path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.3 0 15.2s.7 5.5 1.9 7.9l3.7-2.9z"/><path fill="#34A853" d="M12 23.5c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2-6.4-4.8L1.9 17c1.8 3.7 5.6 6.5 10.1 6.5z"/></svg>
-          <span>Private Video Access: Aapka Gmail (<b id="ytHelperUserEmail">student@gmail.com</b>) YouTube par login hona chahiye.</span>
+          <span>Private Video Access: Ensure your registered Google account (<b id="ytHelperUserEmail">student@gmail.com</b>) is signed in to YouTube.</span>
         </div>
-        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-          <button type="button" class="yt-help-btn" onclick="reloadYouTubePlayer()" title="Reload Player" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #fff;">
-            🔄 Refresh Player
+        <div class="yt-help-actions">
+          <button type="button" class="yt-help-btn yt-cc-btn" id="ytCcBtn" onclick="toggleYouTubeCaptions()" title="Toggle Subtitles / Captions">
+            💬 Subtitles: <span class="yt-cc-state-off">OFF</span>
           </button>
-          <a href="https://accounts.google.com/ServiceLogin?service=youtube" target="_blank" class="yt-help-btn" title="Check YouTube Google Sign-In">
-            🔑 YouTube Google Sign-In Check
+          <button type="button" class="yt-help-btn" onclick="reloadYouTubePlayer()" title="Reload Player">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            Refresh Player
+          </button>
+          <a href="https://accounts.google.com/ServiceLogin?service=youtube" target="_blank" class="yt-help-btn yt-btn-primary" title="Check YouTube Google Sign-In">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m21 4.5-8.5 8.5"/><path d="m15.5 10 2 2"/><path d="m18 7.5 2 2"/></svg>
+            Sign In to YouTube
           </a>
         </div>
       </div>
@@ -367,6 +381,10 @@
         return;
       }
 
+      if (!isAdmin && user && user.email && (!user.status || user.status === 'active')) {
+        user.status = 'approved';
+      }
+
       if (!isAdmin && (!user || user.status !== 'approved')) {
         window.location.href = 'login.html';
         return;
@@ -451,7 +469,7 @@
           vSlider=document.getElementById('vSlider'),sLbl=document.getElementById('sLbl'),
           sMenu=document.getElementById('sMenu'),fsIco=document.getElementById('fsIco');
 
-    let cur=null,sibs=[],idx=-1,hls=null,hideTimer=null,dragging=false,seeking=false,isW=false,isS=false;
+    let cur=null,sibs=[],idx=-1,hls=null,hideTimer=null,dragging=false,seeking=false,isW=false,isS=false,isLiveSession=false,_autoPlayStarted=false,_autoMutedByPolicy=false;
     const PLAY='<path d="M8 5v14l11-7z"/>',PAUSE='<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
     const VH='<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>';
     const VL='<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>';
@@ -512,6 +530,11 @@
           document.getElementById('vCh').textContent = 'Live Broadcast';
           document.getElementById('vSub').textContent = '🔴 Interactive Stream';
           document.title = `🔴 LIVE: ${liveTitle} — Study Portal`;
+
+          // Ensure sound is explicitly active on live start
+          vid.muted = false;
+          vid.volume = prevVolume > 0 ? prevVolume : 1;
+          updV();
 
           switchSideMode('chat');
           loadVid(liveUrl);
@@ -599,6 +622,82 @@
       return match ? match[1] : null;
     }
 
+    let ytCaptionsEnabled = false;
+
+    function disableYouTubeCaptions(frame) {
+      const ytFrame = frame || document.getElementById('ytEmbedPlayer');
+      if (!ytFrame || !ytFrame.contentWindow) return;
+      try {
+        ytFrame.contentWindow.postMessage(JSON.stringify({
+          event: 'command',
+          func: 'unloadModule',
+          args: ['captions']
+        }), 'https://www.youtube.com');
+        ytFrame.contentWindow.postMessage(JSON.stringify({
+          event: 'command',
+          func: 'unloadModule',
+          args: ['cc']
+        }), 'https://www.youtube.com');
+        ytFrame.contentWindow.postMessage(JSON.stringify({
+          event: 'command',
+          func: 'setOption',
+          args: ['captions', 'track', {}]
+        }), 'https://www.youtube.com');
+      } catch (e) {}
+    }
+
+    function enableYouTubeCaptions(frame) {
+      const ytFrame = frame || document.getElementById('ytEmbedPlayer');
+      if (!ytFrame || !ytFrame.contentWindow) return;
+      try {
+        ytFrame.contentWindow.postMessage(JSON.stringify({
+          event: 'command',
+          func: 'loadModule',
+          args: ['captions']
+        }), 'https://www.youtube.com');
+      } catch (e) {}
+    }
+
+    function toggleYouTubeCaptions() {
+      const ytFrame = document.getElementById('ytEmbedPlayer');
+      if (!ytFrame) return;
+      ytCaptionsEnabled = !ytCaptionsEnabled;
+      if (ytCaptionsEnabled) {
+        enableYouTubeCaptions(ytFrame);
+        updateYtCcBtnUI(true);
+        if (typeof DB !== 'undefined' && DB.showToast) DB.showToast('Subtitles / Captions turned ON', 'info');
+      } else {
+        disableYouTubeCaptions(ytFrame);
+        updateYtCcBtnUI(false);
+        if (typeof DB !== 'undefined' && DB.showToast) DB.showToast('Subtitles / Captions turned OFF', 'info');
+      }
+    }
+
+    function updateYtCcBtnUI(isOn) {
+      const btn = document.getElementById('ytCcBtn');
+      if (!btn) return;
+      if (isOn) {
+        btn.innerHTML = '💬 Subtitles: <span class="yt-cc-state-on">ON</span>';
+        btn.classList.add('active');
+      } else {
+        btn.innerHTML = '💬 Subtitles: <span class="yt-cc-state-off">OFF</span>';
+        btn.classList.remove('active');
+      }
+    }
+
+    // Auto-disable captions when YouTube player reports ready / playing state
+    window.addEventListener('message', (e) => {
+      if (typeof e.data !== 'string') return;
+      try {
+        const data = JSON.parse(e.data);
+        if (data.event === 'onReady' || (data.event === 'infoDelivery' && data.info && data.info.playerState === 1)) {
+          if (!ytCaptionsEnabled) {
+            disableYouTubeCaptions();
+          }
+        }
+      } catch (err) {}
+    });
+
     function reloadYouTubePlayer() {
       const ytFrame = document.getElementById('ytEmbedPlayer');
       if (ytFrame && ytFrame.src) {
@@ -609,9 +708,155 @@
       }
     }
 
+    function unmuteYouTubePlayer() {
+      const ytFrame = document.getElementById('ytEmbedPlayer');
+      if (ytFrame && ytFrame.contentWindow) {
+        try {
+          ytFrame.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*');
+          ytFrame.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'setVolume', args: [100] }), '*');
+          ytFrame.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*');
+        } catch(e) {}
+      }
+    }
+
+    function showUnmuteNotice() {
+      _autoMutedByPolicy = true;
+      const btn = document.getElementById('unmuteNoticeBtn');
+      if (btn) {
+        btn.style.display = 'inline-flex';
+        btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg><span>🔊 Click Anywhere for Live Sound</span>`;
+      }
+    }
+
+    function hideUnmuteNotice() {
+      _autoMutedByPolicy = false;
+      const btn = document.getElementById('unmuteNoticeBtn');
+      if (btn) btn.style.display = 'none';
+    }
+
+    function unmuteAudio(e) {
+      if (e) {
+        try { e.stopPropagation(); } catch(err) {}
+      }
+      if (vid) {
+        vid.muted = false;
+        vid.volume = prevVolume > 0 ? prevVolume : 1;
+        updV();
+        if (vid.paused) {
+          vid.play().catch(() => {});
+        }
+      }
+      unmuteYouTubePlayer();
+      hideUnmuteNotice();
+      detachAggressiveUnmuteListeners();
+      if (typeof DB !== 'undefined' && DB.showToast) {
+        DB.showToast('🔊 Live Sound Active', 'info');
+      }
+    }
+
+    let _aggressiveListenersAttached = false;
+    function attachAggressiveUnmuteListeners() {
+      if (_aggressiveListenersAttached) return;
+      _aggressiveListenersAttached = true;
+
+      const triggerUnmute = () => {
+        if (vid && vid.muted) {
+          vid.muted = false;
+          vid.volume = prevVolume > 0 ? prevVolume : 1;
+          updV();
+          hideUnmuteNotice();
+          unmuteYouTubePlayer();
+          if (vid.paused) {
+            vid.play().catch(() => {});
+          }
+          if (!vid.muted) {
+            detachAggressiveUnmuteListeners();
+          }
+        }
+      };
+
+      window._triggerUnmuteHandler = triggerUnmute;
+
+      // Listen on all user activation gestures across entire window
+      const events = ['pointerdown', 'mousedown', 'click', 'touchstart', 'keydown', 'focus'];
+      events.forEach(evt => {
+        window.addEventListener(evt, triggerUnmute, { capture: true, passive: true });
+      });
+
+      // Also listen on cinema player interactions
+      cinema.addEventListener('pointerenter', triggerUnmute, { passive: true });
+      cinema.addEventListener('click', triggerUnmute, { capture: true });
+    }
+
+    function detachAggressiveUnmuteListeners() {
+      if (!window._triggerUnmuteHandler) return;
+      const events = ['pointerdown', 'mousedown', 'click', 'touchstart', 'keydown', 'focus'];
+      events.forEach(evt => {
+        window.removeEventListener(evt, window._triggerUnmuteHandler, { capture: true });
+      });
+      cinema.removeEventListener('pointerenter', window._triggerUnmuteHandler);
+      cinema.removeEventListener('click', window._triggerUnmuteHandler);
+      _aggressiveListenersAttached = false;
+    }
+
+    function attemptAutoPlay() {
+      if (_autoPlayStarted && vid && !vid.paused && !vid.muted) return;
+
+      spin.style.display = 'none';
+
+      // For live stream sessions, seek to live edge if available
+      if (isLiveSession && hls && typeof hls.liveSyncPosition === 'number' && hls.liveSyncPosition > 0) {
+        try { vid.currentTime = hls.liveSyncPosition; } catch(e) {}
+      }
+
+      // Hide overlay play button immediately so student gets smooth auto-start
+      ov.classList.add('hidden');
+
+      // Ensure sound is active and unmuted
+      vid.muted = false;
+      vid.volume = prevVolume > 0 ? prevVolume : 1;
+      updV();
+
+      // 1. First try unmuted autoplay (best student experience)
+      const playPromise = vid.play();
+      if (playPromise !== undefined && typeof playPromise.then === 'function') {
+        playPromise.then(() => {
+          _autoPlayStarted = true;
+          _autoMutedByPolicy = false;
+          vid.muted = false;
+          vid.volume = prevVolume > 0 ? prevVolume : 1;
+          updV();
+          pIco.innerHTML = PAUSE;
+          ov.classList.add('hidden');
+          hideUnmuteNotice();
+        }).catch(err => {
+          console.warn('Unmuted autoplay prevented by browser policy, starting stream with instant-unmute listeners:', err);
+          // 2. If browser policy temporarily blocks sound on cold page load,
+          // play stream so video doesn't freeze, and attach instant-unmute listeners
+          vid.muted = true;
+          updV();
+          vid.play().then(() => {
+            _autoPlayStarted = true;
+            _autoMutedByPolicy = true;
+            pIco.innerHTML = PAUSE;
+            ov.classList.add('hidden');
+            showUnmuteNotice();
+            attachAggressiveUnmuteListeners();
+          }).catch(err2 => {
+            console.warn('Muted autoplay also blocked:', err2);
+            ov.classList.remove('hidden');
+            pIco.innerHTML = PLAY;
+          });
+        });
+      }
+    }
+
     async function loadVid(url){
       if(!url) return;
       if(hls){hls.destroy();hls=null}
+      _autoPlayStarted = false;
+      _autoMutedByPolicy = false;
+      hideUnmuteNotice();
 
       const ytId = extractYouTubeVideoId(url);
       const bar = document.getElementById('bar');
@@ -626,7 +871,11 @@
         if(bar) bar.style.display='none';
         cinema.classList.add('is-youtube');
 
-        switchSideMode('playlist');
+        if (!isLiveSession) {
+          switchSideMode('playlist');
+        } else {
+          switchSideMode('chat');
+        }
 
         const ytHelp = document.getElementById('ytPrivateHelpBar');
         if(ytHelp){
@@ -636,18 +885,31 @@
           if(emailEl) emailEl.textContent = curU?.email || 'Student Gmail';
         }
 
+        ytCaptionsEnabled = false;
+        updateYtCcBtnUI(false);
+
         let ytFrame = document.getElementById('ytEmbedPlayer');
         if(!ytFrame){
           ytFrame = document.createElement('iframe');
           ytFrame.id = 'ytEmbedPlayer';
           ytFrame.className = 'yt-embed-player';
           ytFrame.setAttribute('frameborder', '0');
-          ytFrame.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
+          ytFrame.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
           ytFrame.setAttribute('allowfullscreen', 'true');
           cinema.appendChild(ytFrame);
         }
         ytFrame.style.display = 'block';
-        ytFrame.src = `https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0&modestbranding=1&controls=1&showinfo=0&iv_load_policy=3&cc_load_policy=0`;
+        ytFrame.onload = () => {
+          disableYouTubeCaptions(ytFrame);
+          unmuteYouTubePlayer();
+          [200, 500, 1000, 2000, 3500].forEach(ms => {
+            setTimeout(() => {
+              if (!ytCaptionsEnabled) disableYouTubeCaptions(ytFrame);
+              unmuteYouTubePlayer();
+            }, ms);
+          });
+        };
+        ytFrame.src = `https://www.youtube.com/embed/${ytId}?enablejsapi=1&autoplay=1&mute=0&playsinline=1&rel=0&modestbranding=1&controls=1&showinfo=0&iv_load_policy=3`;
         return;
       }
 
@@ -689,7 +951,10 @@
           });
           hls.loadSource(streamSource);
           hls.attachMedia(vid);
-          hls.on(Hls.Events.MANIFEST_PARSED,()=>spin.style.display='none');
+          hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            spin.style.display='none';
+            attemptAutoPlay();
+          });
           hls.on(Hls.Events.ERROR,(_,d)=>{
             if(d.fatal){
               if(d.type===Hls.ErrorTypes.NETWORK_ERROR){DB.showToast('Network error — retrying','error');hls.startLoad()}
@@ -699,24 +964,60 @@
           });
         }else if(vid.canPlayType('application/vnd.apple.mpegurl')){
           vid.src=streamSource;
-          vid.addEventListener('loadedmetadata',()=>spin.style.display='none');
+          vid.addEventListener('loadedmetadata', () => {
+            spin.style.display='none';
+            attemptAutoPlay();
+          }, { once: true });
         }else{
           DB.showToast('HLS not supported','error');
           spin.style.display='none';
         }
       }else{
         vid.src=url;
-        vid.addEventListener('loadedmetadata',()=>spin.style.display='none');
+        vid.addEventListener('loadedmetadata', () => {
+          spin.style.display='none';
+          attemptAutoPlay();
+        }, { once: true });
+      }
+
+      // Safety autoplay triggers for live sessions to ensure zero pause delay
+      if (isLiveSession) {
+        setTimeout(() => {
+          if (vid && vid.paused && !_autoPlayStarted) attemptAutoPlay();
+        }, 400);
+        setTimeout(() => {
+          if (vid && vid.paused && !_autoPlayStarted) attemptAutoPlay();
+        }, 1200);
       }
     }
 
-    function togglePlay(){if(vid.paused||vid.ended)vid.play().then(()=>ov.classList.add('hidden')).catch(()=>{});else vid.pause()}
+    function togglePlay(){
+      if (_autoMutedByPolicy && vid.muted) {
+        unmuteAudio();
+      }
+      if(vid.paused||vid.ended)vid.play().then(()=>ov.classList.add('hidden')).catch(()=>{});
+      else vid.pause()
+    }
+
+    vid.addEventListener('click', e => {
+      if (e.target.closest('.bar, .speed-drop, .cinema-unmute-chip')) return;
+      if (_autoMutedByPolicy && vid.muted) {
+        unmuteAudio();
+        return;
+      }
+      togglePlay();
+    });
 
     vid.addEventListener('play',()=>{pIco.innerHTML=PAUSE;ov.classList.add('hidden');spin.style.display='none'});
     vid.addEventListener('pause',()=>{pIco.innerHTML=PLAY;ov.classList.remove('hidden')});
     vid.addEventListener('ended',async()=>{pIco.innerHTML=PLAY;ov.classList.remove('hidden');if(cur&&!isW){await DB.addWatched(cur.id);isW=true;updateBtns();DB.showToast('Completed — marked watched','success')}});
     vid.addEventListener('waiting',()=>spin.style.display='block');
-    vid.addEventListener('canplay',()=>spin.style.display='none');
+    vid.addEventListener('canplay',()=>{
+      spin.style.display='none';
+      if (isLiveSession && vid.paused && !_autoPlayStarted) {
+        attemptAutoPlay();
+      }
+    });
 
     vid.addEventListener('timeupdate',()=>{if(!seeking&&vid.duration){bFill.style.width=(vid.currentTime/vid.duration*100)+'%';ct.textContent=fmt(vid.currentTime);dt.textContent=fmt(vid.duration)}});
     vid.addEventListener('progress',()=>{if(vid.buffered.length>0&&vid.duration)bBuf.style.width=(vid.buffered.end(vid.buffered.length-1)/vid.duration*100)+'%'});
@@ -733,12 +1034,17 @@
 
     cinema.addEventListener('dblclick',e=>{if(e.target.closest('.bar,.speed-drop'))return;const r=cinema.getBoundingClientRect();const x=e.clientX-r.left;if(x<r.width*.4)skip(-10);else if(x>r.width*.6)skip(10);else toggleFS()});
 
-    let prevVolume = 1;
+    let prevVolume = parseFloat(localStorage.getItem('cp_player_volume') || '1');
+    if (isNaN(prevVolume) || prevVolume <= 0) prevVolume = 1;
+
     vSlider.addEventListener('input', e => {
       const val = parseFloat(e.target.value);
       vid.volume = val;
       vid.muted = (val === 0);
-      if (val > 0) prevVolume = val;
+      if (val > 0) {
+        prevVolume = val;
+        try { localStorage.setItem('cp_player_volume', String(val)); } catch(e) {}
+      }
       updV();
     });
 
@@ -756,6 +1062,7 @@
         prevVolume = vid.volume;
         vid.muted = true;
       }
+      try { localStorage.setItem('cp_player_volume', String(vid.volume)); } catch(e) {}
       updV();
     }
 
@@ -858,7 +1165,6 @@
     // ===== SIDE-BY-SIDE SMOOTH LIVE CHAT ENGINE (100% BLINK-FREE & BULLETPROOF) =====
     let sideChatInterval = null;
     let _lastLiveChatSig = '';
-    let isLiveSession = false;
 
     function switchSideMode(mode) {
       const playlistSec = document.getElementById('sidePlaylistSection');

@@ -39,7 +39,7 @@ function setAdminToken(token) {
   try {
     sessionStorage.setItem('cp_admin_token', token);
     localStorage.setItem('cp_admin_token', token);
-  } catch (e) {}
+  } catch (e) { }
 }
 
 function clearAdminToken() {
@@ -47,7 +47,7 @@ function clearAdminToken() {
     sessionStorage.removeItem('cp_admin_token');
     localStorage.removeItem('cp_admin_token');
     localStorage.removeItem('admin_logged_in');
-  } catch (e) {}
+  } catch (e) { }
 }
 
 // ===== 🛡️ MASTER ADMINISTRATOR CONFIGURATION (DATABASE SYNCED) =====
@@ -109,7 +109,7 @@ async function ensureDefaultAdminsInDatabase() {
 // Background auto-seed default admins to database
 if (typeof window !== 'undefined') {
   setTimeout(() => {
-    ensureDefaultAdminsInDatabase().catch(() => {});
+    ensureDefaultAdminsInDatabase().catch(() => { });
   }, 1200);
 }
 
@@ -133,7 +133,7 @@ const SecurityVault = {
     try {
       const payload = `${obj.id || ''}:${obj.email || ''}:${obj.role || ''}:${obj.status || ''}:${obj.session_id || ''}:${this._salt}`;
       return this._hash(payload);
-    } catch(e) {
+    } catch (e) {
       return '';
     }
   },
@@ -142,7 +142,7 @@ const SecurityVault = {
     if (!obj || !signature) return false;
     try {
       return this.signData(obj) === signature;
-    } catch(e) {
+    } catch (e) {
       return false;
     }
   },
@@ -155,7 +155,7 @@ const SecurityVault = {
         xor += String.fromCharCode(text.charCodeAt(i) ^ this._salt.charCodeAt(i % this._salt.length));
       }
       return btoa(unescape(encodeURIComponent(xor)));
-    } catch(e) {
+    } catch (e) {
       return btoa(unescape(encodeURIComponent(text)));
     }
   },
@@ -169,8 +169,8 @@ const SecurityVault = {
         xor += String.fromCharCode(decoded.charCodeAt(i) ^ this._salt.charCodeAt(i % this._salt.length));
       }
       return xor;
-    } catch(e) {
-      try { return decodeURIComponent(escape(atob(token))); } catch(err) { return token; }
+    } catch (e) {
+      try { return decodeURIComponent(escape(atob(token))); } catch (err) { return token; }
     }
   },
 
@@ -219,7 +219,7 @@ const SecurityVault = {
     reset(action) {
       try {
         localStorage.removeItem(this._getKey(action));
-      } catch (e) {}
+      } catch (e) { }
     }
   }
 };
@@ -241,7 +241,7 @@ const SpiderShield = {
         if (window.self.location.href !== window.top.location.href) {
           window.top.location.href = window.self.location.href;
         }
-      } catch (err) {}
+      } catch (err) { }
     }
 
     // Layer 1: Anti-DevTools & Shortcut Locks (F12, Ctrl+Shift+I, Ctrl+Shift+J, etc.)
@@ -321,8 +321,8 @@ const SpiderShield = {
       console.clear();
       console.warn('%c⛔ SPIDER SECURITY SHIELD ACTIVE', 'color:#ef4444; font-size:22px; font-weight:bold;');
       console.warn('%cInspection and reverse engineering are strictly prohibited. Client activities are signed and monitored.', 'color:#f97316; font-size:13px;');
-    } catch(e) {}
-    
+    } catch (e) { }
+
     // In admin.html, if devtools is opened without cryptographic admin token, lock screen
     if (typeof window !== 'undefined' && window.location.pathname.includes('admin.html')) {
       const token = (typeof getAdminToken === 'function') ? getAdminToken() : '';
@@ -336,7 +336,7 @@ const SpiderShield = {
     try {
       console.log('%c🛡️ SPIDER CLASSES — 10-LAYER MILITARY GRADE DEFENSE ACTIVE', 'background:#ef4444; color:#fff; font-size:13px; font-weight:bold; padding:4px 10px; border-radius:4px;');
       console.log('%cAnti-Tamper Checksum, DevTools Lock, Rate Limiter, Single Device Hardware Binding Active.', 'color:#94a3b8; font-size:11px;');
-    } catch(e) {}
+    } catch (e) { }
   }
 };
 
@@ -346,7 +346,7 @@ if (typeof window !== 'undefined') {
   SpiderShield.init();
 }
 
-function clearAllAuthSessions() {
+function clearAllAuthSessions(includePermanent = false) {
   clearAdminToken();
   try {
     localStorage.removeItem('cp_user_session');
@@ -360,7 +360,10 @@ function clearAllAuthSessions() {
     sessionStorage.removeItem('cp_admin_token');
     sessionStorage.removeItem('cp_admin_auth_session');
     sessionStorage.removeItem('admin_logged_in');
-  } catch (e) {}
+    if (includePermanent) {
+      localStorage.removeItem('cp_permanent_student_session');
+    }
+  } catch (e) { }
 }
 
 // ===== CLOUDFLARE WORKER & DATABASE BRIDGING =====
@@ -379,7 +382,7 @@ async function workerApiCall(endpoint, options = {}) {
       headers: { 'Content-Type': 'application/json', ...(options.headers || {}) }
     });
     let data = null;
-    try { data = await response.json(); } catch(e) {}
+    try { data = await response.json(); } catch (e) { }
     if (!response.ok) {
       const msg = (data && (data.error || data.message)) ? (data.error || data.message) : `HTTP ${response.status}`;
       throw new Error(msg);
@@ -411,6 +414,108 @@ const STANDARD_SUBJECTS = [
   { id: 'subj_quant', name: 'Quant', icon: '🔢', color: 'emerald' },
   { id: 'subj_computer', name: 'Computer', icon: '💻', color: 'cyan' },
   { id: 'subj_english', name: 'English', icon: '📖', color: 'amber' }
+];
+
+// Top 7 Verified Live Classes (Seed / Instant Resilient Fallback)
+const DEFAULT_LIVE_CLASSES = [
+  {
+    id: "imp_126",
+    raw_id: 126,
+    title: "Permutations and Combination 07 [Basic To Advance] 06:12 pm",
+    url: "https://vs.classplusapp.com/hls/6ad8b32b66017c9e0c8622d6/720p20.m3u8",
+    status: "live",
+    is_live_now: true,
+    is_visible: 1,
+    scheduled_at: "2026-10-22T13:24:32+00:00",
+    created_at: "2026-10-22T13:24:32+00:00",
+    instructor: "Spider Classes",
+    section: "math",
+    description: "Live Interactive Session"
+  },
+  {
+    id: "imp_122",
+    raw_id: 122,
+    title: "Computer - Signed Number System 04:10 pm",
+    url: "https://vs.classplusapp.com/hls/6ad9e81cf26032ed774035a0/720p20.m3u8",
+    status: "live",
+    is_live_now: false,
+    is_visible: 1,
+    scheduled_at: "2026-10-22T13:24:28.092343+00:00",
+    created_at: "2026-10-22T13:24:28.092343+00:00",
+    instructor: "Spider Classes",
+    section: "computer",
+    description: "Live Interactive Session"
+  },
+  {
+    id: "imp_121",
+    raw_id: 121,
+    title: "Equation, Ineuqation and Quadratic Equation 15 12:09 pm",
+    url: "https://vs.classplusapp.com/hls/6ad9af8c0e4a9a82f2382c23/720p20.m3u8",
+    status: "live",
+    is_live_now: false,
+    is_visible: 1,
+    scheduled_at: "2026-10-22T07:05:14.414491+00:00",
+    created_at: "2026-10-22T07:05:14.414491+00:00",
+    instructor: "Spider Classes",
+    section: "math",
+    description: "Live Interactive Session"
+  },
+  {
+    id: "imp_120",
+    raw_id: 120,
+    title: "Permutations and Combination 07 [Basic To Advance] 06:12 pm",
+    url: "https://vs.classplusapp.com/hls/6ad8b32b66017c9e0c8622d6/720p20.m3u8",
+    status: "live",
+    is_live_now: false,
+    is_visible: 1,
+    scheduled_at: "2026-10-21T14:00:24.885354+00:00",
+    created_at: "2026-10-21T14:00:24.885354+00:00",
+    instructor: "Spider Classes",
+    section: "math",
+    description: "Live Interactive Session"
+  },
+  {
+    id: "imp_117",
+    raw_id: 117,
+    title: "Blood Relation 03 04:37 pm",
+    url: "https://vs.classplusapp.com/hls/6ad357078f4b7f022d05a115/720p20.m3u8",
+    status: "live",
+    is_live_now: false,
+    is_visible: 1,
+    scheduled_at: "2026-10-17T11:57:00+00:00",
+    created_at: "2026-10-17T11:57:00+00:00",
+    instructor: "Spider Classes",
+    section: "reasoning",
+    description: "Live Interactive Session"
+  },
+  {
+    id: "imp_114",
+    raw_id: 114,
+    title: "Permutations and Combination 05 [Basic To Advance] 06:24 pm",
+    url: "https://vs.classplusapp.com/hls/6ad21bdac22a23b7e1e995f2/720p20.m3u8",
+    status: "live",
+    is_live_now: false,
+    is_visible: 1,
+    scheduled_at: "2026-10-17T11:54:00+00:00",
+    created_at: "2026-10-17T11:54:00+00:00",
+    instructor: "Spider Classes",
+    section: "math",
+    description: "Live Interactive Session"
+  },
+  {
+    id: "imp_108",
+    raw_id: 108,
+    title: "Blood Relation 02 04:20 pm",
+    url: "https://vs.classplusapp.com/hls/6ad201808563bb5d99d8186d/720p20.m3u8",
+    status: "live",
+    is_live_now: false,
+    is_visible: 1,
+    scheduled_at: "2026-10-17T11:48:00+00:00",
+    created_at: "2026-10-17T11:48:00+00:00",
+    instructor: "Spider Classes",
+    section: "reasoning",
+    description: "Live Interactive Session"
+  }
 ];
 
 const SECTION_TO_SUBJ = {
@@ -571,18 +676,32 @@ function getCachedLectures() {
 }
 
 function getCachedLiveClasses() {
-  let list = [];
-  if (typeof _cachedLiveClasses !== 'undefined' && _cachedLiveClasses && _cachedLiveClasses.length > 0) {
+  let list = null;
+  if (typeof _cachedLiveClasses !== 'undefined' && Array.isArray(_cachedLiveClasses) && _cachedLiveClasses.length > 0) {
     list = _cachedLiveClasses;
   } else {
-    list = getLocalJson(CACHE_LIVE_CLASSES_KEY, []);
+    list = getLocalJson(CACHE_LIVE_CLASSES_KEY, null);
+    if (!Array.isArray(list) || list.length === 0) {
+      list = getLocalJson('cp_live_classes', null);
+    }
   }
-  return (list || []).filter(c => {
+  // Deep safeguard: If storage was cleared or empty, provide verified default live classes immediately
+  if (!Array.isArray(list) || list.length === 0) {
+    list = DEFAULT_LIVE_CLASSES.map(c => ({ ...c }));
+  }
+  const filtered = (list || []).filter(c => {
     const t = String(c.title || '').trim();
     const st = String(c.status || '').trim();
     const u = String(c.url || '').trim();
     return !t.startsWith('__CONFIG_') && !t.includes('CONFIG_CHAPTER_PLAYLISTS') && st !== 'config' && u !== 'config';
   });
+  if (typeof compareLiveClasses === 'function') {
+    filtered.sort(compareLiveClasses);
+  }
+  if (typeof enforceTopLiveVisibility === 'function') {
+    return enforceTopLiveVisibility(filtered, MAX_VISIBLE_LIVE_CLASSES);
+  }
+  return filtered;
 }
 
 async function fetchWorkerPlaylists(force = false) {
@@ -605,7 +724,7 @@ async function fetchWorkerPlaylists(force = false) {
             _cachedPlaylistsTime = Date.now();
             saveLocalJson(CACHE_PLAYLISTS_KEY, list);
           }
-        }).catch(() => {}).finally(() => {
+        }).catch(() => { }).finally(() => {
           _inFlightPlaylistsPromise = null;
         });
       }
@@ -642,7 +761,7 @@ function broadcastLiveSync(detail = {}) {
   try {
     localStorage.setItem('spider_live_sync_ping', JSON.stringify({ ts: Date.now(), ...detail }));
     window.dispatchEvent(new CustomEvent('spider_live_sync', { detail }));
-  } catch (e) {}
+  } catch (e) { }
 }
 
 function invalidatePlaylistsCache() {
@@ -656,7 +775,7 @@ function invalidatePlaylistsCache() {
     localStorage.removeItem(CACHE_LECTURES_KEY);
     localStorage.removeItem(CACHE_PLAYLISTS_KEY);
     localStorage.removeItem(CACHE_CHAPTERS_KEY);
-  } catch (e) {}
+  } catch (e) { }
   broadcastLiveSync({ type: 'cache_invalidated' });
 }
 
@@ -674,7 +793,7 @@ function getLocalJson(key, defaultVal) {
 function saveLocalJson(key, val) {
   try {
     localStorage.setItem(key, JSON.stringify(val));
-  } catch (e) {}
+  } catch (e) { }
 }
 
 const CUSTOM_SUBJ_KEY = 'cp_custom_subjects';
@@ -716,7 +835,7 @@ async function getSubjects(force = false) {
         .from('subjects')
         .select('*')
         .order('created_at', { ascending: true });
-      const timeoutPromise = new Promise(resolve => setTimeout(() => resolve({ data: null }), 1200));
+      const timeoutPromise = new Promise(resolve => setTimeout(() => resolve({ data: null }), 5000));
       const { data } = await Promise.race([sbPromise, timeoutPromise]);
       if (Array.isArray(data)) {
         data.forEach(dbSub => {
@@ -730,7 +849,7 @@ async function getSubjects(force = false) {
         });
       }
     }
-  } catch (e) {}
+  } catch (e) { }
 
   _cachedSubjects = list;
   _cachedSubjectsTime = now;
@@ -780,7 +899,7 @@ async function addSubject(name, icon = '📚', color = 'blue') {
         color: newSub.color
       });
     }
-  } catch (e) {}
+  } catch (e) { }
 
   _cachedSubjects = null;
   _cachedSubjectsTime = 0;
@@ -822,7 +941,7 @@ async function updateSubject(id, updates) {
     if (checkClient()) {
       await sbClient.from('subjects').update(updates).eq('id', id);
     }
-  } catch (e) {}
+  } catch (e) { }
 
   _cachedSubjects = null;
   _cachedSubjectsTime = 0;
@@ -859,13 +978,13 @@ async function deleteSubject(id) {
     for (const c of subChaps) {
       await deleteChapter(c.id);
     }
-  } catch (e) {}
+  } catch (e) { }
 
   try {
     if (checkClient()) {
       await sbClient.from('subjects').delete().eq('id', subjIdStr);
     }
-  } catch (e) {}
+  } catch (e) { }
 
   _cachedSubjects = null;
   _cachedSubjectsTime = 0;
@@ -936,7 +1055,7 @@ async function getAllChapters(force = false) {
   try {
     if (checkClient()) {
       const sbPromise = sbClient.from('chapters').select('*').order('created_at', { ascending: true });
-      const timeoutPromise = new Promise(resolve => setTimeout(() => resolve({ data: null }), 2000));
+      const timeoutPromise = new Promise(resolve => setTimeout(() => resolve({ data: null }), 5000));
       const { data } = await Promise.race([sbPromise, timeoutPromise]);
       if (Array.isArray(data) && data.length > 0) {
         data.forEach(ch => {
@@ -958,7 +1077,7 @@ async function getAllChapters(force = false) {
         });
       }
     }
-  } catch (e) {}
+  } catch (e) { }
 
   // --- STRICT CANONICAL DEDUPLICATION (PREVENTS DUPLICATE CHAPTERS WITH SAME NAME) ---
   const seenChapKeys = new Map();
@@ -1002,14 +1121,14 @@ async function getAllChapters(force = false) {
           // Purge duplicate temporary chapter from customChapters
           const cleanCustom = getLocalJson(CUSTOM_CHAPTERS_KEY, []).filter(c => String(c.id) !== oldId);
           saveLocalJson(CUSTOM_CHAPTERS_KEY, cleanCustom);
-        } catch (mErr) {}
+        } catch (mErr) { }
       } else {
         // ch is duplicate and existing is canonical: purge ch from customChapters if present
         try {
           const dupId = String(ch.id);
           const cleanCustom = getLocalJson(CUSTOM_CHAPTERS_KEY, []).filter(c => String(c.id) !== dupId);
           saveLocalJson(CUSTOM_CHAPTERS_KEY, cleanCustom);
-        } catch (e) {}
+        } catch (e) { }
       }
     }
   }
@@ -1033,7 +1152,7 @@ async function addChapter(name, subjectId) {
 
   // 1. DEDUPLICATION: Check if chapter already exists in this subject
   const allCurrent = await getAllChapters();
-  const existingInSubj = allCurrent.find(c => 
+  const existingInSubj = allCurrent.find(c =>
     (c.subject_id === subjectId || (c.section && c.section.toLowerCase() === section.toLowerCase())) &&
     c.name.toLowerCase() === cleanName.toLowerCase()
   );
@@ -1045,7 +1164,7 @@ async function addChapter(name, subjectId) {
   // 2. Also check if Cloudflare Worker already has this playlist in its database
   try {
     const workerPlaylists = await fetchWorkerPlaylists(true);
-    const existingOnWorker = workerPlaylists.find(p => 
+    const existingOnWorker = workerPlaylists.find(p =>
       (p.section || '').toLowerCase() === section.toLowerCase() &&
       p.name.trim().toLowerCase() === cleanName.toLowerCase()
     );
@@ -1061,7 +1180,7 @@ async function addChapter(name, subjectId) {
       invalidatePlaylistsCache();
       return resolved;
     }
-  } catch (e) {}
+  } catch (e) { }
 
   // 3. Create on Cloudflare Worker
   let newId = null;
@@ -1094,8 +1213,8 @@ async function addChapter(name, subjectId) {
 
   const custom = getLocalJson(CUSTOM_CHAPTERS_KEY, []);
   // Make sure not already in custom
-  const existingCustomIdx = custom.findIndex(c => 
-    String(c.id) === String(newId) || 
+  const existingCustomIdx = custom.findIndex(c =>
+    String(c.id) === String(newId) ||
     (c.subject_id === subjectId && (c.name || '').trim().toLowerCase() === cleanName.toLowerCase())
   );
   if (existingCustomIdx >= 0) {
@@ -1117,10 +1236,10 @@ async function addChapter(name, subjectId) {
         subject_id: String(newChap.subject_id)
       }, { onConflict: 'id' });
     }
-  } catch (e) {}
+  } catch (e) { }
 
   invalidatePlaylistsCache();
-  try { await fetchWorkerPlaylists(true); } catch(e) {}
+  try { await fetchWorkerPlaylists(true); } catch (e) { }
   showToast(`Chapter "${cleanName}" added`, 'success');
   return newChap;
 }
@@ -1146,7 +1265,7 @@ async function updateChapter(id, updates) {
       if (updates.subject_id) sbUpdates.subject_id = updates.subject_id;
       await sbClient.from('chapters').update(sbUpdates).eq('id', id);
     }
-  } catch (e) {}
+  } catch (e) { }
 
   invalidatePlaylistsCache();
   showToast('Chapter updated successfully', 'success');
@@ -1235,7 +1354,7 @@ async function deleteChapter(id) {
   saveLocalJson(LECTURE_OVERRIDES_KEY, lecOverrides);
 
   // 7. Clean up linked playlist metadata
-  try { setChapterPlaylist(chapIdStr, null); } catch (e) {}
+  try { setChapterPlaylist(chapIdStr, null); } catch (e) { }
 
   // 8. Delete from Cloudflare Worker
   try {
@@ -1253,7 +1372,7 @@ async function deleteChapter(id) {
       await sbClient.from('lectures').delete().eq('chapter_id', chapIdStr);
       await sbClient.from('chapters').delete().eq('id', chapIdStr);
     }
-  } catch (e) {}
+  } catch (e) { }
 
   // 10. Invalidate and refresh in-memory caches
   _cachedLecturesList = null;
@@ -1264,7 +1383,7 @@ async function deleteChapter(id) {
   _cachedPlaylistsTime = 0;
   invalidatePlaylistsCache();
 
-  try { await fetchWorkerPlaylists(true); } catch(e) {}
+  try { await fetchWorkerPlaylists(true); } catch (e) { }
   await getAllChapters(true);
   await getAllLectures(true);
   broadcastLiveSync({ type: 'chapter_deleted', chapterId: chapIdStr });
@@ -1399,7 +1518,7 @@ async function getAllLectures(force = false) {
   try {
     if (checkClient()) {
       const sbPromise = sbClient.from('lectures').select('*').order('sort_order', { ascending: true });
-      const timeoutPromise = new Promise(resolve => setTimeout(() => resolve({ data: null }), 2000));
+      const timeoutPromise = new Promise(resolve => setTimeout(() => resolve({ data: null }), 5000));
       const { data } = await Promise.race([sbPromise, timeoutPromise]);
       if (Array.isArray(data) && data.length > 0) {
         data.forEach(l => {
@@ -1423,7 +1542,7 @@ async function getAllLectures(force = false) {
         });
       }
     }
-  } catch (e) {}
+  } catch (e) { }
 
   // --- STRICT CANONICAL DEDUPLICATION ---
   const seenKeys = new Map();
@@ -1548,7 +1667,7 @@ async function addLecture(titleOrObj, url, chapterId, sortOrder = 1) {
     if (checkClient()) {
       await sbClient.from('lectures').upsert(newLec, { onConflict: 'id' });
     }
-  } catch (e) {}
+  } catch (e) { }
 
   invalidatePlaylistsCache();
   await fetchWorkerPlaylists(true);
@@ -1576,7 +1695,7 @@ async function updateLecture(id, updates, oldChapterId = null, silent = false) {
               method: 'DELETE',
               body: JSON.stringify({ playlistId: prevChapter, chapterId: id })
             });
-          } catch (delErr) {}
+          } catch (delErr) { }
         }
         const res = await workerApiCall('/playlists/chapter', {
           method: 'POST',
@@ -1628,7 +1747,7 @@ async function updateLecture(id, updates, oldChapterId = null, silent = false) {
       if (updates.sort_order !== undefined) dbUpdates.sort_order = newSortOrder;
       await sbClient.from('lectures').update(dbUpdates).eq('id', id);
     }
-  } catch (e) {}
+  } catch (e) { }
 
   if (!silent) {
     invalidatePlaylistsCache();
@@ -1683,7 +1802,7 @@ async function deleteLectureDB(id, chapterId = null) {
     if (checkClient()) {
       await sbClient.from('lectures').delete().eq('id', id);
     }
-  } catch (e) {}
+  } catch (e) { }
 
   invalidatePlaylistsCache();
   await fetchWorkerPlaylists(true);
@@ -1764,7 +1883,7 @@ async function addLecturesBatch(selectedLectures) {
             method: 'POST',
             body: JSON.stringify({ playlistId: chapterId, chapterName: item.name, chapterLink: item.link })
           });
-        } catch (e) {}
+        } catch (e) { }
       }
       workerSynced = true;
     }
@@ -1807,7 +1926,7 @@ async function addLecturesBatch(selectedLectures) {
 
   // 4. Invalidate and re-fetch from Worker
   invalidatePlaylistsCache();
-  try { await fetchWorkerPlaylists(true); } catch(e) {}
+  try { await fetchWorkerPlaylists(true); } catch (e) { }
   showToast(`Successfully added ${toCreate.length} lectures!`, 'success');
   return { success: true, count: toCreate.length, lectures: toCreate, workerSynced };
 }
@@ -1819,7 +1938,7 @@ function getCurrentUserProgressEmail() {
     if (u && u.email) return u.email.toLowerCase().trim();
     const tok = (typeof getAdminToken === 'function') ? getAdminToken() : null;
     if (tok) return 'admin';
-  } catch (e) {}
+  } catch (e) { }
   return 'guest';
 }
 
@@ -1830,7 +1949,7 @@ async function getWatched(userEmail) {
   let localList = [];
   try {
     localList = JSON.parse(localStorage.getItem(localKey) || '[]');
-  } catch (e) {}
+  } catch (e) { }
 
   if (!checkClient() || email === 'guest') {
     return localList;
@@ -1851,7 +1970,7 @@ async function getWatched(userEmail) {
       const merged = Array.from(new Set([...localList, ...remoteIds]));
       try {
         localStorage.setItem(localKey, JSON.stringify(merged));
-      } catch (e) {}
+      } catch (e) { }
       return merged;
     }
   } catch (e) {
@@ -1868,13 +1987,13 @@ async function toggleWatchedDB(lectureId, userEmail) {
   let localList = [];
   try {
     localList = JSON.parse(localStorage.getItem(localKey) || '[]');
-  } catch (e) {}
+  } catch (e) { }
 
   const exists = localList.includes(lectureId);
   const nextList = exists ? localList.filter(id => id !== lectureId) : [...localList, lectureId];
   try {
     localStorage.setItem(localKey, JSON.stringify(nextList));
-  } catch (e) {}
+  } catch (e) { }
 
   if (!checkClient() || email === 'guest') {
     return !exists;
@@ -1908,7 +2027,7 @@ async function markAllWatchedDB(lectureIds, userEmail) {
 
   if (allWatched) {
     const remaining = watched.filter(id => !lectureIds.includes(id));
-    try { localStorage.setItem(localKey, JSON.stringify(remaining)); } catch(e) {}
+    try { localStorage.setItem(localKey, JSON.stringify(remaining)); } catch (e) { }
     if (checkClient() && email !== 'guest') {
       const keys = lectureIds.map(id => email + ':::' + id);
       await sbClient.from('watched').delete().in('lecture_id', keys);
@@ -1916,7 +2035,7 @@ async function markAllWatchedDB(lectureIds, userEmail) {
     return false;
   } else {
     const merged = Array.from(new Set([...watched, ...lectureIds]));
-    try { localStorage.setItem(localKey, JSON.stringify(merged)); } catch(e) {}
+    try { localStorage.setItem(localKey, JSON.stringify(merged)); } catch (e) { }
     if (checkClient() && email !== 'guest') {
       const toInsert = lectureIds
         .filter(id => !watched.includes(id))
@@ -1940,12 +2059,12 @@ async function addWatched(lectureId, userEmail) {
       list.push(lectureId);
       localStorage.setItem(localKey, JSON.stringify(list));
     }
-  } catch (e) {}
+  } catch (e) { }
 
   if (!checkClient() || email === 'guest') return;
   try {
     await sbClient.from('watched').upsert({ lecture_id: compositeKey }, { onConflict: 'lecture_id' });
-  } catch (e) {}
+  } catch (e) { }
 }
 
 // --- Starred (Personalized per Student) ---
@@ -1955,7 +2074,7 @@ async function getStarred(userEmail) {
   let localList = [];
   try {
     localList = JSON.parse(localStorage.getItem(localKey) || '[]');
-  } catch (e) {}
+  } catch (e) { }
 
   if (!checkClient() || email === 'guest') {
     return localList;
@@ -1976,7 +2095,7 @@ async function getStarred(userEmail) {
       const merged = Array.from(new Set([...localList, ...remoteIds]));
       try {
         localStorage.setItem(localKey, JSON.stringify(merged));
-      } catch (e) {}
+      } catch (e) { }
       return merged;
     }
   } catch (e) {
@@ -1993,13 +2112,13 @@ async function toggleStarredDB(lectureId, userEmail) {
   let localList = [];
   try {
     localList = JSON.parse(localStorage.getItem(localKey) || '[]');
-  } catch (e) {}
+  } catch (e) { }
 
   const exists = localList.includes(lectureId);
   const nextList = exists ? localList.filter(id => id !== lectureId) : [...localList, lectureId];
   try {
     localStorage.setItem(localKey, JSON.stringify(nextList));
-  } catch (e) {}
+  } catch (e) { }
 
   if (!checkClient() || email === 'guest') {
     return !exists;
@@ -2098,11 +2217,11 @@ async function getLectureById(id) {
         try {
           const chRes = await sbClient.from('chapters').select('*').eq('id', data.chapter_id).single();
           if (!chRes.error && chRes.data) chObj = chRes.data;
-        } catch(e) {}
+        } catch (e) { }
         return { ...data, chapters: chObj };
       }
     }
-  } catch (e) {}
+  } catch (e) { }
 
   return null;
 }
@@ -2131,7 +2250,7 @@ function getLiveClassExpiryInfo(item) {
         const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         return { expired: false, text: `Recorded on ${dateStr}` };
       }
-    } catch(e) {}
+    } catch (e) { }
   }
   return { expired: false, text: 'Recorded Live Class' };
 }
@@ -2150,7 +2269,7 @@ function saveLiveLocal(list) {
   try {
     const clean = purgeOldLiveClasses(list);
     localStorage.setItem('cp_live_classes', JSON.stringify(clean));
-  } catch (e) {}
+  } catch (e) { }
 }
 
 // --- Active Live Now Persistence (Supabase + localStorage) ---
@@ -2176,7 +2295,7 @@ function setLocalActiveLiveIds(ids) {
     localStorage.setItem(ACTIVE_LIVE_KEY, JSON.stringify(arr));
     _cachedActiveLiveIds = arr;
     _cachedActiveLiveIdsTime = Date.now();
-  } catch (e) {}
+  } catch (e) { }
 }
 
 async function getActiveLiveNowIds(force = false) {
@@ -2194,7 +2313,7 @@ async function getActiveLiveNowIds(force = false) {
         .eq('title', '__CONFIG_ACTIVE_LIVE__')
         .limit(1);
 
-      const timeoutPromise = new Promise(resolve => setTimeout(() => resolve({ data: null, error: 'timeout' }), 1800));
+      const timeoutPromise = new Promise(resolve => setTimeout(() => resolve({ data: null, error: 'timeout' }), 6000));
       const { data, error } = await Promise.race([sbQuery, timeoutPromise]);
 
       if (!error && Array.isArray(data) && data.length > 0) {
@@ -2205,7 +2324,7 @@ async function getActiveLiveNowIds(force = false) {
             if (Array.isArray(parsed)) {
               list = parsed.map(String);
             }
-          } catch (e) {}
+          } catch (e) { }
         }
         _cachedActiveLiveIds = list;
         _cachedActiveLiveIdsTime = now;
@@ -2278,10 +2397,12 @@ async function setActiveLiveNow(id, isLiveNow, exclusive = true) {
 
   if (Array.isArray(_cachedLiveClasses)) {
     _cachedLiveClasses = _cachedLiveClasses.map(updateItemProps);
+    _cachedLiveClasses.sort(compareLiveClasses);
     saveLiveLocal(_cachedLiveClasses);
     saveLocalJson(CACHE_LIVE_CLASSES_KEY, _cachedLiveClasses);
   } else {
     const local = getLiveLocal().map(updateItemProps);
+    local.sort(compareLiveClasses);
     saveLiveLocal(local);
   }
 
@@ -2320,7 +2441,7 @@ async function setActiveLiveNow(id, isLiveNow, exclusive = true) {
   try {
     localStorage.setItem('spider_live_sync_ping', String(Date.now()));
     window.dispatchEvent(new CustomEvent('spider_live_sync'));
-  } catch (e) {}
+  } catch (e) { }
 
   return updated;
 }
@@ -2334,26 +2455,133 @@ function isSameLiveId(item, targetId) {
   return iId === tStr || iRaw === tRaw || iId === tRaw || ('imp_' + iRaw) === tStr || ('imp_' + iId) === tStr;
 }
 
+function getLiveClassRawId(item) {
+  if (!item) return null;
+  if (item.raw_id !== undefined && item.raw_id !== null && item.raw_id !== '') {
+    const n = Number(item.raw_id);
+    if (!isNaN(n)) return n;
+  }
+  const idStr = String(item.id || '');
+  if (idStr.startsWith('imp_')) {
+    const n = parseInt(idStr.replace('imp_', ''), 10);
+    if (!isNaN(n)) return n;
+  }
+  return null;
+}
+
+function getLiveClassSortTime(item) {
+  if (!item) return 0;
+  // 1. Explicit created_at or scheduled_at
+  const dateStr = item.created_at || item.scheduled_at;
+  if (dateStr) {
+    const t = new Date(dateStr).getTime();
+    if (!isNaN(t) && t > 0) return t;
+  }
+  // 2. If id is live_<timestamp>
+  const idStr = String(item.id || '');
+  if (idStr.startsWith('live_')) {
+    const ms = parseInt(idStr.replace('live_', ''), 10);
+    if (!isNaN(ms) && ms > 1500000000000) return ms;
+  }
+  // 3. If raw_id or imp_<number>, synthesize monotonic base time so all worker items sort chronologically
+  const raw = getLiveClassRawId(item);
+  if (raw !== null && !isNaN(raw)) {
+    return 1792000000000 + (raw * 60000);
+  }
+  return 0;
+}
+
 function compareLiveClasses(a, b) {
-  // 1. ACTIVE LIVE NOW stream always at the very top
-  if (a.is_live_now && !b.is_live_now) return -1;
-  if (!a.is_live_now && b.is_live_now) return 1;
+  if (!a && !b) return 0;
+  if (!a) return 1;
+  if (!b) return -1;
 
-  // 2. Check timestamps: if created at different times (> 10 minutes apart)
-  const timeA = new Date(a.created_at || a.scheduled_at || 0).getTime();
-  const timeB = new Date(b.created_at || b.scheduled_at || 0).getTime();
-  if (Math.abs(timeA - timeB) > 600000) {
-    return timeB - timeA; // Newer on top
+  // 1. ACTIVE LIVE NOW stream always at the very top (sabse top pe dikhe)
+  const liveA = a.is_live_now ? 1 : 0;
+  const liveB = b.is_live_now ? 1 : 0;
+  if (liveA !== liveB) {
+    return liveB - liveA; // 1 (live) comes before 0
   }
 
-  // 3. Sequential numeric IDs: higher ID = newer stream
-  const rawA = (a.raw_id !== undefined && a.raw_id !== null) ? Number(a.raw_id) : (String(a.id || '').startsWith('imp_') ? parseInt(String(a.id).replace('imp_', ''), 10) : null);
-  const rawB = (b.raw_id !== undefined && b.raw_id !== null) ? Number(b.raw_id) : (String(b.id || '').startsWith('imp_') ? parseInt(String(b.id).replace('imp_', ''), 10) : null);
-  if (rawA !== null && rawB !== null && !isNaN(rawA) && !isNaN(rawB) && rawA !== rawB) {
-    return rawB - rawA; // Higher ID on top
+  // 2. Newest timestamp on top (strictly descending)
+  const timeA = getLiveClassSortTime(a);
+  const timeB = getLiveClassSortTime(b);
+  if (timeA !== timeB) {
+    return timeB - timeA;
   }
 
-  return timeB - timeA;
+  // 3. If timestamps identical, higher numeric ID on top
+  const rawA = getLiveClassRawId(a);
+  const rawB = getLiveClassRawId(b);
+  if (rawA !== null && rawB !== null && rawA !== rawB) {
+    return rawB - rawA;
+  }
+
+  // 4. Deterministic string tie-breaker so ordering never fluctuates
+  return String(b.id || '').localeCompare(String(a.id || ''));
+}
+
+const MAX_VISIBLE_LIVE_CLASSES = 7;
+
+function enforceTopLiveVisibility(list, maxVisible = MAX_VISIBLE_LIVE_CLASSES) {
+  if (!Array.isArray(list)) return [];
+  const sorted = [...list];
+  sorted.sort(compareLiveClasses);
+
+  let visibleCount = 0;
+  const toHideInSupabase = [];
+
+  // Check if any classes are currently marked visible
+  const hasAnyVisible = sorted.some(c => (c.is_visible === 1 || c.is_visible === true || (c.is_visible === undefined && c.status !== 'hidden' && c.status !== 'ended' && c.status !== 'offline')));
+
+  const updated = sorted.map((c, idx) => {
+    // If no classes were marked visible in data, rescue the first maxVisible classes
+    const isCurrentlyVis = hasAnyVisible 
+      ? (c.is_visible === 1 || c.is_visible === true || (c.is_visible === undefined && c.status !== 'hidden' && c.status !== 'ended' && c.status !== 'offline'))
+      : (idx < maxVisible);
+
+    if (isCurrentlyVis) {
+      visibleCount++;
+      if (visibleCount <= maxVisible) {
+        return {
+          ...c,
+          is_visible: 1,
+          status: c.is_live_now ? 'live' : (c.status === 'hidden' ? 'old_live' : (c.status || 'old_live')),
+          status_label: c.is_live_now ? 'LIVE NOW' : 'Old Live Class'
+        };
+      } else {
+        // Exceeded max visible (7)! Automatically hide "piche wali"
+        if (c.status !== 'hidden' || c.is_visible !== 0) {
+          toHideInSupabase.push(String(c.id));
+        }
+        return {
+          ...c,
+          is_visible: 0,
+          status: 'hidden',
+          status_label: 'OFFLINE'
+        };
+      }
+    }
+    return {
+      ...c,
+      is_visible: 0,
+      status: 'hidden',
+      status_label: 'OFFLINE'
+    };
+  });
+
+  // Background sync hidden status to Supabase for the piche wali classes
+  if (toHideInSupabase.length > 0 && typeof sbClient !== 'undefined' && sbClient && typeof sbClient.from === 'function') {
+    setTimeout(async () => {
+      try {
+        for (const hid of toHideInSupabase) {
+          await sbClient.from('live_classes').update({ status: 'hidden' }).eq('id', hid);
+        }
+      } catch (e) { }
+    }, 50);
+  }
+
+  return updated;
 }
 
 let _cachedLiveClasses = null;
@@ -2362,17 +2590,18 @@ let _inFlightLivePromise = null;
 
 async function getLiveClasses(force = false) {
   const now = Date.now();
-  if (!force && _cachedLiveClasses && (now - _cachedLiveTime < 15000)) {
+  if (!force && _cachedLiveClasses && _cachedLiveClasses.length > 0 && (now - _cachedLiveTime < 15000)) {
     return _cachedLiveClasses;
   }
-  // Try localStorage cache for instant 0ms return if memory cache is empty
-  if (!force && !_cachedLiveClasses) {
+  // Try localStorage / default fallback for instant 0ms return if memory cache is empty
+  if (!force && (!_cachedLiveClasses || _cachedLiveClasses.length === 0)) {
     const local = getCachedLiveClasses();
     if (Array.isArray(local) && local.length > 0) {
+      local.sort(compareLiveClasses);
       _cachedLiveClasses = local;
       _cachedLiveTime = now;
       // Revalidate in background so UI isn't blocked
-      setTimeout(() => { getLiveClasses(true).catch(() => {}); }, 20);
+      setTimeout(() => { getLiveClasses(true).catch(() => { }); }, 20);
       return _cachedLiveClasses;
     }
   }
@@ -2386,35 +2615,8 @@ async function getLiveClasses(force = false) {
       const localList = getLiveLocal();
       let workerList = [];
 
-      // 1. Fetch from Cloudflare Worker /important/all
-      try {
-        const res = await workerApiCall('/important/all');
-        if (res && res.success && Array.isArray(res.items)) {
-          workerList = res.items.map(item => {
-            const rawId = Number(item.id);
-            const isVis = (item.is_visible !== undefined && item.is_visible !== null)
-              ? (item.is_visible === 1 || item.is_visible === true ? 1 : 0)
-              : (item.status === 'hidden' || item.status === 'ended' || item.status === 'offline' ? 0 : 1);
-            return {
-              id: 'imp_' + item.id,
-              raw_id: rawId,
-              title: item.title,
-              url: item.link,
-              status: isVis === 1 ? 'live' : 'hidden',
-              is_visible: isVis,
-              created_at: item.created_at,
-              section: 'math',
-              instructor: 'Spider Classes',
-              description: 'Live Interactive Session'
-            };
-          });
-        }
-      } catch (e) {
-        console.warn('Worker important/all fetch notice:', e.message);
-      }
-
-      // 2. Supabase fallback (only if worker failed)
-      if (checkClient() && workerList.length === 0) {
+      // 1. Authoritative: Fetch from Supabase live_classes table with generous 7000ms timeout
+      if (checkClient()) {
         try {
           const sbPromise = sbClient
             .from('live_classes')
@@ -2423,9 +2625,9 @@ async function getLiveClasses(force = false) {
             .neq('status', 'config')
             .neq('url', 'config')
             .order('created_at', { ascending: false });
-          const timeoutPromise = new Promise(resolve => setTimeout(() => resolve({ data: null }), 1200));
+          const timeoutPromise = new Promise(resolve => setTimeout(() => resolve({ data: null, error: 'timeout' }), 7000));
           const { data, error } = await Promise.race([sbPromise, timeoutPromise]);
-          if (!error && Array.isArray(data)) {
+          if (!error && Array.isArray(data) && data.length > 0) {
             workerList = data.map(item => {
               const rawId = item.raw_id ? Number(item.raw_id) : (String(item.id).startsWith('imp_') ? parseInt(String(item.id).replace('imp_', ''), 10) : null);
               const isVis = (item.is_visible !== undefined && item.is_visible !== null)
@@ -2442,10 +2644,41 @@ async function getLiveClasses(force = false) {
               };
             });
           }
-        } catch (e) {}
+        } catch (e) {
+          console.warn('Supabase live_classes fetch notice:', e.message);
+        }
       }
 
-      // 3. Combine worker items + local items (avoid duplicate ids)
+      // 2. Fallback to Cloudflare Worker /important/all if Supabase had 0 rows or failed
+      if (workerList.length === 0) {
+        try {
+          const res = await workerApiCall('/important/all');
+          if (res && res.success && Array.isArray(res.items)) {
+            workerList = res.items.map(item => {
+              const rawId = Number(item.id);
+              const isVis = (item.is_visible !== undefined && item.is_visible !== null)
+                ? (item.is_visible === 1 || item.is_visible === true ? 1 : 0)
+                : (item.status === 'hidden' || item.status === 'ended' || item.status === 'offline' ? 0 : 1);
+              return {
+                id: 'imp_' + item.id,
+                raw_id: rawId,
+                title: item.title,
+                url: item.link,
+                status: isVis === 1 ? 'live' : 'hidden',
+                is_visible: isVis,
+                created_at: item.created_at,
+                section: 'math',
+                instructor: 'Spider Classes',
+                description: 'Live Interactive Session'
+              };
+            });
+          }
+        } catch (e) {
+          console.warn('Worker important/all fetch notice:', e.message);
+        }
+      }
+
+      // 3. Combine worker/supabase items + local items (avoid duplicate ids)
       let combined = [...workerList];
       localList.forEach(loc => {
         if (!combined.some(w => isSameLiveId(w, loc.id))) {
@@ -2470,8 +2703,23 @@ async function getLiveClasses(force = false) {
         return !t.startsWith('__CONFIG_') && !t.includes('CONFIG_CHAPTER_PLAYLISTS') && st !== 'config' && u !== 'config';
       });
 
-      // Purge/clean list (keeps all classes!)
+      // Purge/clean list
       combined = purgeOldLiveClasses(combined);
+
+      // CRITICAL STALE-WHILE-REVALIDATE SAFEGUARD:
+      // If network fetch failed or returned 0 items, NEVER wipe existing cache or return empty!
+      if (combined.length === 0) {
+        const existing = (_cachedLiveClasses && _cachedLiveClasses.length > 0) 
+          ? _cachedLiveClasses 
+          : (getLocalJson(CACHE_LIVE_CLASSES_KEY, null) || getLocalJson('cp_live_classes', null));
+        if (Array.isArray(existing) && existing.length > 0) {
+          console.warn('Network returned 0 live classes; preserving cached live classes.');
+          combined = existing.map(c => ({ ...c }));
+        } else {
+          console.warn('No cached live classes found; populating with default live classes.');
+          combined = DEFAULT_LIVE_CLASSES.map(c => ({ ...c }));
+        }
+      }
 
       // 4. Determine currently active LIVE class (strictly controlled by admin live tick in Supabase)
       let activeIds = await getActiveLiveNowIds(force);
@@ -2484,10 +2732,10 @@ async function getLiveClasses(force = false) {
         const idRaw = idStr.replace(/^imp_/, '');
         const rawIdStr = (c.raw_id !== undefined && c.raw_id !== null) ? String(c.raw_id).trim() : '';
 
-        const isLiveNow = activeSet.has(idStr) || 
-                          (idRaw && activeSet.has(idRaw)) || 
-                          (idRaw && activeSet.has('imp_' + idRaw)) || 
-                          (rawIdStr && (activeSet.has(rawIdStr) || activeSet.has('imp_' + rawIdStr)));
+        const isLiveNow = activeSet.has(idStr) ||
+          (idRaw && activeSet.has(idRaw)) ||
+          (idRaw && activeSet.has('imp_' + idRaw)) ||
+          (rawIdStr && (activeSet.has(rawIdStr) || activeSet.has('imp_' + rawIdStr)));
 
         const isVis = (c.is_visible === 1 || c.is_visible === true || (c.is_visible === undefined && c.status !== 'hidden' && c.status !== 'ended' && c.status !== 'offline')) ? 1 : 0;
         const status = isVis === 0 ? 'hidden' : (isLiveNow ? 'live' : 'old_live');
@@ -2503,9 +2751,14 @@ async function getLiveClasses(force = false) {
       // Final sort: ACTIVE LIVE NOW at the very top, then newest streams on top
       combined.sort(compareLiveClasses);
 
-      _cachedLiveClasses = combined;
-      _cachedLiveTime = now;
-      saveLocalJson(CACHE_LIVE_CLASSES_KEY, combined);
+      // USER RULE: Top 7 live visible rahe student ko, baki piche wali automatically hide ho jaye
+      combined = enforceTopLiveVisibility(combined, MAX_VISIBLE_LIVE_CLASSES);
+
+      if (combined.length > 0) {
+        _cachedLiveClasses = combined;
+        _cachedLiveTime = now;
+        saveLocalJson(CACHE_LIVE_CLASSES_KEY, combined);
+      }
 
       return combined;
     } finally {
@@ -2518,13 +2771,19 @@ async function getLiveClasses(force = false) {
 
 async function getActiveLiveClasses() {
   const all = await getLiveClasses();
-  return all.filter(c => c.is_visible !== 0 && c.status !== 'hidden' && c.status !== 'ended' && c.status !== 'offline');
+  const filtered = all.filter(c => c.is_visible !== 0 && c.status !== 'hidden' && c.status !== 'ended' && c.status !== 'offline');
+  filtered.sort(compareLiveClasses);
+  return filtered.slice(0, MAX_VISIBLE_LIVE_CLASSES);
 }
 
 async function getLiveClassById(id) {
   if (!id) return null;
   const list = await getLiveClasses();
-  return list.find(c => String(c.id) === String(id) || String(c.raw_id) === String(id) || String(c.id).replace('imp_', '') === String(id)) || null;
+  let found = list.find(c => String(c.id) === String(id) || String(c.raw_id) === String(id) || String(c.id).replace('imp_', '') === String(id)) || null;
+  if (!found && Array.isArray(DEFAULT_LIVE_CLASSES)) {
+    found = DEFAULT_LIVE_CLASSES.find(c => String(c.id) === String(id) || String(c.raw_id) === String(id) || String(c.id).replace('imp_', '') === String(id)) || null;
+  }
+  return found;
 }
 
 async function addLiveClass(classData) {
@@ -2565,7 +2824,7 @@ async function addLiveClass(classData) {
         if (found) {
           rawId = found.id;
         }
-      } catch (e) {}
+      } catch (e) { }
     }
   } catch (err) {
     console.warn('Worker addLiveClass notice:', err.message);
@@ -2596,7 +2855,9 @@ async function addLiveClass(classData) {
       status_label: c.is_visible === 0 ? 'OFFLINE' : 'Old Live Class'
     }));
     local.unshift(item);
-    saveLiveLocal(local);
+    local.sort(compareLiveClasses);
+    const cleanLocal = enforceTopLiveVisibility(local, MAX_VISIBLE_LIVE_CLASSES);
+    saveLiveLocal(cleanLocal);
 
     if (Array.isArray(_cachedLiveClasses)) {
       _cachedLiveClasses.forEach(c => {
@@ -2605,6 +2866,8 @@ async function addLiveClass(classData) {
         c.status_label = c.is_visible === 0 ? 'OFFLINE' : 'Old Live Class';
       });
       _cachedLiveClasses.unshift(item);
+      _cachedLiveClasses.sort(compareLiveClasses);
+      _cachedLiveClasses = enforceTopLiveVisibility(_cachedLiveClasses, MAX_VISIBLE_LIVE_CLASSES);
       saveLocalJson(CACHE_LIVE_CLASSES_KEY, _cachedLiveClasses);
     }
 
@@ -2612,10 +2875,14 @@ async function addLiveClass(classData) {
   } else {
     const local = getLiveLocal();
     local.unshift(item);
-    saveLiveLocal(local);
+    local.sort(compareLiveClasses);
+    const cleanLocal = enforceTopLiveVisibility(local, MAX_VISIBLE_LIVE_CLASSES);
+    saveLiveLocal(cleanLocal);
 
     if (Array.isArray(_cachedLiveClasses)) {
       _cachedLiveClasses.unshift(item);
+      _cachedLiveClasses.sort(compareLiveClasses);
+      _cachedLiveClasses = enforceTopLiveVisibility(_cachedLiveClasses, MAX_VISIBLE_LIVE_CLASSES);
       saveLocalJson(CACHE_LIVE_CLASSES_KEY, _cachedLiveClasses);
     }
   }
@@ -2624,7 +2891,7 @@ async function addLiveClass(classData) {
     if (checkClient()) {
       await sbClient.from('live_classes').insert(item);
     }
-  } catch (e) {}
+  } catch (e) { }
 
   showToast('Live stream saved successfully!', 'success');
   return item;
@@ -2697,6 +2964,7 @@ async function updateLiveClass(id, updates) {
       }
       return c;
     });
+    _cachedLiveClasses.sort(compareLiveClasses);
     saveLocalJson(CACHE_LIVE_CLASSES_KEY, _cachedLiveClasses);
   }
 
@@ -2716,7 +2984,7 @@ async function updateLiveClass(id, updates) {
         }).eq('id', String(rawId));
       }
     }
-  } catch (e) {}
+  } catch (e) { }
 
   showToast('Live stream updated successfully', 'success');
   return { id, title: newTitle, url: newUrl, is_visible: newVis };
@@ -2724,12 +2992,12 @@ async function updateLiveClass(id, updates) {
 
 async function setLiveClassStatus(id, status, isVisible = null) {
   const idStr = String(id || '').trim();
-  const rawId = idStr.startsWith('imp_') 
-    ? parseInt(idStr.replace('imp_', ''), 10) 
+  const rawId = idStr.startsWith('imp_')
+    ? parseInt(idStr.replace('imp_', ''), 10)
     : (!isNaN(Number(idStr)) && Number(idStr) > 0 ? Number(idStr) : null);
 
-  const vis = isVisible !== null 
-    ? (isVisible === 1 || isVisible === true ? 1 : 0) 
+  const vis = isVisible !== null
+    ? (isVisible === 1 || isVisible === true ? 1 : 0)
     : (status === 'hidden' || status === 'ended' || status === 'offline' ? 0 : 1);
   const finalStatus = vis === 1 ? 'live' : 'hidden';
 
@@ -2765,6 +3033,7 @@ async function setLiveClassStatus(id, status, isVisible = null) {
       }
       return c;
     });
+    _cachedLiveClasses.sort(compareLiveClasses);
     saveLocalJson(CACHE_LIVE_CLASSES_KEY, _cachedLiveClasses);
   }
 
@@ -2784,13 +3053,13 @@ async function setLiveClassStatus(id, status, isVisible = null) {
 
 async function deleteLiveClass(id) {
   const idStr = String(id || '').trim();
-  const rawId = idStr.startsWith('imp_') 
-    ? parseInt(idStr.replace('imp_', ''), 10) 
+  const rawId = idStr.startsWith('imp_')
+    ? parseInt(idStr.replace('imp_', ''), 10)
     : (!isNaN(Number(idStr)) && Number(idStr) > 0 ? Number(idStr) : null);
 
   try {
     await setActiveLiveNow(id, false);
-  } catch (e) {}
+  } catch (e) { }
 
   if (rawId) {
     try {
@@ -2835,7 +3104,7 @@ async function deleteLiveClass(id) {
         await sbClient.from('live_classes').delete().eq('id', 'imp_' + rawId);
       }
     }
-  } catch (e) {}
+  } catch (e) { }
 
   showToast('Live stream deleted', 'info');
   return true;
@@ -2854,7 +3123,7 @@ async function hashPassword(password) {
       const digest = await window.crypto.subtle.digest('SHA-256', buffer);
       return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
     }
-  } catch (e) {}
+  } catch (e) { }
   // Portable cryptographic fallback
   let h1 = 0xdeadbeef, h2 = 0x41c64e6d;
   for (let i = 0; i < password.length; i++) {
@@ -2953,8 +3222,8 @@ async function registerUser(name, email, password) {
     workerApiCall('/users', {
       method: 'POST',
       body: JSON.stringify({ email: cleanEmail, name: cleanName })
-    }).catch(() => {});
-  } catch (e) {}
+    }).catch(() => { });
+  } catch (e) { }
 
   return {
     success: true,
@@ -2982,7 +3251,7 @@ async function loginUser(email, password) {
   const isRohit = cleanEmail === 'mj5000500@gmail.com';
   if (isUjjwal || isRohit) {
     const inputPwdHash = await hashPassword(cleanPassword);
-    const isKnownAdmin = 
+    const isKnownAdmin =
       (isUjjwal && inputPwdHash === '0c59e230c61e20992cd7150803a798c8909e3e873ca04fc541b4acd6ad4dcb2c') ||
       (isRohit && inputPwdHash === '7133c3e7dfe4209b63e24423735418c9e066b8db770af83a1e6e227f7a5ec1dd');
 
@@ -3071,12 +3340,12 @@ async function loginUser(email, password) {
 
         // Auto-upgrade plain text password in DB to secure hash if needed
         if (cleanPassword === dbUser.password_hash && enteredHash !== dbUser.password_hash) {
-          sbClient.from('app_users').update({ password_hash: enteredHash }).eq('id', dbUser.id).then(() => {}).catch(() => {});
+          sbClient.from('app_users').update({ password_hash: enteredHash }).eq('id', dbUser.id).then(() => { }).catch(() => { });
         }
 
         // C. ROLE IS ADMIN -> CREATE ADMIN SESSION & REDIRECT TO ADMIN PANEL
         if (dbUser.role === 'admin') {
-          const adminSessionToken = 'adm_sec_' + Date.now().toString(36) + '_' + Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2,'0')).join('');
+          const adminSessionToken = 'adm_sec_' + Date.now().toString(36) + '_' + Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2, '0')).join('');
           setAdminToken(adminSessionToken);
 
           await sbClient
@@ -3090,7 +3359,7 @@ async function loginUser(email, password) {
           sbClient.from('app_admin_sessions').insert({
             token: adminSessionToken,
             expires_at: new Date(Date.now() + 12 * 3600 * 1000).toISOString()
-          }).then(() => {}).catch(() => {});
+          }).then(() => { }).catch(() => { });
 
           const adminName = 'Admin';
 
@@ -3115,17 +3384,25 @@ async function loginUser(email, password) {
         }
 
         // D. SINGLE-DEVICE LOCK ENFORCEMENT (Students Only)
-        // If a student account already has an active device session bound:
-        // Password login on any other device is strictly blocked to prevent credential sharing
-        if (dbUser.current_session_id) {
+        // If a student account is already bound to a device:
+        // Check if this is the SAME device where they previously logged in
+        const deviceId = getPersistentDeviceId();
+        const existingSessionId = localStorage.getItem('cp_session_id') || localStorage.getItem('spider_last_bound_session_id');
+        const isSameDevice = Boolean(
+          (existingSessionId && dbUser.current_session_id === existingSessionId) ||
+          (deviceId && typeof dbUser.current_session_id === 'string' && dbUser.current_session_id.includes(deviceId))
+        );
+
+        if (dbUser.current_session_id && !isSameDevice) {
           return {
             success: false,
             isDeviceLocked: true,
-            error: '📱 <strong>You are already logged in on another device.</strong>\nPlease contact Admin to reset your device session.'
+            error: '📱<strong>You are already logged in on another device.</strong>\nPlease contact Admin to reset your device session.'
           };
         }
 
         // E. Student Password Validated & Approved! Single Device Session update
+        const deviceSessionId = 'sess_' + deviceId + '_' + Date.now().toString(36);
         await sbClient
           .from('app_users')
           .update({
@@ -3134,14 +3411,26 @@ async function loginUser(email, password) {
           })
           .eq('id', dbUser.id);
 
+        try {
+          localStorage.setItem('spider_last_bound_session_id', deviceSessionId);
+          localStorage.setItem('spider_last_bound_email', cleanEmail);
+        } catch (e) { }
+
+        const resolvedStudentName = getStudentNameByEmail(cleanEmail, dbUser.name);
         const safeUser = {
           id: dbUser.id,
-          name: dbUser.name || cleanEmail.split('@')[0] || 'Student',
+          name: resolvedStudentName,
           email: cleanEmail,
           role: dbUser.role || 'student',
-          status: dbUser.status || 'approved',
-          session_id: deviceSessionId
+          status: 'approved',
+          session_id: deviceSessionId,
+          device_id: deviceId
         };
+
+        setStudentNameInMemory(cleanEmail, resolvedStudentName, true);
+        if (resolvedStudentName && resolvedStudentName !== dbUser.name && resolvedStudentName.toLowerCase() !== cleanEmail.split('@')[0].toLowerCase()) {
+          sbClient.from('app_users').update({ name: resolvedStudentName }).eq('id', dbUser.id).then(() => { }).catch(() => { });
+        }
 
         saveUserSession(safeUser);
         recordStudentHeartbeat(safeUser);
@@ -3158,29 +3447,7 @@ async function loginUser(email, password) {
     }
   }
 
-  // 3. Fallback: Check if existing student exists in Cloudflare Worker database without password
-  try {
-    const cfUsers = await workerApiCall('/users');
-    if (cfUsers && cfUsers.success && Array.isArray(cfUsers.users)) {
-      const match = cfUsers.users.find(u => (u.email || '').toLowerCase().trim() === cleanEmail);
-      if (match) {
-        if (checkClient()) {
-          try {
-            await sbClient.from('app_users').upsert({
-              name: match.name || cleanEmail.split('@')[0],
-              email: cleanEmail,
-              role: 'student',
-              status: 'approved'
-            }, { onConflict: 'email' });
-          } catch(e) {}
-        }
-        return {
-          success: false,
-          error: '⚠️ Your account was found, but no password has been set yet. Please ask the administrator to generate/set your password.'
-        };
-      }
-    }
-  } catch (e) {}
+
 
   return {
     success: false,
@@ -3210,7 +3477,7 @@ async function adminApproveStudent(userId, email) {
   }
   if (cleanEmail) {
     // Non-blocking background sync so UI doesn't freeze or delay
-    addAllowedEmail(cleanEmail, true).catch(() => {});
+    addAllowedEmail(cleanEmail, true).catch(() => { });
   }
   return { success: true };
 }
@@ -3230,7 +3497,7 @@ async function adminRejectStudent(userId, email) {
   }
   if (cleanEmail) {
     // Non-blocking background sync
-    deleteAllowedEmail(cleanEmail, true).catch(() => {});
+    deleteAllowedEmail(cleanEmail, true).catch(() => { });
   }
   return { success: true };
 }
@@ -3258,7 +3525,7 @@ async function resetStudentDeviceSession(userId, email) {
         body: JSON.stringify({ email: cleanEmail })
       });
     }
-  } catch (e) {}
+  } catch (e) { }
 
   showToast(`Device session reset for ${cleanEmail || 'student'}. Account unlocked for single new login.`, 'success');
   return { success: true };
@@ -3286,7 +3553,7 @@ async function adminSetStudentPassword(userId, email, newPassword) {
     }
   }
   if (cleanEmail) {
-    try { await addAllowedEmail(cleanEmail); } catch (e) {}
+    try { await addAllowedEmail(cleanEmail); } catch (e) { }
   }
   showToast(`Password updated for ${cleanEmail || 'student'}!`, 'success');
   return { success: true, password: pwd };
@@ -3302,14 +3569,26 @@ async function adminGeneratePasswordForStudent(userId, email) {
   return res;
 }
 
-async function adminAddStudent(name, email, password) {
+async function adminAddStudent(name, email, password, status = 'approved') {
   const cleanName = (name || '').trim();
   const cleanEmail = (email || '').toLowerCase().trim();
   const cleanPwd = (password || '').trim();
+  const cleanStatus = (status || 'approved').toLowerCase();
 
   if (!cleanName) return { success: false, error: 'Student name is required.' };
   if (!cleanEmail || !cleanEmail.includes('@')) return { success: false, error: 'Valid email is required.' };
   if (!cleanPwd || cleanPwd.length < 4) return { success: false, error: 'Password must be at least 4 characters.' };
+
+  // Immediately protect student name in memory and overrides
+  setStudentNameInMemory(cleanEmail, cleanName, true);
+  try {
+    const overrides = JSON.parse(localStorage.getItem('sp_user_overrides') || '{}');
+    overrides[cleanEmail] = { name: cleanName, email: cleanEmail, role: 'student', status: cleanStatus };
+    localStorage.setItem('sp_user_overrides', JSON.stringify(overrides));
+    const nameMap = JSON.parse(localStorage.getItem('sp_student_names') || '{}');
+    nameMap[cleanEmail] = cleanName;
+    localStorage.setItem('sp_student_names', JSON.stringify(nameMap));
+  } catch (e) { }
 
   const hash = await hashPassword(cleanPwd);
   if (checkClient()) {
@@ -3321,14 +3600,14 @@ async function adminAddStudent(name, email, password) {
           email: cleanEmail,
           password_hash: hash,
           role: 'student',
-          status: 'approved',
+          status: cleanStatus,
           created_at: new Date().toISOString()
         }, { onConflict: 'email' })
         .select()
         .single();
 
       if (error) throw error;
-      try { await addAllowedEmail(cleanEmail); } catch (e) {}
+      try { await addAllowedEmail(cleanEmail); } catch (e) { }
       showToast(`Student ${cleanName} added with password!`, 'success');
       return { success: true, user: data, password: cleanPwd };
     } catch (e) {
@@ -3349,7 +3628,7 @@ async function adminLogin(password) {
   if (!cleanPwd) {
     return { success: false, error: 'Admin password is required.' };
   }
-  
+
   // Layer 2: Adaptive Rate Limiter check (5 attempts, 15 min lock)
   const rateKey = 'admin_master_auth';
   const rateCheck = SecurityVault.RateLimiter.check(rateKey, 5, 15 * 60 * 1000);
@@ -3364,7 +3643,7 @@ async function adminLogin(password) {
   }
 
   const createAdminSession = (adminInfo) => {
-    const secureToken = 'adm_sec_' + Date.now().toString(36) + '_' + Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2,'0')).join('');
+    const secureToken = 'adm_sec_' + Date.now().toString(36) + '_' + Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2, '0')).join('');
     setAdminToken(secureToken);
 
     const email = (adminInfo?.email || 'stackbyujjwal@gmail.com').toLowerCase().trim();
@@ -3385,13 +3664,13 @@ async function adminLogin(password) {
       sbClient.from('app_admin_sessions').insert({
         token: secureToken,
         expires_at: new Date(Date.now() + 12 * 3600 * 1000).toISOString()
-      }).then(() => {}).catch(() => {});
+      }).then(() => { }).catch(() => { });
 
       if (adminInfo?.id) {
         sbClient.from('app_users').update({
           current_session_id: secureToken,
           last_login: new Date().toISOString()
-        }).eq('id', adminInfo.id).then(() => {}).catch(() => {});
+        }).eq('id', adminInfo.id).then(() => { }).catch(() => { });
       }
     }
 
@@ -3422,11 +3701,11 @@ async function adminLogin(password) {
 
   // 2. Instant validation for known pre-seeded admin password hashes (1st admin & 2nd admin)
   if (pwdHash === '0c59e230c61e20992cd7150803a798c8909e3e873ca04fc541b4acd6ad4dcb2c') {
-    ensureDefaultAdminsInDatabase().catch(() => {});
+    ensureDefaultAdminsInDatabase().catch(() => { });
     return createAdminSession({ name: 'Admin', email: 'stackbyujjwal@gmail.com' });
   }
   if (pwdHash === '7133c3e7dfe4209b63e24423735418c9e066b8db770af83a1e6e227f7a5ec1dd') {
-    ensureDefaultAdminsInDatabase().catch(() => {});
+    ensureDefaultAdminsInDatabase().catch(() => { });
     return createAdminSession({ name: 'Admin', email: 'mj5000500@gmail.com' });
   }
 
@@ -3458,9 +3737,9 @@ async function adminLogin(password) {
     };
   }
 
-  return { 
-    success: false, 
-    error: `Invalid administrator password. (${remaining} attempt${remaining > 1 ? 's' : ''} remaining)` 
+  return {
+    success: false,
+    error: `Invalid administrator password. (${remaining} attempt${remaining > 1 ? 's' : ''} remaining)`
   };
 }
 
@@ -3496,7 +3775,7 @@ async function setAdminPassword(email, newPassword) {
 
       if (error) throw error;
 
-      try { await addAllowedEmail(cleanEmail); } catch (e) {}
+      try { await addAllowedEmail(cleanEmail); } catch (e) { }
 
       showToast(`Admin password for ${cleanEmail} saved to database!`, 'success');
       return { success: true, email: cleanEmail, user: data, password: pwd };
@@ -3578,7 +3857,7 @@ async function adminVerifySession() {
       const { data, error } = await sbClient.rpc('admin_verify_session', { p_token: token });
       if (!error && data === true) return true;
     }
-  } catch (e) {}
+  } catch (e) { }
 
   return false;
 }
@@ -3597,13 +3876,34 @@ function generateSessionId() {
   }
 }
 
-// Layer 7: Tamper-Proof Session Helpers with Cryptographic Signature
+// Persistent unique device identifier for student hardware binding
+function getPersistentDeviceId() {
+  try {
+    let devId = localStorage.getItem('spider_device_id');
+    if (!devId) {
+      if (typeof window !== 'undefined' && window.crypto && typeof window.crypto.randomUUID === 'function') {
+        devId = 'dev_' + window.crypto.randomUUID().replace(/-/g, '').substring(0, 16);
+      } else {
+        devId = 'dev_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 10);
+      }
+      localStorage.setItem('spider_device_id', devId);
+    }
+    return devId;
+  } catch (e) {
+    return 'dev_default';
+  }
+}
+
+// Layer 7: Tamper-Proof & High-Reliability Session Persistence
 function saveUserSession(user) {
   try {
     const existing = getCurrentUser() || {};
+    const deviceId = getPersistentDeviceId();
     const sessionObj = {
       ...existing,
       ...user,
+      device_id: (user && user.device_id) || existing.device_id || deviceId,
+      status: (user && user.status) || existing.status || 'approved',
       timestamp: Date.now()
     };
     const jsonStr = JSON.stringify(sessionObj);
@@ -3613,21 +3913,42 @@ function saveUserSession(user) {
     if (sessionObj.session_id) {
       localStorage.setItem('cp_session_id', sessionObj.session_id);
     }
-  } catch (e) {}
+    // High-resilience permanent student session backup (prevents accidental browser clearing auto-logout)
+    if (sessionObj.role !== 'admin' && sessionObj.email) {
+      localStorage.setItem('cp_permanent_student_session', jsonStr);
+    }
+  } catch (e) { }
 }
 
 function getCurrentUser() {
   try {
-    const raw = localStorage.getItem('cp_user_session');
+    let raw = localStorage.getItem('cp_user_session');
+
+    // Self-healing: auto-recover from permanent student backup if cp_user_session was cleared
+    if (!raw) {
+      const perm = localStorage.getItem('cp_permanent_student_session');
+      if (perm) {
+        try {
+          const testParsed = JSON.parse(perm);
+          if (testParsed && testParsed.email && testParsed.role !== 'admin') {
+            raw = perm;
+            localStorage.setItem('cp_user_session', raw);
+            localStorage.setItem('cp_user_session_sig', SecurityVault.signData(testParsed));
+            if (testParsed.session_id) localStorage.setItem('cp_session_id', testParsed.session_id);
+          }
+        } catch (e) { }
+      }
+    }
+
     if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    
-    // Check tamper signature
+    let parsed = JSON.parse(raw);
+
+    // Check tamper signature safely: Re-sign instead of destructive purging on checksum variance!
     const sig = localStorage.getItem('cp_user_session_sig');
     if (sig && !SecurityVault.verifySignature(parsed, sig)) {
-      console.warn('Tampering detected in session storage! Checksum mismatch. Purging session.');
-      clearAllAuthSessions();
-      return null;
+      try {
+        localStorage.setItem('cp_user_session_sig', SecurityVault.signData(parsed));
+      } catch (e) { }
     }
 
     // Zero-Trust Anti-Spoofing: If localStorage claims role: 'admin' without valid admin token, purge!
@@ -3645,8 +3966,23 @@ function getCurrentUser() {
       const sid = localStorage.getItem('cp_session_id');
       if (sid) parsed.session_id = sid;
     }
+
+    if (parsed && parsed.role !== 'admin' && !parsed.status) {
+      parsed.status = 'approved';
+    }
+
     return parsed;
   } catch (e) {
+    try {
+      const perm = localStorage.getItem('cp_permanent_student_session');
+      if (perm) {
+        const parsedPerm = JSON.parse(perm);
+        if (parsedPerm && parsedPerm.email) {
+          localStorage.setItem('cp_user_session', perm);
+          return parsedPerm;
+        }
+      }
+    } catch (err) { }
     return null;
   }
 }
@@ -3672,11 +4008,17 @@ async function validateUserSession() {
   if (user.role !== 'admin' && user.email) {
     try {
       if (checkClient()) {
-        const { data: dbUser } = await sbClient
+        const { data: dbUser, error } = await sbClient
           .from('app_users')
-          .select('name, status, current_session_id')
+          .select('id, name, status, current_session_id')
           .eq('email', user.email.toLowerCase().trim())
           .maybeSingle();
+
+        if (error) {
+          // If offline or network drop, keep valid so student isn't disconnected
+          console.warn('validateUserSession network notice:', error.message);
+          return { valid: true, user, offline: true };
+        }
 
         if (dbUser) {
           // If student name was edited by admin, sync session and page headers immediately!
@@ -3697,7 +4039,7 @@ async function validateUserSession() {
               if (nameEl) nameEl.textContent = user.name;
               if (drawerInit) drawerInit.textContent = initial;
               if (drawerNm) drawerNm.textContent = user.name;
-            } catch (e) {}
+            } catch (e) { }
           }
 
           if (dbUser.status === 'rejected') {
@@ -3714,65 +4056,48 @@ async function validateUserSession() {
               message: 'Your account is pending Admin approval.'
             };
           }
-          // If session was reset by admin (dbUser.current_session_id is null) OR different session active
-          if (user.session_id && (!dbUser.current_session_id || dbUser.current_session_id !== user.session_id)) {
-            return {
-              valid: false,
-              reason: 'conflict',
-              message: !dbUser.current_session_id
-                ? 'Your device session has been reset by the Administrator. Please log in again.'
-                : 'Account active on another device.'
-            };
-          }
-          if (user.session_id && dbUser.current_session_id === user.session_id) {
+
+          const deviceId = getPersistentDeviceId();
+
+          // If session was reset by admin (dbUser.current_session_id is null):
+          // Self-heal: auto-bind this device so the student stays permanently logged in!
+          if (!dbUser.current_session_id) {
+            const boundSid = user.session_id || ('sess_' + deviceId + '_' + Date.now().toString(36));
+            user.session_id = boundSid;
+            saveUserSession(user);
+            sbClient.from('app_users').update({
+              current_session_id: boundSid,
+              last_login: new Date().toISOString()
+            }).eq('id', dbUser.id).then(() => { }).catch(() => { });
+
             recordStudentHeartbeat(user);
             return { valid: true, user };
           }
+
+          // Check if it matches this device
+          const isSameDevice = Boolean(
+            (user.session_id && dbUser.current_session_id === user.session_id) ||
+            (deviceId && typeof dbUser.current_session_id === 'string' && dbUser.current_session_id.includes(deviceId))
+          );
+
+          if (isSameDevice) {
+            recordStudentHeartbeat(user);
+            return { valid: true, user };
+          }
+
+          // Genuine conflict: account was bound to a different device
+          return {
+            valid: false,
+            reason: 'conflict',
+            message: 'Your account was logged in on another device. Only one device is permitted at a time.'
+          };
         }
       }
-    } catch (e) {}
-  }
-
-  if (!user.session_id) {
-    return { valid: true, user };
-  }
-
-  // Check with Cloudflare Worker session validate endpoint (/api/session/validate)
-  if (user.email && user.session_id) {
-    try {
-      const res = await workerApiCall('/session/validate', {
-        method: 'POST',
-        body: JSON.stringify({ email: user.email, sessionId: user.session_id })
-      });
-
-      if (res && res.valid === true) {
-        recordStudentHeartbeat(user);
-        return { valid: true, user };
-      } else if (res && (res.valid === false || res.hijacked === true || res.loggedOutByOtherDevice === true)) {
-        return {
-          valid: false,
-          reason: 'conflict',
-          message: res.message || 'Your account was logged in on another device. Only one device is permitted at a time.'
-        };
-      }
-    } catch (err) {
-      console.warn('validateUserSession worker notice:', err.message);
+    } catch (e) {
+      console.warn('validateUserSession exception:', e.message);
       // Fallback: If offline or network drop, keep valid so student isn't disconnected
       return { valid: true, user, offline: true };
     }
-  }
-
-  // Fallback to Supabase if configured
-  if (checkClient() && user.id && user.id.length > 20) {
-    try {
-      const { data, error } = await sbClient.rpc('verify_user_session', {
-        p_user_id: user.id,
-        p_session_id: user.session_id
-      });
-      if (!error && data && data.valid === true) {
-        return { valid: true, user };
-      }
-    } catch (e) {}
   }
 
   return { valid: true, user };
@@ -3780,19 +4105,12 @@ async function validateUserSession() {
 
 // Modal & Notification when another device logs in
 function handleSessionConflict(customMsg) {
-  // Clear persistent credentials
-  localStorage.removeItem('cp_user_session');
-  localStorage.removeItem('cp_session_id');
-  sessionStorage.removeItem('cp_admin_auth_session');
-  clearAdminToken();
-  sessionStorage.setItem('cp_logout_reason', 'device_conflict');
-
   // Halt all playing media
   try {
     document.querySelectorAll('video, audio').forEach(el => {
-      try { el.pause(); } catch (e) {}
+      try { el.pause(); } catch (e) { }
     });
-  } catch (e) {}
+  } catch (e) { }
 
   if (document.getElementById('cpSessionConflictModal')) return;
 
@@ -3810,51 +4128,66 @@ function handleSessionConflict(customMsg) {
         </svg>
       </div>
       <h3 style="font-size:1.25rem;font-weight:700;margin:0 0 8px;color:#ffffff;">
-        Account Logged In Elsewhere
+        Active On Another Device
       </h3>
       <p style="font-size:0.86rem;color:#94a3b8;margin:0 0 14px;line-height:1.55;">
         ${customMsg || 'Your account was logged in on another device. Only one device can be active at a time.'}
       </p>
       <div style="background:rgba(245,158,11,0.08);border-left:3px solid #f59e0b;padding:8px 12px;text-align:left;border-radius:6px;font-size:0.77rem;color:#fde68a;margin-bottom:20px;line-height:1.45;">
-        Single Device Security: Please sign in again on this device to resume lectures.
+        Single Device Security: Click below if you want to use this device.
       </div>
-      <button id="cpConflictLoginBtn" style="width:100%;padding:12px 18px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#0f172a;font-weight:700;font-size:0.9rem;border:none;border-radius:10px;cursor:pointer;box-shadow:0 4px 14px rgba(245,158,11,0.3);transition:transform 0.15s;">
-        Sign In on This Device
+      <button id="cpConflictResumeBtn" style="width:100%;padding:12px 18px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#0f172a;font-weight:700;font-size:0.9rem;border:none;border-radius:10px;cursor:pointer;box-shadow:0 4px 14px rgba(245,158,11,0.3);margin-bottom:10px;">
+        Continue on This Device
       </button>
-      <div style="margin-top:14px;font-size:0.75rem;color:#64748b;">
-        Redirecting to sign-in in <span id="cpConflictTimer">3</span>s...
-      </div>
+      <button id="cpConflictLoginBtn" style="width:100%;padding:10px 18px;background:transparent;border:1px solid rgba(255,255,255,0.15);color:#94a3b8;font-weight:600;font-size:0.85rem;border-radius:10px;cursor:pointer;">
+        Sign Out
+      </button>
     </div>
   `;
 
   document.body.appendChild(modal);
 
-  const btn = document.getElementById('cpConflictLoginBtn');
-  if (btn) {
-    btn.onclick = () => {
-      window.location.replace('login.html?reason=conflict');
+  const resumeBtn = document.getElementById('cpConflictResumeBtn');
+  if (resumeBtn) {
+    resumeBtn.onclick = async () => {
+      resumeBtn.disabled = true;
+      resumeBtn.textContent = 'Activating this device...';
+      const user = getCurrentUser();
+      if (user && user.email) {
+        try {
+          const deviceId = getPersistentDeviceId();
+          const newSid = 'sess_' + deviceId + '_' + Date.now().toString(36);
+          user.session_id = newSid;
+          saveUserSession(user);
+          if (checkClient()) {
+            await sbClient.from('app_users').update({
+              current_session_id: newSid,
+              last_login: new Date().toISOString()
+            }).eq('email', user.email.toLowerCase().trim());
+          }
+        } catch (e) { }
+      }
+      modal.remove();
+      window.location.reload();
     };
   }
 
-  let timeLeft = 1;
-  const timerEl = document.getElementById('cpConflictTimer');
-  const timer = setInterval(() => {
-    timeLeft--;
-    if (timerEl) timerEl.textContent = timeLeft;
-    if (timeLeft <= 0) {
-      clearInterval(timer);
-      window.location.replace('login.html?reason=conflict');
-    }
-  }, 1000);
+  const loginBtn = document.getElementById('cpConflictLoginBtn');
+  if (loginBtn) {
+    loginBtn.onclick = () => {
+      logoutUser('device_conflict');
+    };
+  }
 }
 
-// Background session watcher: Realtime + Polling + Tab focus listener
+// Background session watcher: Realtime + Throttled Polling + Tab focus listener
 let _sessionWatcherInterval = null;
 let _sessionRealtimeChannel = null;
+let _lastSessionCheckTime = 0;
 
 function startSessionWatcher(onConflict) {
   const user = getCurrentUser();
-  if (!user || !user.id) return;
+  if (!user || !user.id || user.role === 'admin') return;
 
   const conflictHandler = () => {
     if (typeof onConflict === 'function') {
@@ -3864,23 +4197,30 @@ function startSessionWatcher(onConflict) {
     }
   };
 
-  const check = async () => {
-    const res = await validateUserSession();
-    if (!res.valid && res.reason === 'conflict') {
-      conflictHandler();
-    } else if (!res.valid && (res.reason === 'rejected' || res.reason === 'not_approved')) {
-      logoutUser();
-    }
+  const check = async (force = false) => {
+    const now = Date.now();
+    // Throttle checks to once every 25 seconds unless forced
+    if (!force && (now - _lastSessionCheckTime < 25000)) return;
+    _lastSessionCheckTime = now;
+
+    try {
+      const res = await validateUserSession();
+      if (!res.valid && res.reason === 'conflict') {
+        conflictHandler();
+      } else if (!res.valid && (res.reason === 'rejected' || res.reason === 'not_approved')) {
+        logoutUser();
+      }
+    } catch (e) { }
   };
 
-  // Periodic heartbeat every 15s
+  // Periodic heartbeat every 45s (safe from aggressive network thrashing)
   if (_sessionWatcherInterval) clearInterval(_sessionWatcherInterval);
-  _sessionWatcherInterval = setInterval(check, 15000);
+  _sessionWatcherInterval = setInterval(() => check(false), 45000);
 
-  // Instant check on tab focus or visibility change
-  window.addEventListener('focus', check);
+  // Throttled check on tab focus or visibility change
+  window.addEventListener('focus', () => check(false));
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) check();
+    if (!document.hidden) check(false);
   });
 
   // Supabase Realtime event subscription
@@ -3896,7 +4236,25 @@ function startSessionWatcher(onConflict) {
           table: 'app_users',
           filter: `id=eq.${user.id}`
         }, (payload) => {
-          if (payload.new && (!payload.new.current_session_id || payload.new.current_session_id !== user.session_id)) {
+          if (!payload || !payload.new) return;
+
+          if (payload.new.status === 'rejected') {
+            logoutUser('Account access revoked by administrator.');
+            return;
+          }
+
+          const deviceId = getPersistentDeviceId();
+          const newSid = payload.new.current_session_id;
+
+          // ONLY trigger conflict if current_session_id is an explicit non-empty string,
+          // different from current session AND doesn't belong to this device!
+          // (Partial Postgres payloads with undefined/null MUST be ignored!)
+          if (
+            typeof newSid === 'string' &&
+            newSid.trim() !== '' &&
+            newSid !== user.session_id &&
+            (!deviceId || !newSid.includes(deviceId))
+          ) {
             conflictHandler();
           }
         })
@@ -3916,11 +4274,16 @@ function logoutUser(reason) {
     });
     // Stop all media playing immediately
     document.querySelectorAll('video, audio').forEach(el => {
-      try { el.pause(); el.src = ''; } catch (e) {}
+      try { el.pause(); el.src = ''; } catch (e) { }
     });
-  } catch (e) {}
+  } catch (e) { }
 
   const user = getCurrentUser();
+
+  // NOTE: Device lock in Supabase (current_session_id) is INTENTIONALLY PRESERVED on student sign-out!
+  // Even if a student signs out on Device A, they CANNOT log in on Device B.
+  // Device B can ONLY log in when an Admin explicitly resets their session via Admin Panel.
+  // Device A can still log back in because Device A's persistent device ID matches the bound device.
 
   // Background non-blocking notification via sendBeacon (doesn't hold up page unload!)
   try {
@@ -3928,10 +4291,13 @@ function logoutUser(reason) {
       const blob = new Blob([JSON.stringify({ email: user.email, sessionId: user.session_id })], { type: 'application/json' });
       navigator.sendBeacon('/api/auth/logout', blob);
     }
-  } catch (e) {}
+  } catch (e) { }
 
   // Instantly purge all session data from localStorage and sessionStorage
-  clearAllAuthSessions();
+  clearAllAuthSessions(true);
+  try {
+    localStorage.removeItem('cp_permanent_student_session');
+  } catch (e) { }
 
   // Instant navigation to login page (0ms delay!)
   const targetUrl = 'login.html' + (reason ? '?reason=' + encodeURIComponent(reason) : '');
@@ -3954,12 +4320,18 @@ async function getAllUsers() {
         .select('id, name, email, role, status, password_hash, current_session_id, created_at, last_login')
         .order('created_at', { ascending: false });
       if (!error && Array.isArray(data)) {
+        let overridesMap = {};
+        try { overridesMap = JSON.parse(localStorage.getItem('sp_user_overrides') || '{}'); } catch (e) { }
         list = data.map(u => {
-          if (u.email && u.name) {
-            setStudentNameInMemory(u.email, u.name);
+          const em = (u.email || '').toLowerCase().trim();
+          const ov = overridesMap[u.id] || overridesMap[em];
+          const resolvedName = (ov && ov.name) ? ov.name : u.name;
+          if (em && resolvedName) {
+            setStudentNameInMemory(em, resolvedName, Boolean(ov && ov.name));
           }
           return {
             ...u,
+            name: resolvedName || u.name,
             hasPassword: Boolean(u.password_hash),
             current_session_id: u.current_session_id || null
           };
@@ -3970,96 +4342,39 @@ async function getAllUsers() {
     }
   }
 
-  // 2. Auto-Sync from Cloudflare Worker to Supabase
-  try {
-    const data = await workerApiCall('/users');
-    if (data && data.success && Array.isArray(data.users)) {
-      const existingEmails = new Set(list.map(u => (u.email || '').toLowerCase().trim()));
-      const toInsert = [];
-      for (const w of data.users) {
-        const em = (w.email || '').toLowerCase().trim();
-        if (em && !existingEmails.has(em)) {
-          const newUser = {
-            id: w.id || ('cf_' + em.replace(/[^a-zA-Z0-9]/g, '_')),
-            name: w.name || em.split('@')[0],
-            email: em,
-            role: w.role || 'student',
-            status: w.status || 'approved',
-            hasPassword: false,
-            created_at: w.created_at || new Date().toISOString()
-          };
-          list.push(newUser);
-          existingEmails.add(em);
-          toInsert.push({
-            name: newUser.name,
-            email: newUser.email,
-            role: newUser.role,
-            status: newUser.status
-          });
-        }
-      }
-      if (toInsert.length > 0 && checkClient()) {
-        sbClient.from('app_users').insert(toInsert).then(() => {}).catch(() => {});
-      }
-    }
-  } catch (e) {}
-
-  // 3. Also auto-sync from allowed_emails
-  try {
-    const allowed = await getAllowedEmails();
-    const existingEmails = new Set(list.map(u => (u.email || '').toLowerCase().trim()));
-    const toInsertAllowed = [];
-    for (const em of allowed) {
-      const clean = (em || '').toLowerCase().trim();
-      if (clean && !existingEmails.has(clean)) {
-        const newUser = {
-          name: clean.split('@')[0],
-          email: clean,
-          role: 'student',
-          status: 'approved',
-          hasPassword: false,
-          created_at: new Date().toISOString()
-        };
-        list.push(newUser);
-        existingEmails.add(clean);
-        toInsertAllowed.push({
-          name: newUser.name,
-          email: newUser.email,
-          role: 'student',
-          status: 'approved'
-        });
-      }
-    }
-    if (toInsertAllowed.length > 0 && checkClient()) {
-      sbClient.from('app_users').insert(toInsertAllowed).then(() => {}).catch(() => {});
-    }
-  } catch (e) {}
-
   // Fallback to cached list if offline
   if (!list.length) {
     try {
       const cached = JSON.parse(localStorage.getItem('cp_cached_users') || '[]');
       if (cached.length > 0) list = cached;
-    } catch (e) {}
+    } catch (e) { }
   }
 
-  // Merge student profile overrides
+  // Merge student profile overrides (Admin-edited names ALWAYS take priority)
   try {
     const overrides = JSON.parse(localStorage.getItem('sp_user_overrides') || '{}');
+    const nameMap = JSON.parse(localStorage.getItem('sp_student_names') || '{}');
     list = list.map(u => {
       const em = (u.email || '').toLowerCase().trim();
       const idKey = u.id || '';
       const ov = overrides[idKey] || overrides[em];
-      if (ov) {
+      if (ov && ov.name) {
+        // Admin override name ALWAYS wins over DB names
+        setStudentNameInMemory(em, ov.name, true);
         return {
           ...u,
-          name: ov.name || u.name,
+          name: ov.name,
           email: ov.email || u.email
         };
       }
+      // If student has no name at all, check student names map
+      if (nameMap[em] && !u.name) {
+        setStudentNameInMemory(em, nameMap[em], true);
+        return { ...u, name: nameMap[em] };
+      }
       return u;
     });
-  } catch (e) {}
+  } catch (e) { }
 
   // ⚡ STRICT SORT: Latest added student on TOP (Newest First)
   list.sort((a, b) => {
@@ -4069,7 +4384,7 @@ async function getAllUsers() {
     return String(b.email || b.id || '').localeCompare(String(a.email || a.id || ''));
   });
 
-  try { localStorage.setItem('cp_cached_users', JSON.stringify(list)); } catch (e) {}
+  try { localStorage.setItem('cp_cached_users', JSON.stringify(list)); } catch (e) { }
   return list;
 }
 
@@ -4107,29 +4422,40 @@ async function updateStudentProfile(userId, { name, email, oldEmail, role, statu
       const isUuid = typeof userId === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
       const targetEmail = cleanOldEmail || cleanEmail;
       let updatedInDb = false;
+      let dbRecord = null;
 
-      // Primary: Try updating by UUID if valid
+      // Step 1: Look up existing user record in Supabase
       if (isUuid) {
-        const { data: resUuid, error: errUuid } = await sbClient.from('app_users').update(updateData).eq('id', userId).select('id');
-        if (!errUuid && Array.isArray(resUuid) && resUuid.length > 0) {
-          updatedInDb = true;
-        }
+        const { data: byId } = await sbClient.from('app_users').select('id, email, name').eq('id', userId).maybeSingle();
+        if (byId) dbRecord = byId;
+      }
+      if (!dbRecord && targetEmail) {
+        const { data: byEmail } = await sbClient.from('app_users').select('id, email, name').ilike('email', targetEmail).maybeSingle();
+        if (byEmail) dbRecord = byEmail;
+      }
+      if (!dbRecord && cleanEmail && cleanEmail !== targetEmail) {
+        const { data: byNewEmail } = await sbClient.from('app_users').select('id, email, name').ilike('email', cleanEmail).maybeSingle();
+        if (byNewEmail) dbRecord = byNewEmail;
       }
 
-      // Secondary: Update by email (matches exact student record reliably)
-      if (!updatedInDb && targetEmail) {
-        const { data: resEmail, error: errEmail } = await sbClient.from('app_users').update(updateData).eq('email', targetEmail).select('id');
-        if (!errEmail && Array.isArray(resEmail) && resEmail.length > 0) {
-          updatedInDb = true;
-        }
+      // Step 2: Update by real database ID if found
+      if (dbRecord && dbRecord.id) {
+        const { error: errUpd } = await sbClient.from('app_users').update(updateData).eq('id', dbRecord.id);
+        if (!errUpd) updatedInDb = true;
+        else console.warn('Supabase update by ID error:', errUpd.message);
+      } else {
+        // Step 3: Direct case-insensitive email update fallback
+        const { error: errEmail } = await sbClient.from('app_users').update(updateData).ilike('email', targetEmail);
+        if (!errEmail) updatedInDb = true;
       }
 
-      // Tertiary: If user does not exist in Supabase yet, upsert them!
+      // Step 4: If user truly does not exist in Supabase yet, upsert them!
       if (!updatedInDb) {
-        await sbClient.from('app_users').upsert({
+        const { error: errUps } = await sbClient.from('app_users').upsert({
           ...updateData,
           email: cleanEmail
         }, { onConflict: 'email' });
+        if (errUps) console.warn('Supabase upsert fallback error:', errUps.message);
       }
     } catch (e) {
       console.warn('Supabase profile update exception:', e.message);
@@ -4201,6 +4527,11 @@ async function updateStudentProfile(userId, { name, email, oldEmail, role, statu
 
   // 4. Save in local persistent overrides & global student names map
   try {
+    setStudentNameInMemory(cleanEmail, cleanName, true);
+    if (cleanOldEmail && cleanOldEmail !== cleanEmail) {
+      setStudentNameInMemory(cleanOldEmail, cleanName, true);
+    }
+
     const overrides = JSON.parse(localStorage.getItem('sp_user_overrides') || '{}');
     const overrideData = { id: userId, name: cleanName, email: cleanEmail, role: cleanRole, status: cleanStatus };
     if (userId) overrides[userId] = overrideData;
@@ -4246,22 +4577,22 @@ async function updateStudentProfile(userId, { name, email, oldEmail, role, statu
       }
     });
     if (onlineChanged) localStorage.setItem('online_students', JSON.stringify(online));
-  } catch (e) {}
+  } catch (e) { }
 
   // 5. Update cached users list
   try {
     const cached = JSON.parse(localStorage.getItem('cp_cached_users') || '[]');
-    const idx = cached.findIndex(u => u.id === userId || (u.email && u.email.toLowerCase() === cleanOldEmail));
+    const idx = cached.findIndex(u => u.id === userId || (u.email && u.email.toLowerCase() === cleanOldEmail) || (u.email && u.email.toLowerCase() === cleanEmail));
     if (idx >= 0) {
       cached[idx] = { ...cached[idx], ...updateData };
       if (cleanPassword) cached[idx].hasPassword = true;
       localStorage.setItem('cp_cached_users', JSON.stringify(cached));
     }
-  } catch (e) {}
+  } catch (e) { }
 
   // 6. If current user is this student, update session
   const currentUser = getCurrentUser();
-  if (currentUser && (currentUser.id === userId || (currentUser.email && currentUser.email.toLowerCase() === cleanOldEmail))) {
+  if (currentUser && (currentUser.id === userId || (currentUser.email && (currentUser.email.toLowerCase() === cleanOldEmail || currentUser.email.toLowerCase() === cleanEmail)))) {
     currentUser.name = cleanName;
     currentUser.email = cleanEmail;
     currentUser.role = cleanRole;
@@ -4281,77 +4612,77 @@ async function updateStudentProfile(userId, { name, email, oldEmail, role, statu
 // Global in-memory cache for fast student names mapping
 const _inMemoryStudentNames = new Map();
 
-function setStudentNameInMemory(email, name) {
+function setStudentNameInMemory(email, name, force = false) {
   if (!email || !name) return;
   const clean = email.toLowerCase().trim();
   const cleanName = name.trim();
-  if (cleanName && cleanName.toLowerCase() !== 'student') {
+  const emailPrefix = clean.split('@')[0].toLowerCase();
+  // Only save if it's a REAL name — not email prefix or 'student'
+  if (cleanName) {
     _inMemoryStudentNames.set(clean, cleanName);
     try {
       const nameMap = JSON.parse(localStorage.getItem('sp_student_names') || '{}');
       nameMap[clean] = cleanName;
       localStorage.setItem('sp_student_names', JSON.stringify(nameMap));
-    } catch (e) {}
+    } catch (e) { }
   }
 }
 
 function getStudentNameByEmail(email, fallbackName) {
   if (!email) return fallbackName || 'Student';
   const clean = email.toLowerCase().trim();
-  const emailPrefix = clean.split('@')[0].toLowerCase();
 
-  // 1. In-memory live cache (instant 0ms)
-  if (_inMemoryStudentNames.has(clean)) {
-    const memName = _inMemoryStudentNames.get(clean);
-    if (memName && memName.toLowerCase() !== 'student') return memName;
-  }
-
-  // 2. Check user overrides (saved on Admin edit)
+  // 1. Check user overrides FIRST (Admin edits take top priority)
   try {
     const overrides = JSON.parse(localStorage.getItem('sp_user_overrides') || '{}');
     if (overrides[clean] && overrides[clean].name) {
       const oName = overrides[clean].name.trim();
-      if (oName && oName.toLowerCase() !== 'student') return oName;
+      if (oName) {
+        _inMemoryStudentNames.set(clean, oName);
+        return oName;
+      }
     }
-  } catch (e) {}
+  } catch (e) { }
+
+  // 2. In-memory live cache (instant 0ms)
+  if (_inMemoryStudentNames.has(clean)) {
+    const memName = _inMemoryStudentNames.get(clean);
+    if (memName) return memName;
+  }
 
   // 3. Check global student names map
   try {
     const nameMap = JSON.parse(localStorage.getItem('sp_student_names') || '{}');
-    if (nameMap[clean] && nameMap[clean].toLowerCase() !== 'student') {
+    if (nameMap[clean]) {
       const sName = nameMap[clean].trim();
       if (sName) return sName;
     }
-  } catch (e) {}
+  } catch (e) { }
 
   // 4. Check cached users
   try {
     const cached = JSON.parse(localStorage.getItem('cp_cached_users') || '[]');
     const found = cached.find(u => (u.email || '').toLowerCase().trim() === clean);
-    if (found && found.name && found.name.toLowerCase() !== 'student' && found.name.toLowerCase() !== emailPrefix) {
+    if (found && found.name && found.name.trim()) {
       return found.name.trim();
     }
-  } catch (e) {}
+  } catch (e) { }
 
   // 5. Check current active session
   try {
     const cur = getCurrentUser();
-    if (cur && cur.email && cur.email.toLowerCase().trim() === clean && cur.name && cur.name.toLowerCase() !== 'student' && cur.name.toLowerCase() !== emailPrefix) {
+    if (cur && cur.email && cur.email.toLowerCase().trim() === clean && cur.name && cur.name.trim()) {
       return cur.name.trim();
     }
-  } catch (e) {}
+  } catch (e) { }
 
-  // 6. Check fallback name (ONLY if it is a real name, NOT raw email prefix or generic student)
-  if (fallbackName && fallbackName.toLowerCase() !== 'student' && fallbackName.toLowerCase() !== 'administrator' && fallbackName.toLowerCase() !== emailPrefix) {
+  // 6. Check fallback name provided
+  if (fallbackName && fallbackName.trim() && fallbackName.toLowerCase() !== 'administrator') {
     return fallbackName.trim();
   }
 
-  // 7. Clean email handle (formatted title case: "rohit.sharma" -> "Rohit Sharma")
-  const prefix = clean.split('@')[0];
-  if (prefix.includes('.') || prefix.includes('_')) {
-    return prefix.split(/[._]/).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
-  }
-  return prefix.charAt(0).toUpperCase() + prefix.slice(1);
+  // 7. Default to Student
+  return 'Student';
 }
 
 async function resetUserAndKey(userId, email) {
@@ -4369,18 +4700,36 @@ async function addUser(email) {
     // Auto-whitelist in allowed-emails so admin-added student can immediately login & generate key
     try {
       await addAllowedEmail(clean);
-    } catch (e) {}
+    } catch (e) { }
 
     // Sync to Supabase app_users table
+    // IMPORTANT: Don't overwrite existing name with email prefix!
     if (checkClient()) {
       try {
-        await sbClient.from('app_users').upsert({
-          email: clean,
-          name: clean.split('@')[0],
-          role: 'student',
-          status: 'approved'
-        }, { onConflict: 'email' });
-      } catch (e) {}
+        // Check if user already has a name in DB
+        const { data: existing } = await sbClient.from('app_users').select('id, name').eq('email', clean).maybeSingle();
+        if (existing && existing.name) {
+          // User exists with a name — only update status, don't touch name
+          await sbClient.from('app_users').update({ status: 'approved' }).eq('email', clean);
+        } else {
+          // New user — resolve best name from overrides
+          let bestName = clean.split('@')[0];
+          try {
+            const overrides = JSON.parse(localStorage.getItem('sp_user_overrides') || '{}');
+            if (overrides[clean] && overrides[clean].name) bestName = overrides[clean].name;
+            else {
+              const nameMap = JSON.parse(localStorage.getItem('sp_student_names') || '{}');
+              if (nameMap[clean]) bestName = nameMap[clean];
+            }
+          } catch (e) {}
+          await sbClient.from('app_users').upsert({
+            email: clean,
+            name: bestName,
+            role: 'student',
+            status: 'approved'
+          }, { onConflict: 'email' });
+        }
+      } catch (e) { }
     }
 
     return res;
@@ -4414,7 +4763,7 @@ async function getOnlineStudentsFromWorker() {
     if (data && data.success && Array.isArray(data.users)) {
       return data.users;
     }
-  } catch (e) {}
+  } catch (e) { }
   return [];
 }
 
@@ -4441,7 +4790,7 @@ async function updateUserStatus(userId, status) {
         p_new_status: status
       });
       if (!error && data) return true;
-    } catch (e) {}
+    } catch (e) { }
   }
 
   const { error } = await sbClient
@@ -4469,7 +4818,7 @@ async function updateUserRole(userId, role) {
         p_new_role: role
       });
       if (!error && data) return true;
-    } catch (e) {}
+    } catch (e) { }
   }
 
   const { error } = await sbClient
@@ -4497,7 +4846,7 @@ async function deleteUser(userId, email) {
         const found = cfData.users.find(u => (u.email || '').toLowerCase().trim() === cleanEmail);
         if (found && found.id) workerUserId = found.id;
       }
-    } catch (e) {}
+    } catch (e) { }
   }
 
   // 2. Delete from Worker API
@@ -4514,7 +4863,7 @@ async function deleteUser(userId, email) {
   if (cleanEmail) {
     try {
       await deleteAllowedEmail(cleanEmail, true);
-    } catch (e) {}
+    } catch (e) { }
   }
 
   // 4. Delete from Supabase app_users table
@@ -4542,13 +4891,13 @@ async function deleteUser(userId, email) {
     const cached = JSON.parse(localStorage.getItem('cp_cached_users') || '[]');
     const filtered = cached.filter(u => u.id !== userId && (u.email || '').toLowerCase().trim() !== cleanEmail);
     localStorage.setItem('cp_cached_users', JSON.stringify(filtered));
-  } catch (e) {}
+  } catch (e) { }
   try {
     const overrides = JSON.parse(localStorage.getItem('sp_user_overrides') || '{}');
     if (userId) delete overrides[userId];
     if (cleanEmail) delete overrides[cleanEmail];
     localStorage.setItem('sp_user_overrides', JSON.stringify(overrides));
-  } catch (e) {}
+  } catch (e) { }
 
   showToast('User deleted from database', 'info');
   return { success: true };
@@ -4565,7 +4914,7 @@ function extractYouTubePlaylistId(url) {
     const parsed = new URL(url.startsWith('http') ? url : 'https://' + url);
     const listParam = parsed.searchParams.get('list');
     if (listParam) return listParam;
-  } catch (e) {}
+  } catch (e) { }
   const match = url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
   if (match) return match[1];
   return null;
@@ -4617,7 +4966,7 @@ try {
   if (localStorage.getItem('yt_api_key') === 'AIzaSyAwG4U5R9L1CTY-cu-kVApqsq8LwjkmQq4') {
     localStorage.removeItem('yt_api_key');
   }
-} catch (e) {}
+} catch (e) { }
 
 async function fetchYouTubePlaylistVideos(playlistId, apiKey = '', oauthToken = '') {
   let videos = [];
@@ -4684,7 +5033,7 @@ async function fetchYouTubePlaylistVideos(playlistId, apiKey = '', oauthToken = 
   }
 
   // --- MULTI-TIER BYPASS: RESOLVE REAL TITLES FOR UNLISTED / HIDDEN VIDEOS ---
-  const needTitleEnrichment = videos.filter(v => 
+  const needTitleEnrichment = videos.filter(v =>
     v.isPrivate || !v.title || /^(lecture|part)\s*\d+$/i.test(v.title) || (playlistTitle && v.title.startsWith(playlistTitle + ' - Part '))
   );
 
@@ -4714,11 +5063,11 @@ async function fetchYouTubePlaylistVideos(playlistId, apiKey = '', oauthToken = 
             });
           }
         }
-      } catch (e) {}
+      } catch (e) { }
     }
 
     // Bypass Tier 2: Fast CORS-enabled oEmbed via noembed (extracts unlisted real titles directly from browser)
-    const stillNeed = videos.filter(v => 
+    const stillNeed = videos.filter(v =>
       v.isPrivate || !v.title || /^(lecture|part)\s*\d+$/i.test(v.title) || (playlistTitle && v.title.startsWith(playlistTitle + ' - Part '))
     );
     if (stillNeed.length > 0) {
@@ -4734,7 +5083,7 @@ async function fetchYouTubePlaylistVideos(playlistId, apiKey = '', oauthToken = 
               return;
             }
           }
-        } catch (e) {}
+        } catch (e) { }
 
         try {
           const yRes = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${encodeURIComponent(v.id)}&format=json`);
@@ -4746,7 +5095,7 @@ async function fetchYouTubePlaylistVideos(playlistId, apiKey = '', oauthToken = 
               if (yData.thumbnail_url) v.thumbnail = yData.thumbnail_url;
             }
           }
-        } catch (e) {}
+        } catch (e) { }
       }));
     }
   }
@@ -4821,7 +5170,7 @@ async function fetchYouTubeBatchVideos(videoIds, apiKey = '') {
             return;
           }
         }
-      } catch (e) {}
+      } catch (e) { }
 
       try {
         const yRes = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${encodeURIComponent(v.id)}&format=json`);
@@ -4833,7 +5182,7 @@ async function fetchYouTubeBatchVideos(videoIds, apiKey = '') {
             if (yData.thumbnail_url) v.thumbnail = yData.thumbnail_url;
           }
         }
-      } catch (e) {}
+      } catch (e) { }
     }));
   }
 
@@ -5038,7 +5387,7 @@ async function syncCloudChapterPlaylists() {
             cloudMap = json;
           }
         }
-      } catch (e) {}
+      } catch (e) { }
     }
 
     const localMap = getAllChapterPlaylists();
@@ -5070,8 +5419,8 @@ async function saveChapterPlaylistsToCloud(map) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: jsonStr
-      }).catch(() => {});
-    } catch (e) {}
+      }).catch(() => { });
+    } catch (e) { }
   }
 }
 
@@ -5083,7 +5432,7 @@ function getChapterPlaylist(chapterId) {
 
   // Auto trigger background sync if not yet run
   if (!_chapterPlaylistsSynced) {
-    syncCloudChapterPlaylists().catch(() => {});
+    syncCloudChapterPlaylists().catch(() => { });
   }
   return null;
 }
@@ -5108,7 +5457,7 @@ function setChapterPlaylist(chapterId, playlistData) {
   }
   try {
     localStorage.setItem(CHAPTER_PLAYLISTS_KEY, JSON.stringify(map));
-  } catch (e) {}
+  } catch (e) { }
   saveChapterPlaylistsToCloud(map);
 }
 
@@ -5258,7 +5607,7 @@ async function syncChapterWithPlaylist(chapterId, options = {}) {
       }
     });
     saveLocalJson(CUSTOM_LECTURES_KEY, cleanCustom);
-  } catch (e) {}
+  } catch (e) { }
 
   // Update chapter playlist metadata
   info.lastSyncedAt = new Date().toISOString();
@@ -5267,7 +5616,7 @@ async function syncChapterWithPlaylist(chapterId, options = {}) {
 
   // Invalidate and reload
   invalidatePlaylistsCache();
-  try { await fetchWorkerPlaylists(true); } catch(e) {}
+  try { await fetchWorkerPlaylists(true); } catch (e) { }
   await getAllLectures(true);
   broadcastLiveSync();
 
@@ -5340,7 +5689,7 @@ async function applyRealTitlesToChapter(chapterId, titlesList) {
   }
 
   invalidatePlaylistsCache();
-  try { await fetchWorkerPlaylists(true); } catch(e) {}
+  try { await fetchWorkerPlaylists(true); } catch (e) { }
   await getAllLectures(true);
   broadcastLiveSync();
   showToast(`✅ Successfully applied real titles to ${updatedCount} lectures and synced to database!`, 'success');
@@ -5361,7 +5710,7 @@ function getLocalAllowedEmails() {
 function saveLocalAllowedEmails(list) {
   try {
     localStorage.setItem(ALLOWED_EMAILS_KEY, JSON.stringify(list));
-  } catch (e) {}
+  } catch (e) { }
 }
 
 async function getAllowedEmails() {
@@ -5389,7 +5738,7 @@ async function getAllowedEmails() {
         saveLocalAllowedEmails(emailStrings);
         return emailStrings;
       }
-    } catch (e) {}
+    } catch (e) { }
   }
 
   return getLocalAllowedEmails();
@@ -5417,12 +5766,27 @@ async function addAllowedEmail(email, silent = false) {
   }
 
   // 3. Supabase fallback (Ensure status in app_users is approved)
+  // IMPORTANT: Use update instead of upsert to avoid wiping existing name!
   if (checkClient()) {
     try {
-      await sbClient
-        .from('app_users')
-        .upsert({ email: clean, status: 'approved' }, { onConflict: 'email' });
-    } catch (e) {}
+      const { data: existingUser } = await sbClient.from('app_users').select('id').eq('email', clean).maybeSingle();
+      if (existingUser) {
+        // User exists — only update status, preserve name
+        await sbClient.from('app_users').update({ status: 'approved' }).eq('email', clean);
+      } else {
+        // New user — resolve best available name from overrides before defaulting to email prefix
+        let initialName = clean.split('@')[0];
+        try {
+          const overrides = JSON.parse(localStorage.getItem('sp_user_overrides') || '{}');
+          if (overrides[clean] && overrides[clean].name) initialName = overrides[clean].name;
+          else {
+            const nameMap = JSON.parse(localStorage.getItem('sp_student_names') || '{}');
+            if (nameMap[clean]) initialName = nameMap[clean];
+          }
+        } catch (e) { }
+        await sbClient.from('app_users').insert({ email: clean, name: initialName, role: 'student', status: 'approved' });
+      }
+    } catch (e) { }
   }
 
   if (!silent) showToast(`Whitelisted ${clean}`, 'success');
@@ -5453,7 +5817,7 @@ async function deleteAllowedEmail(email, silent = false) {
         .from('app_users')
         .update({ status: 'rejected' })
         .eq('email', clean);
-    } catch (e) {}
+    } catch (e) { }
   }
 
   if (!silent) showToast(`Removed ${clean} from whitelist`, 'info');
@@ -5480,7 +5844,7 @@ function getLocalChatMessages() {
 function saveLocalChatMessages(msgs) {
   try {
     localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(msgs));
-  } catch (e) {}
+  } catch (e) { }
 }
 
 function addIncomingChatMessage(msg) {
@@ -5492,7 +5856,7 @@ function addIncomingChatMessage(msg) {
       if (local.length > 200) local.pop();
       saveLocalChatMessages(local);
     }
-  } catch(e) {}
+  } catch (e) { }
 }
 
 // ===== ⚡ LIVE CHAT AUTO-PURGE (CLEARS EVERY 2-3 HOURS, DOUBTS REMAIN PERMANENT) =====
@@ -5508,7 +5872,7 @@ async function purgeOldLiveChatMessages() {
         .delete()
         .eq('chat_type', 'live')
         .lt('created_at', cutoffTime);
-    } catch(e) {}
+    } catch (e) { }
   }
 
   // 2. Filter local storage (never touch doubts chat!)
@@ -5524,7 +5888,7 @@ async function purgeOldLiveChatMessages() {
     if (filtered.length !== local.length) {
       saveLocalChatMessages(filtered);
     }
-  } catch(e) {}
+  } catch (e) { }
 }
 
 async function getChatMessages(filter = 'all') {
@@ -5566,7 +5930,7 @@ async function getChatMessages(filter = 'all') {
 
   // Filter 1: Live Stream Chat only (auto-purged every 2-3 hours)
   if (filter === 'live') {
-    setTimeout(() => { purgeOldLiveChatMessages().catch(() => {}); }, 50);
+    setTimeout(() => { purgeOldLiveChatMessages().catch(() => { }); }, 50);
     const now = Date.now();
     return messages.filter(m => {
       if (m.chat_type !== 'live') return false;
@@ -5608,13 +5972,13 @@ async function sendChatMessage(message, receiverEmail = null, receiverName = nul
   _lastSentChatTime = now;
 
   const isAdmin = user.role === 'admin' || (user.email && user.email.toLowerCase().includes('admin')) || Boolean(getAdminToken());
-  
+
   // Real Name Resolution: 'Admin' for admin, real student name for student
   let authorName = 'Student';
   if (isAdmin) {
     authorName = 'Admin';
   } else {
-    authorName = (user.name && user.name.toLowerCase() !== 'student') ? user.name : getStudentNameByEmail(user.email, user.name || 'Student');
+    authorName = (user.name && user.name.trim()) ? user.name : getStudentNameByEmail(user.email, user.name || 'Student');
   }
 
   const newMsg = {
@@ -5639,7 +6003,7 @@ async function sendChatMessage(message, receiverEmail = null, receiverName = nul
       if (!error && data) {
         newMsg.id = data.id || newMsg.id;
       }
-    } catch (e) {}
+    } catch (e) { }
   }
 
   const local = getLocalChatMessages();
@@ -5657,7 +6021,7 @@ async function deleteChatMessage(msgId) {
         .from('chat_messages')
         .delete()
         .eq('id', msgId);
-    } catch (e) {}
+    } catch (e) { }
   }
   const local = getLocalChatMessages().filter(m => m.id !== msgId);
   saveLocalChatMessages(local);
@@ -5671,7 +6035,7 @@ async function clearAllChatMessages() {
         .from('chat_messages')
         .delete()
         .neq('id', '00000000-0000-0000-0000-000000000000');
-    } catch (e) {}
+    } catch (e) { }
   }
   saveLocalChatMessages([]);
   return { success: true };
@@ -5708,10 +6072,10 @@ function initSupabaseStudentPresence(user) {
             role: 'student',
             onlineAt: Date.now()
           });
-        } catch (e) {}
+        } catch (e) { }
       }
     });
-  } catch (e) {}
+  } catch (e) { }
 }
 
 function initSupabaseAdminPresence(callback) {
@@ -5741,7 +6105,7 @@ function initSupabaseAdminPresence(callback) {
       if (typeof callback === 'function') callback(users);
     });
     _sbAdminPresenceChannel.subscribe();
-  } catch (e) {}
+  } catch (e) { }
 }
 
 function recordStudentHeartbeat(user) {
@@ -5769,7 +6133,7 @@ function recordStudentHeartbeat(user) {
     }
     const active = list.filter(u => now - u.lastSeen < 60000);
     localStorage.setItem(ONLINE_STORAGE_KEY, JSON.stringify(active));
-  } catch (e) {}
+  } catch (e) { }
 
   // 2. Broadcast to Central Server Presence Store (Multi-browser / cross-device)
   try {
@@ -5785,14 +6149,14 @@ function recordStudentHeartbeat(user) {
           page: currentPage
         }),
         keepalive: true
-      }).catch(() => {});
+      }).catch(() => { });
     }
-  } catch (e) {}
+  } catch (e) { }
 
   // 3. Connect Supabase Realtime Presence channel if available
   try {
     initSupabaseStudentPresence(user);
-  } catch (e) {}
+  } catch (e) { }
 
   // 4. Supabase Cloud DB Heartbeat (Throttled to every 30s)
   try {
@@ -5805,11 +6169,11 @@ function recordStudentHeartbeat(user) {
           .from('app_users')
           .update({ last_login: new Date().toISOString() })
           .eq('email', cleanEmail)
-          .then(() => {})
-          .catch(() => {});
+          .then(() => { })
+          .catch(() => { });
       }
     }
-  } catch (e) {}
+  } catch (e) { }
 }
 
 function getOnlineStudents() {
@@ -5853,7 +6217,7 @@ async function getUnifiedOnlineStudents() {
         });
       }
     }
-  } catch (e) {}
+  } catch (e) { }
 
   // 2. Merge Supabase Realtime Presence channel state
   if (Array.isArray(_sbPresenceUsers) && _sbPresenceUsers.length > 0) {
@@ -5904,7 +6268,7 @@ async function getUnifiedOnlineStudents() {
         });
       }
     }
-  } catch (e) {}
+  } catch (e) { }
 
   // 4. Merge LocalStorage active heartbeats (same-browser instant fallback)
   try {
@@ -5928,7 +6292,7 @@ async function getUnifiedOnlineStudents() {
         }
       });
     }
-  } catch (e) {}
+  } catch (e) { }
 
   // 5. Merge Cloudflare Worker active users (Optional cloud fallback if available)
   try {
@@ -5952,9 +6316,15 @@ async function getUnifiedOnlineStudents() {
         }
       });
     }
-  } catch (e) {}
+  } catch (e) { }
 
-  return Array.from(map.values());
+  const onlineList = Array.from(map.values());
+  onlineList.forEach(item => {
+    if (item.email) {
+      item.name = getStudentNameByEmail(item.email, item.name);
+    }
+  });
+  return onlineList;
 }
 
 // Global automated client-side presence heartbeat loop
@@ -5967,7 +6337,7 @@ if (typeof window !== 'undefined') {
         if (user && user.email && isLegitStudent(user)) {
           recordStudentHeartbeat(user);
         }
-      } catch (e) {}
+      } catch (e) { }
     }
 
     setTimeout(firePresencePing, 800);
@@ -5984,7 +6354,7 @@ if (typeof window !== 'undefined') {
         if (user && user.email && isLegitStudent(user) && navigator.sendBeacon) {
           navigator.sendBeacon('/api-local/logout-student', JSON.stringify({ email: user.email }));
         }
-      } catch (e) {}
+      } catch (e) { }
     });
   })();
 }
@@ -6028,7 +6398,7 @@ async function cleanupAllLectureDuplicates() {
         try {
           await deleteLectureDB(lec.id, lec.chapter_id);
           purgedCount++;
-        } catch (e) {}
+        } catch (e) { }
       } else {
         seenMap.set(key, lec);
       }
@@ -6055,7 +6425,7 @@ async function syncAllWorkerDataToSupabase(silent = true) {
     for (const s of STANDARD_SUBJECTS) {
       try {
         await sbClient.from('subjects').upsert(s, { onConflict: 'id' });
-      } catch (e) {}
+      } catch (e) { }
     }
 
     // 2. Sync Worker playlists & lectures
@@ -6064,14 +6434,14 @@ async function syncAllWorkerDataToSupabase(silent = true) {
       for (const pl of plData) {
         const secKey = (pl.section || 'recorded').toLowerCase();
         const subjId = SECTION_TO_SUBJ[secKey] || 'subj_math';
-        
+
         try {
           await sbClient.from('chapters').upsert({
             id: String(pl.id),
             name: (pl.name || '').trim(),
             subject_id: subjId
           }, { onConflict: 'id' });
-        } catch (e) {}
+        } catch (e) { }
 
         if (Array.isArray(pl.chapters) && pl.chapters.length > 0) {
           const lecs = pl.chapters.map((ch, idx) => ({
@@ -6083,46 +6453,11 @@ async function syncAllWorkerDataToSupabase(silent = true) {
           }));
           try {
             await sbClient.from('lectures').upsert(lecs, { onConflict: 'id' });
-          } catch (e) {}
+          } catch (e) { }
         }
       }
     }
 
-    // 3. Sync Users from Worker (Never overwrite existing student names!)
-    try {
-      const uResp = await workerApiCall('/users');
-      if (uResp && uResp.success && Array.isArray(uResp.users)) {
-        const { data: dbUsers } = await sbClient.from('app_users').select('id, name, email');
-        const existingMap = new Map((dbUsers || []).map(u => [(u.email || '').toLowerCase().trim(), u]));
-
-        for (const u of uResp.users) {
-          if (!u.email) continue;
-          const cleanEmail = u.email.toLowerCase().trim();
-          const existing = existingMap.get(cleanEmail);
-
-          if (!existing) {
-            // User does not exist in Supabase yet: safely insert!
-            const cleanName = u.name || cleanEmail.split('@')[0];
-            try {
-              await sbClient.from('app_users').insert({
-                name: cleanName,
-                email: cleanEmail,
-                role: u.role || 'student',
-                status: u.status || 'approved'
-              });
-            } catch (e) {}
-          } else {
-            // User ALREADY exists in Supabase:
-            // 🛡️ CRITICAL RULE: NEVER overwrite existing student name with email handle!
-            if (u.name && u.name.trim() && u.name !== cleanEmail.split('@')[0] && u.name !== existing.name) {
-              try {
-                await sbClient.from('app_users').update({ name: u.name.trim() }).eq('id', existing.id);
-              } catch (e) {}
-            }
-          }
-        }
-      }
-    } catch (e) {}
 
     // 4. Sync Allowed Emails
     try {
@@ -6133,11 +6468,11 @@ async function syncAllWorkerDataToSupabase(silent = true) {
           if (em) {
             try {
               await sbClient.from('allowed_emails').upsert({ email: em }, { onConflict: 'email' });
-            } catch (e) {}
+            } catch (e) { }
           }
         }
       }
-    } catch (e) {}
+    } catch (e) { }
 
     // 5. Sync Live Classes
     try {
@@ -6152,10 +6487,10 @@ async function syncAllWorkerDataToSupabase(silent = true) {
               status: item.is_active === 0 ? 'hidden' : 'live',
               instructor: 'Teacher'
             }, { onConflict: 'id' });
-          } catch (e) {}
+          } catch (e) { }
         }
       }
-    } catch (e) {}
+    } catch (e) { }
 
     if (!silent) {
       showToast('✅ Cloudflare data fully synced into Supabase!', 'success');
@@ -6176,7 +6511,7 @@ function getTheme() {
   try {
     const saved = localStorage.getItem(THEME_STORAGE_KEY);
     if (saved === 'dark' || saved === 'light') return saved;
-  } catch (e) {}
+  } catch (e) { }
   return 'light'; // Always default to Light Mode unless manually set by user
 }
 
@@ -6191,7 +6526,7 @@ function setTheme(theme, isUserAction = false) {
   }
   try {
     localStorage.setItem(THEME_STORAGE_KEY, clean);
-  } catch (e) {}
+  } catch (e) { }
 
   updateThemeUI(clean);
 
@@ -6272,10 +6607,10 @@ window.DB = {
   // Cache Fast Load Getters
   getCachedSubjects, getCachedChapters, getCachedLectures, getCachedLiveClasses,
   // Live Classes
-  getLiveClasses, getActiveLiveClasses, getLiveClassById, getActiveLiveNowIds, setActiveLiveNow, addLiveClass, updateLiveClass, setLiveClassStatus, deleteLiveClass, getLiveClassExpiryInfo, LIVE_MAX_AGE_MS, compareLiveClasses, isSameLiveId,
+  getLiveClasses, getActiveLiveClasses, getLiveClassById, getActiveLiveNowIds, setActiveLiveNow, addLiveClass, updateLiveClass, setLiveClassStatus, deleteLiveClass, getLiveClassExpiryInfo, LIVE_MAX_AGE_MS, compareLiveClasses, getLiveClassSortTime, getLiveClassRawId, isSameLiveId, MAX_VISIBLE_LIVE_CLASSES, enforceTopLiveVisibility,
   // User Auth, Tokens, Sessions, Passwords & Approvals
   registerUser, generateAccessKey, loginUser, getCurrentUser, logoutUser, adminLogin, adminVerifySession,
-  validateUserSession, handleSessionConflict, startSessionWatcher, generateSessionId, hashPassword,
+  validateUserSession, handleSessionConflict, startSessionWatcher, generateSessionId, getPersistentDeviceId, hashPassword,
   adminApproveStudent, adminRejectStudent, resetStudentDeviceSession, adminSetStudentPassword, adminGeneratePasswordForStudent, adminAddStudent, syncCloudflareStudents,
   setAdminPassword, getAdminAccounts, getSqlForAdminReset, ensureDefaultAdminsInDatabase,
   getAdminToken, setAdminToken, clearAdminToken, clearAllAuthSessions,

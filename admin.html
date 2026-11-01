@@ -3438,6 +3438,7 @@
           }
           if (cachedLive && cachedLive.length) {
             allLiveClasses = cachedLive.filter(c => !String(c.title || '').startsWith('__CONFIG_') && c.status !== 'config' && c.url !== 'config');
+            if (DB.compareLiveClasses) allLiveClasses.sort(DB.compareLiveClasses);
           }
 
           updateKPIStats();
@@ -3466,6 +3467,7 @@
         ]);
         if (Array.isArray(allLiveClasses)) {
           allLiveClasses = allLiveClasses.filter(c => !String(c.title || '').startsWith('__CONFIG_') && c.status !== 'config' && c.url !== 'config');
+          if (DB.compareLiveClasses) allLiveClasses.sort(DB.compareLiveClasses);
         }
 
         // Automated self-healing duplicate cleanup
@@ -3526,8 +3528,9 @@
       if (badgeLec) badgeLec.textContent = `${activeLectures.length} Lectures`;
 
       const liveNowCount = allLiveClasses.filter(c => c.is_live_now).length;
+      const visibleLiveCount = allLiveClasses.filter(c => (c.is_visible === 1 || c.is_visible === true || (c.is_visible === undefined && c.status !== 'hidden' && c.status !== 'ended' && c.status !== 'offline'))).length;
       const statLive = document.getElementById('statLive');
-      if (statLive) statLive.textContent = `${liveNowCount} Live Now (${allLiveClasses.length} Total)`;
+      if (statLive) statLive.textContent = `${liveNowCount} Live Now (${visibleLiveCount} Visible / ${allLiveClasses.length} Total)`;
       if (typeof updateOnlinePresence === 'function') updateOnlinePresence();
     }
 
@@ -4901,6 +4904,7 @@
     function renderLiveClassesTable() {
       const tbody = document.getElementById('liveTableBody');
       const displayClasses = (allLiveClasses || []).filter(c => !String(c.title || '').startsWith('__CONFIG_') && c.status !== 'config' && c.url !== 'config');
+      if (DB.compareLiveClasses) displayClasses.sort(DB.compareLiveClasses);
       if (!displayClasses.length) {
         tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:30px; color:var(--text-4);">No live classes available</td></tr>`;
         return;
@@ -5065,6 +5069,24 @@
         };
         allLiveClasses.unshift(newLive);
         if (DB.compareLiveClasses) allLiveClasses.sort(DB.compareLiveClasses);
+        if (DB.enforceTopLiveVisibility) {
+          allLiveClasses = DB.enforceTopLiveVisibility(allLiveClasses, 7);
+        } else {
+          let visCount = 0;
+          allLiveClasses.forEach(c => {
+            const isVis = (c.is_visible === 1 || c.is_visible === true || (c.is_visible === undefined && c.status !== 'hidden' && c.status !== 'ended' && c.status !== 'offline'));
+            if (isVis) {
+              visCount++;
+              if (visCount > 7) {
+                c.is_visible = 0;
+                c.status = 'hidden';
+                if (window.DB && DB.setLiveClassStatus) {
+                  DB.setLiveClassStatus(c.id, 'hidden', 0).catch(console.error);
+                }
+              }
+            }
+          });
+        }
         document.getElementById('liveTitleInput').value = '';
         document.getElementById('liveUrlInput').value = '';
         if (document.getElementById('liveIsActiveCheckbox')) document.getElementById('liveIsActiveCheckbox').checked = false;
@@ -5134,6 +5156,7 @@
 
       // Filter from in-memory array immediately
       allLiveClasses = allLiveClasses.filter(c => !isSameLiveId(c, id));
+      if (DB.compareLiveClasses) allLiveClasses.sort(DB.compareLiveClasses);
 
       if (allLiveClasses.length === 0) {
         renderLiveClassesTable();
@@ -5184,7 +5207,7 @@
         studentsProgressMap = progressData || {};
         let fetchedUsers = sortStudentsLatestFirst(users || []);
 
-        // Preserve optimistic status for recently approved/rejected students (prevents race-condition flicker)
+        // Preserve optimistic status AND names for recently edited students (prevents race-condition flicker)
         if (window._locallyUpdatedStudentStatuses && window._locallyUpdatedStudentStatuses.size > 0) {
           const now = Date.now();
           fetchedUsers = fetchedUsers.map(u => {
@@ -5192,11 +5215,16 @@
             const localOverride = window._locallyUpdatedStudentStatuses.get(em);
             if (localOverride) {
               if (now - localOverride.timestamp < 45000) {
-                return {
+                const merged = {
                   ...u,
-                  status: localOverride.status,
+                  status: localOverride.status || u.status,
                   current_session_id: (localOverride.current_session_id !== undefined) ? localOverride.current_session_id : u.current_session_id
                 };
+                // Preserve admin-edited name if it was part of this override
+                if (localOverride.name) {
+                  merged.name = localOverride.name;
+                }
+                return merged;
               } else {
                 window._locallyUpdatedStudentStatuses.delete(em);
               }
@@ -5348,7 +5376,7 @@
         const serialNo = idx + 1;
         const email = (u.email || '').trim();
         const cleanEmail = email.toLowerCase();
-        const name = u.name || (DB.getStudentNameByEmail ? DB.getStudentNameByEmail(cleanEmail, '') : '') || email.split('@')[0] || 'Student';
+        const name = (window.DB && DB.getStudentNameByEmail ? DB.getStudentNameByEmail(cleanEmail, u.name) : u.name) || 'Student';
         const isOnline = onlineStudentEmails.has(cleanEmail);
         const status = (u.status || 'approved').toLowerCase();
         const hasPassword = Boolean(u.hasPassword || u.password_hash);
@@ -5578,7 +5606,7 @@
             `;
           }
           if (actCol) {
-            const name = user ? user.name : cleanEmail.split('@')[0];
+            const name = (window.DB && DB.getStudentNameByEmail ? DB.getStudentNameByEmail(cleanEmail, user ? user.name : '') : (user ? user.name : '')) || 'Student';
             const uid = user ? user.id : userId;
             actCol.innerHTML = `
               <button class="btn btn-sm btn-outline" style="border-color:#93c5fd; color:#2563eb; background:#eff6ff;" onclick="openEditStudentModal('${uid}', '${escapeHtml(name)}', '${escapeHtml(cleanEmail)}')" title="Edit Student Name & Email">✏️ Edit</button>
@@ -5683,7 +5711,7 @@
             `;
           }
           if (actCol) {
-            const name = user ? user.name : cleanEmail.split('@')[0];
+            const name = (window.DB && DB.getStudentNameByEmail ? DB.getStudentNameByEmail(cleanEmail, user ? user.name : '') : (user ? user.name : '')) || 'Student';
             const uid = user ? user.id : userId;
             actCol.innerHTML = `
               <button class="btn btn-sm btn-outline" style="border-color:#93c5fd; color:#2563eb; background:#eff6ff;" onclick="openEditStudentModal('${uid}', '${escapeHtml(name)}', '${escapeHtml(cleanEmail)}')" title="Edit Student Name & Email">✏️ Edit</button>
@@ -5854,6 +5882,14 @@
 
       DB.showToast('Creating student account...', 'info');
       try {
+        // Register in optimistic override map immediately
+        window._locallyUpdatedStudentStatuses = window._locallyUpdatedStudentStatuses || new Map();
+        window._locallyUpdatedStudentStatuses.set(email, {
+          name: name,
+          status: status,
+          timestamp: Date.now()
+        });
+
         const res = await DB.adminAddStudent(name, email, password, status);
         if (res && res.success) {
           closeAddStudentModal();
@@ -5995,6 +6031,18 @@
       // Optimistic instant delete from UI (0ms!)
       const cEmail = (email || '').toLowerCase().trim();
       allUsers = allUsers.filter(u => u.id !== userId && (u.email || '').toLowerCase().trim() !== cEmail);
+      if (window._locallyUpdatedStudentStatuses) {
+        window._locallyUpdatedStudentStatuses.delete(cEmail);
+      }
+      try {
+        const overrides = JSON.parse(localStorage.getItem('sp_user_overrides') || '{}');
+        delete overrides[userId];
+        delete overrides[cEmail];
+        localStorage.setItem('sp_user_overrides', JSON.stringify(overrides));
+        const nameMap = JSON.parse(localStorage.getItem('sp_student_names') || '{}');
+        delete nameMap[cEmail];
+        localStorage.setItem('sp_student_names', JSON.stringify(nameMap));
+      } catch (e) { }
       updateStudentCounts();
       renderUsersTableRows();
       DB.showToast(`Deleted ${email}`, 'info');
@@ -6103,7 +6151,11 @@
       document.getElementById('editStudentId').value = user.id || userId || '';
       document.getElementById('editStudentIdDisplay').value = user.id || userId || 'N/A';
       document.getElementById('editStudentOldEmail').value = user.email || cleanEmail || '';
-      document.getElementById('editStudentNameInput').value = user.name || name || '';
+      let currentBestName = user.name || name || '';
+      if (window.DB && DB.getStudentNameByEmail) {
+        currentBestName = DB.getStudentNameByEmail(user.email || cleanEmail, currentBestName);
+      }
+      document.getElementById('editStudentNameInput').value = currentBestName;
       document.getElementById('editStudentEmailInput').value = user.email || cleanEmail || '';
       document.getElementById('editStudentStatusSelect').value = user.status || 'approved';
       document.getElementById('editStudentPasswordInput').value = '';
@@ -6153,7 +6205,7 @@
       }
 
       // 1. INSTANT OPTIMISTIC IN-MEMORY & DOM UPDATE (0ms)
-      const targetUser = allUsers.find(u => u.id === userId || (u.email && u.email.toLowerCase().trim() === oldEmail));
+      const targetUser = allUsers.find(u => u.id === userId || (u.email && (u.email.toLowerCase().trim() === oldEmail || u.email.toLowerCase().trim() === email)));
       if (targetUser) {
         targetUser.name = name;
         targetUser.email = email;
@@ -6163,9 +6215,37 @@
         if (resetSession) targetUser.current_session_id = null;
       }
       if (window.DB && DB.setStudentNameInMemory) {
-        DB.setStudentNameInMemory(email, name);
-        if (oldEmail && oldEmail !== email) DB.setStudentNameInMemory(oldEmail, name);
+        // Force-set in memory — even if name looks like email prefix, admin explicitly set it
+        DB.setStudentNameInMemory(email, name, true);
+        if (oldEmail && oldEmail !== email) DB.setStudentNameInMemory(oldEmail, name, true);
       }
+
+      // Lock name in optimistic override map (prevents 15s background refresh from reverting name)
+      window._locallyUpdatedStudentStatuses = window._locallyUpdatedStudentStatuses || new Map();
+      window._locallyUpdatedStudentStatuses.set(email, {
+        name: name,
+        status: status,
+        current_session_id: resetSession ? null : (targetUser ? targetUser.current_session_id : undefined),
+        timestamp: Date.now()
+      });
+      if (oldEmail && oldEmail !== email) {
+        window._locallyUpdatedStudentStatuses.set(oldEmail, {
+          name: name,
+          status: status,
+          timestamp: Date.now()
+        });
+      }
+
+      // Immediately persist name in sp_user_overrides (protects across getAllUsers calls)
+      try {
+        const overrides = JSON.parse(localStorage.getItem('sp_user_overrides') || '{}');
+        const overrideData = { id: userId, name: name, email: email, role: 'student', status: status };
+        if (userId) overrides[userId] = overrideData;
+        overrides[email] = overrideData;
+        if (oldEmail && oldEmail !== email) overrides[oldEmail] = overrideData;
+        localStorage.setItem('sp_user_overrides', JSON.stringify(overrides));
+      } catch (e) {}
+
       updateStudentCounts();
       renderUsersTableRows();
       closeEditStudentModal();
