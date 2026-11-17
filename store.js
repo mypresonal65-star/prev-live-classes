@@ -2503,18 +2503,18 @@ function compareLiveClasses(a, b) {
     return liveB - liveA; // 1 (live) comes before 0
   }
 
-  // 2. Newest timestamp on top (strictly descending)
-  const timeA = getLiveClassSortTime(a);
-  const timeB = getLiveClassSortTime(b);
-  if (timeA !== timeB) {
-    return timeB - timeA;
-  }
-
-  // 3. If timestamps identical, higher numeric ID on top
+  // 2. If both have numeric raw IDs (e.g. imp_156 vs imp_155), strictly higher ID is newer
   const rawA = getLiveClassRawId(a);
   const rawB = getLiveClassRawId(b);
   if (rawA !== null && rawB !== null && rawA !== rawB) {
     return rawB - rawA;
+  }
+
+  // 3. Newest timestamp on top (strictly descending)
+  const timeA = getLiveClassSortTime(a);
+  const timeB = getLiveClassSortTime(b);
+  if (timeA !== timeB) {
+    return timeB - timeA;
   }
 
   // 4. Deterministic string tie-breaker so ordering never fluctuates
@@ -2649,33 +2649,62 @@ async function getLiveClasses(force = false) {
         }
       }
 
-      // 2. Fallback to Cloudflare Worker /important/all if Supabase had 0 rows or failed
-      if (workerList.length === 0) {
-        try {
-          const res = await workerApiCall('/important/all');
-          if (res && res.success && Array.isArray(res.items)) {
-            workerList = res.items.map(item => {
-              const rawId = Number(item.id);
-              const isVis = (item.is_visible !== undefined && item.is_visible !== null)
-                ? (item.is_visible === 1 || item.is_visible === true ? 1 : 0)
-                : (item.status === 'hidden' || item.status === 'ended' || item.status === 'offline' ? 0 : 1);
-              return {
-                id: 'imp_' + item.id,
-                raw_id: rawId,
-                title: item.title,
-                url: item.link,
-                status: isVis === 1 ? 'live' : 'hidden',
-                is_visible: isVis,
-                created_at: item.created_at,
-                section: 'math',
-                instructor: 'Spider Classes',
-                description: 'Live Interactive Session'
-              };
-            });
+      // 2. Fetch from Cloudflare Worker /important/all to merge any items Supabase is missing (Dual-Cloud Resilience)
+      try {
+        const res = await workerApiCall('/important/all');
+        if (res && res.success && Array.isArray(res.items)) {
+          const wkItems = res.items.map(item => {
+            const rawId = Number(item.id);
+            const isVis = (item.is_visible !== undefined && item.is_visible !== null)
+              ? (item.is_visible === 1 || item.is_visible === true ? 1 : 0)
+              : (item.status === 'hidden' || item.status === 'ended' || item.status === 'offline' ? 0 : 1);
+            return {
+              id: 'imp_' + item.id,
+              raw_id: rawId,
+              title: item.title,
+              url: item.link,
+              status: isVis === 1 ? 'live' : 'hidden',
+              is_visible: isVis,
+              created_at: item.created_at,
+              section: 'math',
+              instructor: 'Spider Classes',
+              description: 'Live Interactive Session'
+            };
+          });
+
+          if (workerList.length === 0) {
+            workerList = wkItems;
+          } else {
+            // Merge any items from Worker that Supabase might be missing
+            const missingToSync = [];
+            for (const wk of wkItems) {
+              if (!workerList.some(sb => isSameLiveId(sb, wk.id))) {
+                workerList.unshift(wk);
+                missingToSync.push(wk);
+              }
+            }
+            // Auto self-heal: sync missing items to Supabase in background
+            if (missingToSync.length > 0 && checkClient()) {
+              setTimeout(async () => {
+                try {
+                  const toInsert = missingToSync.map(m => ({
+                    id: String(m.id),
+                    title: String(m.title),
+                    url: String(m.url),
+                    status: m.is_visible === 0 ? 'hidden' : 'live',
+                    scheduled_at: m.created_at || new Date().toISOString(),
+                    instructor: 'Spider Classes',
+                    description: '',
+                    created_at: m.created_at || new Date().toISOString()
+                  }));
+                  await sbClient.from('live_classes').upsert(toInsert, { onConflict: 'id' });
+                } catch (e) { }
+              }, 100);
+            }
           }
-        } catch (e) {
-          console.warn('Worker important/all fetch notice:', e.message);
         }
+      } catch (e) {
+        console.warn('Worker important/all fetch notice:', e.message);
       }
 
       // 3. Combine worker/supabase items + local items (avoid duplicate ids)
@@ -2807,14 +2836,21 @@ async function addLiveClass(classData) {
     }
     // Check if toggle needed (default in worker is is_visible = 1)
     if (res && isVisible === 0) {
-      const allRes = await workerApiCall('/important/all');
-      const found = (allRes.items || []).find(i => i.title === title && i.link === url);
-      if (found) {
-        rawId = found.id;
+      if (rawId) {
         await workerApiCall('/important/toggle', {
           method: 'POST',
-          body: JSON.stringify({ id: found.id })
-        });
+          body: JSON.stringify({ id: rawId })
+        }).catch(() => {});
+      } else {
+        const allRes = await workerApiCall('/important/all');
+        const found = (allRes.items || []).find(i => i.title === title && i.link === url);
+        if (found) {
+          rawId = found.id;
+          await workerApiCall('/important/toggle', {
+            method: 'POST',
+            body: JSON.stringify({ id: found.id })
+          }).catch(() => {});
+        }
       }
     }
     if (!rawId) {
@@ -2830,8 +2866,10 @@ async function addLiveClass(classData) {
     console.warn('Worker addLiveClass notice:', err.message);
   }
 
+  const itemId = rawId ? ('imp_' + rawId) : ('live_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 4));
+
   const item = {
-    id: rawId ? ('imp_' + rawId) : ('live_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 4)),
+    id: itemId,
     raw_id: rawId,
     title,
     url,
@@ -2840,14 +2878,38 @@ async function addLiveClass(classData) {
     is_visible: isVisible,
     section,
     scheduled_at: nowIso,
-    instructor: classData.instructor || 'Teacher',
+    instructor: classData.instructor || 'Spider Classes',
     description: classData.description || 'Live Interactive Session',
     created_at: nowIso
   };
 
+  // 2. Authoritative Supabase upsert with sanitized columns strictly matching the table schema
+  try {
+    if (checkClient()) {
+      const sbRecord = {
+        id: String(item.id),
+        title: String(item.title),
+        url: String(item.url),
+        status: isVisible === 0 ? 'hidden' : (isLiveNow ? 'live' : 'old_live'),
+        subject_id: section ? ('subj_' + section) : null,
+        scheduled_at: item.scheduled_at || nowIso,
+        instructor: item.instructor || 'Spider Classes',
+        description: item.description || '',
+        created_at: item.created_at || nowIso
+      };
+      const { error: insErr } = await sbClient.from('live_classes').upsert(sbRecord, { onConflict: 'id' });
+      if (insErr) {
+        console.error('Supabase live_classes upsert error:', insErr);
+      } else {
+        console.log('✅ Supabase live_classes saved successfully:', item.id);
+      }
+    }
+  } catch (e) {
+    console.error('Supabase live_classes upsert exception:', e);
+  }
+
+  // 3. Update local caches
   if (isLiveNow) {
-    // If admin added this as LIVE NOW:
-    // Turn off all older live classes so ONLY this new class has live active!
     const local = getLiveLocal().map(c => ({
       ...c,
       is_live_now: false,
@@ -2887,10 +2949,12 @@ async function addLiveClass(classData) {
     }
   }
 
+  // 4. Invalidate memory cache and broadcast real-time sync
+  _cachedLiveClasses = null;
+  _cachedLiveTime = 0;
   try {
-    if (checkClient()) {
-      await sbClient.from('live_classes').insert(item);
-    }
+    localStorage.setItem('spider_live_sync_ping', String(Date.now()));
+    window.dispatchEvent(new CustomEvent('spider_live_sync'));
   } catch (e) { }
 
   showToast('Live stream saved successfully!', 'success');
@@ -2968,22 +3032,33 @@ async function updateLiveClass(id, updates) {
     saveLocalJson(CACHE_LIVE_CLASSES_KEY, _cachedLiveClasses);
   }
 
-  // 3. Supabase update
+  // 3. Supabase upsert (clean schema mapping)
   try {
     if (checkClient()) {
-      await sbClient.from('live_classes').update({
+      const finalStatus = newVis === 1 ? (updates.is_live_now ? 'live' : 'old_live') : 'hidden';
+      const sbRecord = {
+        id: String(id),
         title: newTitle,
         url: newUrl,
-        status: newVis === 1 ? 'live' : 'hidden'
-      }).eq('id', id);
+        status: finalStatus
+      };
+      await sbClient.from('live_classes').upsert(sbRecord, { onConflict: 'id' });
       if (rawId && id.startsWith('imp_')) {
-        await sbClient.from('live_classes').update({
-          title: newTitle,
-          url: newUrl,
-          status: newVis === 1 ? 'live' : 'hidden'
-        }).eq('id', String(rawId));
+        await sbClient.from('live_classes').upsert({
+          ...sbRecord,
+          id: String(rawId)
+        }, { onConflict: 'id' }).catch(() => {});
       }
     }
+  } catch (e) {
+    console.error('Supabase updateLiveClass error:', e);
+  }
+
+  _cachedLiveClasses = null;
+  _cachedLiveTime = 0;
+  try {
+    localStorage.setItem('spider_live_sync_ping', String(Date.now()));
+    window.dispatchEvent(new CustomEvent('spider_live_sync'));
   } catch (e) { }
 
   showToast('Live stream updated successfully', 'success');
@@ -3048,6 +3123,13 @@ async function setLiveClassStatus(id, status, isVisible = null) {
     console.warn('Supabase setLiveClassStatus error:', e);
   }
 
+  _cachedLiveClasses = null;
+  _cachedLiveTime = 0;
+  try {
+    localStorage.setItem('spider_live_sync_ping', String(Date.now()));
+    window.dispatchEvent(new CustomEvent('spider_live_sync'));
+  } catch (e) { }
+
   return true;
 }
 
@@ -3102,12 +3184,322 @@ async function deleteLiveClass(id) {
       await sbClient.from('live_classes').delete().eq('id', id);
       if (rawId) {
         await sbClient.from('live_classes').delete().eq('id', 'imp_' + rawId);
+        await sbClient.from('live_classes').delete().eq('id', String(rawId));
       }
     }
   } catch (e) { }
 
+  _cachedLiveClasses = null;
+  _cachedLiveTime = 0;
+  try {
+    localStorage.setItem('spider_live_sync_ping', String(Date.now()));
+    window.dispatchEvent(new CustomEvent('spider_live_sync'));
+  } catch (e) { }
+
   showToast('Live stream deleted', 'info');
   return true;
+}
+
+// ============================================================
+// 📢 TELEGRAM BOT NOTIFICATIONS MODULE
+// ============================================================
+const SPIDER_TELEGRAM_KEY = 'spider_telegram_config';
+
+function escapeTelegramHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function getTelegramConfig() {
+  try {
+    const raw = (typeof localStorage !== 'undefined')
+      ? (localStorage.getItem(SPIDER_TELEGRAM_KEY) || localStorage.getItem('cp_telegram_config'))
+      : null;
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') {
+        return {
+          botToken: (parsed.botToken || '').trim(),
+          chatId: (parsed.chatId || '').trim(),
+          portalUrl: (parsed.portalUrl || '').trim(),
+          enabled: parsed.enabled !== undefined ? !!parsed.enabled : true,
+          autoAlertLive: parsed.autoAlertLive !== undefined ? !!parsed.autoAlertLive : true
+        };
+      }
+    }
+  } catch (e) {
+    console.warn('Error reading telegram config:', e);
+  }
+  return {
+    botToken: '',
+    chatId: '',
+    portalUrl: '',
+    enabled: true,
+    autoAlertLive: true
+  };
+}
+
+function saveTelegramConfig(cfg) {
+  if (!cfg || typeof cfg !== 'object') return false;
+  const sanitized = {
+    botToken: (cfg.botToken || '').trim(),
+    chatId: (cfg.chatId || '').trim(),
+    portalUrl: (cfg.portalUrl || '').trim(),
+    enabled: cfg.enabled !== undefined ? !!cfg.enabled : true,
+    autoAlertLive: cfg.autoAlertLive !== undefined ? !!cfg.autoAlertLive : true
+  };
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(SPIDER_TELEGRAM_KEY, JSON.stringify(sanitized));
+      localStorage.setItem('cp_telegram_config', JSON.stringify(sanitized));
+    }
+  } catch (e) {}
+
+  // Sync to local server file if available
+  try {
+    if (typeof fetch === 'function') {
+      fetch('/api-local/telegram-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sanitized)
+      }).catch(() => {});
+    }
+  } catch (e) {}
+
+  return sanitized;
+}
+
+async function loadTelegramConfigFromServer() {
+  try {
+    if (typeof fetch === 'function') {
+      const res = await fetch('/api-local/telegram-config');
+      if (res.ok) {
+        const data = await res.json();
+        if (data && (data.botToken || data.chatId)) {
+          saveTelegramConfig(data);
+          return data;
+        }
+      }
+    }
+  } catch (e) {}
+  return getTelegramConfig();
+}
+
+async function sendTelegramMessage(text, options = {}) {
+  const cfg = options.config || getTelegramConfig();
+  if (!cfg || !cfg.botToken || !cfg.chatId) {
+    return {
+      success: false,
+      error: 'NOT_CONFIGURED',
+      description: 'Bot Token or Chat ID is missing. Please configure them in Telegram Settings.'
+    };
+  }
+  if (cfg.enabled === false && !options.isTest) {
+    return {
+      success: false,
+      error: 'DISABLED',
+      description: 'Telegram notifications are disabled in settings.'
+    };
+  }
+
+  const token = cfg.botToken.trim();
+  const chatId = cfg.chatId.trim();
+
+  const payload = {
+    chat_id: chatId,
+    text: text,
+    parse_mode: 'HTML',
+    disable_web_page_preview: false
+  };
+
+  if (options.reply_markup) {
+    payload.reply_markup = options.reply_markup;
+  }
+
+  // Attempt 1: Direct fetch to Telegram Bot API (Telegram officially supports CORS with Access-Control-Allow-Origin: *)
+  try {
+    if (typeof fetch === 'function') {
+      const directRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await directRes.json();
+      if (data && data.ok) {
+        return { success: true, result: data.result };
+      }
+      if (data && data.description) {
+        console.warn('Telegram API direct response error:', data.description);
+        if (data.description.includes('chat not found') ||
+            data.description.includes('Unauthorized') ||
+            data.description.includes('bot was blocked') ||
+            data.description.includes('not enough rights')) {
+          return { success: false, error: data.description };
+        }
+      }
+    }
+  } catch (directErr) {
+    console.warn('Telegram direct fetch error, trying server relay fallback...', directErr);
+  }
+
+  // Attempt 2: Server relay fallback (/api-local/send-telegram)
+  try {
+    if (typeof fetch === 'function') {
+      const relayRes = await fetch('/api-local/send-telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token,
+          chatId,
+          text,
+          reply_markup: options.reply_markup
+        })
+      });
+      if (relayRes.ok) {
+        const relayData = await relayRes.json();
+        if (relayData.ok) {
+          return { success: true, result: relayData.result };
+        }
+        return { success: false, error: relayData.description || 'Server relay error' };
+      }
+    }
+  } catch (relayErr) {
+    // Relay unavailable
+  }
+
+  return {
+    success: false,
+    error: 'Failed to send Telegram message. Please ensure your Bot Token is valid and the Bot has been added as an Administrator to your group.'
+  };
+}
+
+async function sendTelegramLiveNotification(liveData, customConfig = null) {
+  const cfg = customConfig || getTelegramConfig();
+  if (!cfg.botToken || !cfg.chatId) {
+    return { success: false, error: 'NOT_CONFIGURED', description: 'Telegram credentials not set' };
+  }
+  if (cfg.enabled === false || cfg.autoAlertLive === false) {
+    return { success: false, error: 'DISABLED', description: 'Auto alert is disabled' };
+  }
+
+  const title = (liveData.title || 'Live Interactive Class').trim();
+  const rawSection = (liveData.section || 'General').toUpperCase();
+  const isLiveNow = !!liveData.is_live_now;
+  const streamUrl = (liveData.url || '').trim();
+
+  // Date and Time formatting (Indian Standard Time Asia/Kolkata)
+  let dateObj = new Date();
+  if (liveData.scheduled_at) {
+    const parsed = new Date(liveData.scheduled_at);
+    if (!isNaN(parsed.getTime())) dateObj = parsed;
+  }
+
+  const dateStr = dateObj.toLocaleDateString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  });
+  const timeStr = dateObj.toLocaleTimeString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
+
+  const portalBase = (cfg.portalUrl || (typeof window !== 'undefined' ? window.location.origin : '')).trim();
+  const portalLiveLink = portalBase ? (portalBase.replace(/\/+$/, '') + '/index.html') : '';
+
+  const statusBadge = isLiveNow ? '🔴 <b>LIVE NOW</b>' : '⏳ <b>SCHEDULED CLASS</b>';
+
+  let message = `📢 <b>NEW LIVE CLASS ANNOUNCEMENT</b> 🔴\n`;
+  message += `━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+  message += `📚 <b>Lecture:</b> <b>${escapeTelegramHtml(title)}</b>\n`;
+  message += `📂 <b>Subject:</b> ${escapeTelegramHtml(rawSection)}\n`;
+  message += `📅 <b>Date:</b> ${dateStr}\n`;
+  message += `⏰ <b>Time:</b> ${timeStr} (IST)\n`;
+  message += `⚡ <b>Status:</b> ${statusBadge}\n`;
+  message += `━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+
+  if (portalLiveLink && (portalLiveLink.startsWith('http://') || portalLiveLink.startsWith('https://'))) {
+    message += `👉 <b>Watch Live on Portal:</b> <a href="${portalLiveLink}">Click Here to Join</a>\n\n`;
+  } else if (streamUrl && (streamUrl.startsWith('http://') || streamUrl.startsWith('https://'))) {
+    message += `👉 <b>Stream Link:</b> <a href="${escapeTelegramHtml(streamUrl)}">Click Here to Watch</a>\n\n`;
+  }
+
+  message += `<i>💡 Please join on time with your notes ready!</i>`;
+
+  // Inline keyboard buttons
+  const buttons = [];
+  if (portalLiveLink && (portalLiveLink.startsWith('http://') || portalLiveLink.startsWith('https://'))) {
+    buttons.push({
+      text: isLiveNow ? '🔴 Join Live Class' : '🌐 Open Student Portal',
+      url: portalLiveLink
+    });
+  } else if (streamUrl && (streamUrl.startsWith('http://') || streamUrl.startsWith('https://'))) {
+    buttons.push({
+      text: isLiveNow ? '🔴 Watch Stream Now' : '▶ Open Stream Link',
+      url: streamUrl
+    });
+  }
+
+  const reply_markup = buttons.length > 0 ? { inline_keyboard: [buttons] } : undefined;
+
+  return await sendTelegramMessage(message, {
+    config: cfg,
+    reply_markup: reply_markup
+  });
+}
+
+async function testTelegramNotification(customConfig = null) {
+  const cfg = customConfig || getTelegramConfig();
+  if (!cfg.botToken || !cfg.chatId) {
+    return { success: false, error: 'Please enter both Bot Token and Chat ID before testing.' };
+  }
+
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  });
+  const timeStr = now.toLocaleTimeString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
+
+  const portalBase = (cfg.portalUrl || (typeof window !== 'undefined' ? window.location.origin : '')).trim();
+
+  let testMsg = `🤖 <b>Spider Classes Bot Connected!</b> ✅\n`;
+  testMsg += `━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+  testMsg += `📢 <i>Your Telegram Alert System is working perfectly!</i>\n\n`;
+  testMsg += `📅 <b>Date:</b> ${dateStr}\n`;
+  testMsg += `⏰ <b>Time:</b> ${timeStr} (IST)\n\n`;
+  testMsg += `Whenever you add a new Live Class from Admin Panel, automatic lecture alerts will be posted here immediately.`;
+
+  const buttons = [];
+  if (portalBase && (portalBase.startsWith('http://') || portalBase.startsWith('https://'))) {
+    buttons.push({
+      text: '🌐 Spider Classes Portal',
+      url: portalBase
+    });
+  }
+
+  const reply_markup = buttons.length > 0 ? { inline_keyboard: [buttons] } : undefined;
+
+  return await sendTelegramMessage(testMsg, {
+    config: cfg,
+    isTest: true,
+    reply_markup: reply_markup
+  });
 }
 
 // ===== USER AUTHENTICATION & APPROVAL MODULE =====
@@ -6608,6 +7000,8 @@ window.DB = {
   getCachedSubjects, getCachedChapters, getCachedLectures, getCachedLiveClasses,
   // Live Classes
   getLiveClasses, getActiveLiveClasses, getLiveClassById, getActiveLiveNowIds, setActiveLiveNow, addLiveClass, updateLiveClass, setLiveClassStatus, deleteLiveClass, getLiveClassExpiryInfo, LIVE_MAX_AGE_MS, compareLiveClasses, getLiveClassSortTime, getLiveClassRawId, isSameLiveId, MAX_VISIBLE_LIVE_CLASSES, enforceTopLiveVisibility,
+  // Telegram Bot Notifications
+  getTelegramConfig, saveTelegramConfig, loadTelegramConfigFromServer, sendTelegramMessage, sendTelegramLiveNotification, testTelegramNotification,
   // User Auth, Tokens, Sessions, Passwords & Approvals
   registerUser, generateAccessKey, loginUser, getCurrentUser, logoutUser, adminLogin, adminVerifySession,
   validateUserSession, handleSessionConflict, startSessionWatcher, generateSessionId, getPersistentDeviceId, hashPassword,

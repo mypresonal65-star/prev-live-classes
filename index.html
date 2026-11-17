@@ -450,15 +450,15 @@
     window.addEventListener('storage', (e) => {
       if (e.key === 'spider_live_sync_ping') {
         loadData(true).then(() => {
-          renderSubs();
-          renderFolders();
+          renderPills();
+          renderAll();
         });
       }
     });
     window.addEventListener('spider_live_sync', () => {
       loadData(true).then(() => {
-        renderSubs();
-        renderFolders();
+        renderPills();
+        renderAll();
       });
     });
 

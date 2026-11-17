@@ -1,4 +1,5 @@
 const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -375,6 +376,134 @@ const server = http.createServer(async (req, res) => {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         return res.end(JSON.stringify({ success: false, error: 'Malformed JSON: ' + e.message }));
       }
+    }
+  }
+
+  // ===== 📢 TELEGRAM BOT CONFIGURATION API =====
+  if (req.url === '/api-local/telegram-config') {
+    const tgConfigPath = path.join(__dirname, 'telegram_config.json');
+    if (req.method === 'GET') {
+      try {
+        if (fs.existsSync(tgConfigPath)) {
+          const content = fs.readFileSync(tgConfigPath, 'utf8');
+          res.writeHead(200, {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          });
+          return res.end(content || '{}');
+        }
+      } catch (e) {}
+      res.writeHead(200, {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      });
+      return res.end('{}');
+    }
+    if (req.method === 'POST') {
+      try {
+        let totalLength = 0;
+        const bodyChunks = [];
+        for await (const chunk of req) {
+          totalLength += chunk.length;
+          if (totalLength > 100 * 1024) {
+            res.writeHead(413, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ success: false, error: 'Payload too large' }));
+          }
+          bodyChunks.push(chunk);
+        }
+        const parsed = JSON.parse(Buffer.concat(bodyChunks).toString('utf8'));
+        fs.writeFileSync(tgConfigPath, JSON.stringify(parsed, null, 2), 'utf8');
+        res.writeHead(200, {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        });
+        return res.end(JSON.stringify({ success: true }));
+      } catch (e) {
+        res.writeHead(400, {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        });
+        return res.end(JSON.stringify({ success: false, error: e.message }));
+      }
+    }
+  }
+
+  // ===== 📢 TELEGRAM BOT MESSAGE DISPATCH PROXY =====
+  if (req.url === '/api-local/send-telegram' && req.method === 'POST') {
+    try {
+      let totalLength = 0;
+      const bodyChunks = [];
+      for await (const chunk of req) {
+        totalLength += chunk.length;
+        if (totalLength > 200 * 1024) {
+          res.writeHead(413, { 'Content-Type': 'application/json' });
+          return res.end(JSON.stringify({ ok: false, description: 'Payload too large' }));
+        }
+        bodyChunks.push(chunk);
+      }
+      const data = JSON.parse(Buffer.concat(bodyChunks).toString('utf8') || '{}');
+      const token = (data.token || '').trim();
+      const chatId = (data.chatId || '').trim();
+      const text = data.text || '';
+
+      if (!token || !chatId || !text) {
+        res.writeHead(400, {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        });
+        return res.end(JSON.stringify({ ok: false, description: 'Missing token, chatId or text' }));
+      }
+
+      const postPayload = {
+        chat_id: chatId,
+        text: text,
+        parse_mode: 'HTML',
+        disable_web_page_preview: false
+      };
+      if (data.reply_markup) {
+        postPayload.reply_markup = data.reply_markup;
+      }
+
+      const postData = JSON.stringify(postPayload);
+
+      const tgReq = https.request({
+        hostname: 'api.telegram.org',
+        port: 443,
+        path: `/bot${token}/sendMessage`,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(postData)
+        }
+      }, (tgRes) => {
+        let respData = '';
+        tgRes.on('data', (d) => { respData += d; });
+        tgRes.on('end', () => {
+          res.writeHead(tgRes.statusCode, {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          });
+          res.end(respData);
+        });
+      });
+
+      tgReq.on('error', (e) => {
+        res.writeHead(500, {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        });
+        res.end(JSON.stringify({ ok: false, description: e.message }));
+      });
+
+      tgReq.write(postData);
+      tgReq.end();
+      return;
+    } catch (e) {
+      res.writeHead(500, {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      });
+      return res.end(JSON.stringify({ ok: false, description: e.message }));
     }
   }
 

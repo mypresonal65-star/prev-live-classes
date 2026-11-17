@@ -2557,17 +2557,96 @@
                 </div>
               </div>
 
-              <div style="margin: 12px 0 16px;">
+              <div class="field" style="margin-top: 12px; margin-bottom: 12px;">
+                <label style="font-size:0.8rem; color:var(--text-3); font-weight:600;">Scheduled Class Time (Optional - Defaults to Current Time)</label>
+                <input type="datetime-local" id="liveScheduledTimeInput" style="font-size:0.85rem;">
+              </div>
+
+              <div style="margin: 12px 0 14px;">
                 <label style="display:inline-flex; align-items:center; gap:8px; cursor:pointer; font-size:0.875rem; font-weight:600; color:var(--text-1);">
                   <input type="checkbox" id="liveIsActiveCheckbox" style="width:16px; height:16px; accent-color:#ef4444; cursor:pointer;">
                   <span>🔴 Live Now (Active Stream)</span>
                 </label>
               </div>
 
+              <div style="margin: 0 0 16px; padding: 10px 12px; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 8px;">
+                <label style="display:inline-flex; align-items:center; gap:8px; cursor:pointer; font-size:0.875rem; font-weight:600; color:#38bdf8;">
+                  <input type="checkbox" id="liveSendTelegramCheckbox" checked style="width:16px; height:16px; accent-color:#0284c7; cursor:pointer;">
+                  <span>📢 Send Alert to Telegram Group</span>
+                </label>
+                <div style="font-size:0.75rem; color:var(--text-3); margin-top:4px; padding-left:24px;">
+                  Class add hote hi group me lecture name, date & time chala jayega
+                </div>
+              </div>
+
               <button type="submit" class="btn btn-red" style="width: 100%;">
                 <span>Save Live Class</span>
               </button>
             </form>
+          </div>
+
+          <!-- Telegram Bot Integration Settings -->
+          <div class="card" style="margin-top: 18px; border: 1px solid rgba(14, 165, 233, 0.25); background: rgba(15, 23, 42, 0.65);">
+            <div class="card-head" style="margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+              <h3 class="card-title" style="display: flex; align-items: center; gap: 8px; font-size: 0.95rem;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                <span>Telegram Bot Alert Settings</span>
+              </h3>
+              <span id="tgStatusBadge" class="status-pill" style="font-size: 0.72rem; padding: 2px 8px; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);">Not Configured</span>
+            </div>
+
+            <p style="font-size: 0.8rem; color: var(--text-3); line-height: 1.45; margin-bottom: 14px;">
+              Live class add karte hi aapke Telegram group me lecture ka name, date, time aur direct link automatically share ho jayega.
+            </p>
+
+            <form id="telegramSettingsForm" onsubmit="event.preventDefault(); handleSaveTelegramSettings();">
+              <div class="field">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                  <label style="margin: 0; font-size: 0.8rem; font-weight: 600;">Telegram Bot Token</label>
+                  <a href="javascript:void(0)" onclick="openTelegramHelp()" style="font-size: 0.75rem; color: #38bdf8; text-decoration: none;">Kaise banayein? ❓</a>
+                </div>
+                <input type="text" id="tgBotTokenInput" placeholder="e.g. 7123456789:AAHk1_xyz..." autocomplete="off" style="font-size: 0.85rem;">
+                <div style="font-size: 0.72rem; color: var(--text-4); margin-top: 4px;">Telegram par <b>@BotFather</b> se bot banayein aur token paste karein.</div>
+              </div>
+
+              <div class="field">
+                <label style="font-size: 0.8rem; font-weight: 600;">Telegram Group Chat ID</label>
+                <input type="text" id="tgChatIdInput" placeholder="e.g. -1001234567890 ya @groupusername" autocomplete="off" style="font-size: 0.85rem;">
+                <div style="font-size: 0.72rem; color: var(--text-4); margin-top: 4px;">Group me bot ko add karke <b>Admin</b> banayein. Group ID <code>-100...</code> se shuru hoti hai.</div>
+              </div>
+
+              <div class="field">
+                <label style="font-size: 0.8rem; font-weight: 600;">Student Portal / Website Link (Optional)</label>
+                <input type="text" id="tgPortalUrlInput" placeholder="e.g. https://spiderclasses.com ya http://localhost:8085" style="font-size: 0.85rem;">
+                <div style="font-size: 0.72rem; color: var(--text-4); margin-top: 4px;">Students ke liye Telegram message me direct join button ka link.</div>
+              </div>
+
+              <div style="margin: 10px 0 16px;">
+                <label style="display:inline-flex; align-items:center; gap:8px; cursor:pointer; font-size:0.82rem; font-weight:600; color:var(--text-1);">
+                  <input type="checkbox" id="tgAutoEnabledCheckbox" checked style="width:16px; height:16px; accent-color:#0284c7; cursor:pointer;">
+                  <span>Enable automatic Telegram notifications</span>
+                </label>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button type="submit" class="btn btn-primary" id="btnSaveTgConfig" style="width: 100%;">
+                  <span>Save Settings</span>
+                </button>
+                <button type="button" class="btn btn-outline" id="btnTestTgAlert" onclick="handleTestTelegramAlert()" style="width: 100%; border-color: rgba(56, 189, 248, 0.4); color: #38bdf8;">
+                  <span>⚡ Test Message</span>
+                </button>
+              </div>
+            </form>
+
+            <div id="tgHelpBox" style="display: none; margin-top: 14px; padding: 12px; background: rgba(0,0,0,0.3); border: 1px dashed rgba(56, 189, 248, 0.3); border-radius: 8px; font-size: 0.78rem; color: var(--text-3); line-height: 1.6;">
+              <b style="color: #38bdf8; display: block; margin-bottom: 6px;">Telegram Bot Setup Karne Ka Aasan Tarika:</b>
+              1. Telegram app me search karein <b>@BotFather</b> aur <code>/newbot</code> command send karein.<br>
+              2. Bot ka name aur username choose karein. BotFather aapko ek <b>HTTP API Token</b> dega, use yahan <b>Bot Token</b> me paste karein.<br>
+              3. Apne Telegram Study Group me iss bot ko <b>Add karein</b> aur use group ka <b>Admin</b> bana dein.<br>
+              4. Group ka Chat ID nikalne ke liye <b>@RawDataBot</b> ko apne group me temporarily add karein. Wo group ki chat ID dikha dega (jaise <code>-1002345678901</code>). ID copy karne ke baad RawDataBot ko remove kar sakte hain.<br>
+              5. Token aur Chat ID daal kar <b>⚡ Test Message</b> par click karein. Group me test message aate hi <b>Save Settings</b> dabayein!
+            </div>
+          </div>
           </div>
         </div>
 
@@ -3493,6 +3572,7 @@
         renderChaptersTagList();
         renderLecturesTable();
         renderLiveClassesTable();
+        initTelegramSettings();
 
         // Background load user tables
         loadUsersTable();
@@ -3545,6 +3625,7 @@
         if (sec) sec.style.display = (m === mode) ? 'block' : 'none';
       });
 
+      if (mode === 'live') initTelegramSettings();
       if (mode === 'users') loadUsersTable();
       if (mode === 'chat') loadChatMonitor();
     }
@@ -4980,6 +5061,19 @@
       const chk = document.getElementById('liveIsActiveCheckbox');
       if (chk) chk.checked = !!item.is_live_now;
 
+      const sch = document.getElementById('liveScheduledTimeInput');
+      if (sch) {
+        if (item.scheduled_at) {
+          try {
+            const d = new Date(item.scheduled_at);
+            const pad = (n) => String(n).padStart(2, '0');
+            sch.value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+          } catch(e) { sch.value = ''; }
+        } else {
+          sch.value = '';
+        }
+      }
+
       document.getElementById('liveFormTitle').textContent = 'Edit Live Class';
       const saveBtn = document.querySelector('#liveStreamForm button[type="submit"]');
       if (saveBtn) saveBtn.innerHTML = '<span>Update Live Class</span>';
@@ -5003,6 +5097,8 @@
       document.getElementById('liveTitleInput').value = '';
       document.getElementById('liveUrlInput').value = '';
       document.getElementById('liveVisibilitySelect').value = '1';
+      const sch = document.getElementById('liveScheduledTimeInput');
+      if (sch) sch.value = '';
       const chk = document.getElementById('liveIsActiveCheckbox');
       if (chk) chk.checked = false;
       document.getElementById('liveFormTitle').textContent = 'Add Live Class';
@@ -5024,78 +5120,113 @@
         return;
       }
 
-      if (editId) {
-        if (isLiveNow) {
-          // If editing and ticked as LIVE NOW: turn off all other live classes
-          allLiveClasses.forEach(c => {
-            if (!isSameLiveId(c, editId)) {
+      const saveBtn = document.querySelector('#liveStreamForm button[type="submit"]');
+      const origBtnHtml = saveBtn ? saveBtn.innerHTML : '<span>Save Live Class</span>';
+      if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = `<span>${editId ? 'Updating...' : 'Saving...'}</span>`;
+      }
+
+      try {
+        if (editId) {
+          if (isLiveNow) {
+            allLiveClasses.forEach(c => {
+              if (!isSameLiveId(c, editId)) {
+                c.is_live_now = 0;
+                c.status = (c.is_visible === 0 || c.status === 'hidden') ? 'hidden' : 'old_live';
+              }
+            });
+          }
+          const found = allLiveClasses.find(c => isSameLiveId(c, editId));
+          const schedInp = document.getElementById('liveScheduledTimeInput');
+          const schedVal = schedInp && schedInp.value ? new Date(schedInp.value).toISOString() : (found && found.scheduled_at ? found.scheduled_at : new Date().toISOString());
+
+          if (found) {
+            found.title = title;
+            found.url = url;
+            found.is_visible = isVisible;
+            found.section = section;
+            found.is_live_now = isLiveNow ? 1 : 0;
+            found.status = isVisible === 0 ? 'hidden' : (isLiveNow ? 'live' : 'old_live');
+            found.scheduled_at = schedVal;
+          }
+          await DB.updateLiveClass(editId, { title, url, is_visible: isVisible, section, is_live_now: isLiveNow, scheduled_at: schedVal });
+          cancelEditLive();
+          if (DB.compareLiveClasses) allLiveClasses.sort(DB.compareLiveClasses);
+          renderLiveClassesTable();
+          updateKPIStats();
+          DB.showToast('Live stream updated successfully!', 'success');
+        } else {
+          if (isLiveNow) {
+            allLiveClasses.forEach(c => {
               c.is_live_now = 0;
               c.status = (c.is_visible === 0 || c.status === 'hidden') ? 'hidden' : 'old_live';
-            }
+            });
+          }
+          const schedInp = document.getElementById('liveScheduledTimeInput');
+          const schedVal = schedInp && schedInp.value ? new Date(schedInp.value).toISOString() : new Date().toISOString();
+          const created = await DB.addLiveClass({
+            title,
+            url,
+            is_visible: isVisible,
+            section,
+            is_live_now: isLiveNow,
+            scheduled_at: schedVal
           });
-        }
-        const found = allLiveClasses.find(c => isSameLiveId(c, editId));
-        if (found) {
-          found.title = title;
-          found.url = url;
-          found.is_visible = isVisible;
-          found.section = section;
-          found.is_live_now = isLiveNow ? 1 : 0;
-          found.status = isVisible === 0 ? 'hidden' : (isLiveNow ? 'live' : 'old_live');
-        }
-        cancelEditLive();
-        if (DB.compareLiveClasses) allLiveClasses.sort(DB.compareLiveClasses);
-        renderLiveClassesTable(); // 0ms INSTANT
-        updateKPIStats();
-        DB.showToast('Live stream updated!', 'success');
-        DB.updateLiveClass(editId, { title, url, is_visible: isVisible, section, is_live_now: isLiveNow }).catch(console.error);
-      } else {
-        if (isLiveNow) {
-          // USER RULE: "agar live off karna bhul jau to jo new class add ho sirf uspe live lage niche wali off ho jaye"
-          allLiveClasses.forEach(c => {
-            c.is_live_now = 0;
-            c.status = (c.is_visible === 0 || c.status === 'hidden') ? 'hidden' : 'old_live';
-          });
-        }
-        const newLive = {
-          id: 'live_' + Date.now(),
-          title,
-          url,
-          is_visible: isVisible,
-          section,
-          is_live_now: isLiveNow ? 1 : 0,
-          status: isVisible === 0 ? 'hidden' : (isLiveNow ? 'live' : 'old_live'),
-          created_at: new Date().toISOString()
-        };
-        allLiveClasses.unshift(newLive);
-        if (DB.compareLiveClasses) allLiveClasses.sort(DB.compareLiveClasses);
-        if (DB.enforceTopLiveVisibility) {
-          allLiveClasses = DB.enforceTopLiveVisibility(allLiveClasses, 7);
-        } else {
-          let visCount = 0;
-          allLiveClasses.forEach(c => {
-            const isVis = (c.is_visible === 1 || c.is_visible === true || (c.is_visible === undefined && c.status !== 'hidden' && c.status !== 'ended' && c.status !== 'offline'));
-            if (isVis) {
-              visCount++;
-              if (visCount > 7) {
-                c.is_visible = 0;
-                c.status = 'hidden';
-                if (window.DB && DB.setLiveClassStatus) {
-                  DB.setLiveClassStatus(c.id, 'hidden', 0).catch(console.error);
-                }
+          const newLive = {
+            id: created ? created.id : ('live_' + Date.now()),
+            raw_id: created ? created.raw_id : null,
+            title,
+            url,
+            is_visible: isVisible,
+            section,
+            is_live_now: isLiveNow ? 1 : 0,
+            status: isVisible === 0 ? 'hidden' : (isLiveNow ? 'live' : 'old_live'),
+            scheduled_at: schedVal,
+            created_at: new Date().toISOString()
+          };
+          allLiveClasses.unshift(newLive);
+          if (DB.compareLiveClasses) allLiveClasses.sort(DB.compareLiveClasses);
+          if (DB.enforceTopLiveVisibility) {
+            allLiveClasses = DB.enforceTopLiveVisibility(allLiveClasses, 7);
+          }
+          document.getElementById('liveTitleInput').value = '';
+          document.getElementById('liveUrlInput').value = '';
+          if (schedInp) schedInp.value = '';
+          if (document.getElementById('liveIsActiveCheckbox')) document.getElementById('liveIsActiveCheckbox').checked = false;
+          renderLiveClassesTable();
+          updateKPIStats();
+          DB.showToast(isLiveNow ? '🔴 Live stream broadcast launched & synced!' : 'Class saved to live archives successfully!', 'success');
+
+          // 📢 Automatic Telegram Alert Dispatch
+          const sendTg = document.getElementById('liveSendTelegramCheckbox') ? document.getElementById('liveSendTelegramCheckbox').checked : true;
+          if (sendTg && DB.sendTelegramLiveNotification) {
+            DB.sendTelegramLiveNotification({
+              title,
+              url,
+              section,
+              is_live_now: isLiveNow,
+              scheduled_at: schedVal
+            }).then(tgRes => {
+              if (tgRes && tgRes.success) {
+                DB.showToast('📢 Live class alert sent to Telegram group!', 'success');
+              } else if (tgRes && tgRes.error && tgRes.error !== 'NOT_CONFIGURED' && tgRes.error !== 'DISABLED') {
+                console.warn('Telegram alert notice:', tgRes.error);
+                DB.showToast('Telegram alert notice: ' + (tgRes.description || tgRes.error), 'info');
               }
-            }
-          });
+            }).catch(tgErr => {
+              console.warn('Telegram alert exception:', tgErr);
+            });
+          }
         }
-        document.getElementById('liveTitleInput').value = '';
-        document.getElementById('liveUrlInput').value = '';
-        if (document.getElementById('liveIsActiveCheckbox')) document.getElementById('liveIsActiveCheckbox').checked = false;
-        renderLiveClassesTable(); // 0ms INSTANT
-        updateKPIStats();
-        DB.showToast(isLiveNow ? '🔴 Live stream broadcast launched!' : 'Class saved to live archives', 'success');
-        DB.addLiveClass({ title, url, is_visible: isVisible, section, is_live_now: isLiveNow }).then(created => {
-          if (created && created.id) newLive.id = created.id;
-        }).catch(console.error);
+      } catch (err) {
+        console.error('handleSaveLive error:', err);
+        DB.showToast('Failed to save live class: ' + (err.message || err), 'error');
+      } finally {
+        if (saveBtn) {
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = origBtnHtml;
+        }
       }
     }
 
@@ -5171,6 +5302,136 @@
       DB.deleteLiveClass(id).catch(err => {
         console.warn('deleteLiveClass background notice:', err);
       });
+    }
+
+    // ===== 📢 TELEGRAM BOT INTEGRATION CONTROLLERS =====
+    function initTelegramSettings() {
+      if (!window.DB || !DB.getTelegramConfig) return;
+      const cfg = DB.getTelegramConfig();
+      const tokenInput = document.getElementById('tgBotTokenInput');
+      const chatInput = document.getElementById('tgChatIdInput');
+      const portalInput = document.getElementById('tgPortalUrlInput');
+      const autoChk = document.getElementById('tgAutoEnabledCheckbox');
+
+      if (tokenInput && !tokenInput.value) tokenInput.value = cfg.botToken || '';
+      if (chatInput && !chatInput.value) chatInput.value = cfg.chatId || '';
+      if (portalInput && !portalInput.value) portalInput.value = cfg.portalUrl || window.location.origin;
+      if (autoChk) autoChk.checked = cfg.enabled !== false && cfg.autoAlertLive !== false;
+
+      updateTelegramStatusBadge(cfg);
+
+      // Background sync from local server if available
+      if (DB.loadTelegramConfigFromServer) {
+        DB.loadTelegramConfigFromServer().then(remoteCfg => {
+          if (remoteCfg && (remoteCfg.botToken || remoteCfg.chatId)) {
+            if (tokenInput && !tokenInput.value) tokenInput.value = remoteCfg.botToken || '';
+            if (chatInput && !chatInput.value) chatInput.value = remoteCfg.chatId || '';
+            if (portalInput && !portalInput.value) portalInput.value = remoteCfg.portalUrl || '';
+            updateTelegramStatusBadge(remoteCfg);
+          }
+        }).catch(() => {});
+      }
+    }
+
+    function updateTelegramStatusBadge(cfg) {
+      const badge = document.getElementById('tgStatusBadge');
+      if (!badge) return;
+      const hasConfig = cfg && cfg.botToken && cfg.chatId;
+      const isEnabled = cfg && cfg.enabled !== false && cfg.autoAlertLive !== false;
+
+      if (hasConfig && isEnabled) {
+        badge.textContent = 'Active 🟢';
+        badge.style.background = 'rgba(16, 185, 129, 0.15)';
+        badge.style.color = '#34d399';
+        badge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+      } else if (hasConfig && !isEnabled) {
+        badge.textContent = 'Paused ⏸️';
+        badge.style.background = 'rgba(234, 179, 8, 0.15)';
+        badge.style.color = '#fde047';
+        badge.style.borderColor = 'rgba(234, 179, 8, 0.3)';
+      } else {
+        badge.textContent = 'Not Configured ⚪';
+        badge.style.background = 'rgba(239, 68, 68, 0.15)';
+        badge.style.color = '#f87171';
+        badge.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+      }
+    }
+
+    function handleSaveTelegramSettings() {
+      const botToken = (document.getElementById('tgBotTokenInput').value || '').trim();
+      const chatId = (document.getElementById('tgChatIdInput').value || '').trim();
+      const portalUrl = (document.getElementById('tgPortalUrlInput').value || '').trim();
+      const isAuto = document.getElementById('tgAutoEnabledCheckbox') ? document.getElementById('tgAutoEnabledCheckbox').checked : true;
+
+      const saved = DB.saveTelegramConfig({
+        botToken,
+        chatId,
+        portalUrl,
+        enabled: isAuto,
+        autoAlertLive: isAuto
+      });
+
+      updateTelegramStatusBadge(saved);
+      DB.showToast('✅ Telegram Bot settings saved successfully!', 'success');
+    }
+
+    async function handleTestTelegramAlert() {
+      const botToken = (document.getElementById('tgBotTokenInput').value || '').trim();
+      const chatId = (document.getElementById('tgChatIdInput').value || '').trim();
+      const portalUrl = (document.getElementById('tgPortalUrlInput').value || '').trim();
+
+      if (!botToken || !chatId) {
+        DB.showToast('Please enter both Bot Token and Group Chat ID to test.', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('btnTestTgAlert');
+      const origHtml = btn ? btn.innerHTML : '<span>⚡ Test Message</span>';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span>Sending... ⏳</span>';
+      }
+
+      try {
+        const testRes = await DB.testTelegramNotification({
+          botToken,
+          chatId,
+          portalUrl,
+          enabled: true,
+          autoAlertLive: true
+        });
+
+        if (testRes && testRes.success) {
+          DB.showToast('🎉 Test message sent successfully to your Telegram group!', 'success');
+          // Auto-save the working configuration
+          DB.saveTelegramConfig({
+            botToken,
+            chatId,
+            portalUrl,
+            enabled: true,
+            autoAlertLive: true
+          });
+          updateTelegramStatusBadge({ botToken, chatId, enabled: true, autoAlertLive: true });
+        } else {
+          const errMsg = testRes && (testRes.error || testRes.description) ? (testRes.description || testRes.error) : 'Failed to send test message';
+          DB.showToast('❌ Telegram Error: ' + errMsg, 'error');
+        }
+      } catch (err) {
+        console.error('Test telegram error:', err);
+        DB.showToast('❌ Failed: ' + (err.message || err), 'error');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = origHtml;
+        }
+      }
+    }
+
+    function openTelegramHelp() {
+      const box = document.getElementById('tgHelpBox');
+      if (box) {
+        box.style.display = box.style.display === 'none' ? 'block' : 'none';
+      }
     }
 
     // ===== STUDENTS & USERS (SUPABASE APP_USERS + CLOUDFLARE SYNC + APPROVALS) =====
