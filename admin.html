@@ -2616,6 +2616,15 @@
               </div>
 
               <div class="field">
+                <label style="font-size: 0.8rem; font-weight: 600; display:flex; justify-content:space-between; align-items:center;">
+                  <span>Telegram Topic ID / Thread ID (Optional)</span>
+                  <span style="font-size:0.7rem; color:#38bdf8; font-weight:400;">Specific topic ke liye</span>
+                </label>
+                <input type="text" id="tgTopicIdInput" placeholder="e.g. 42 (Khali chhod dein agar General topic me bhejna ho)" autocomplete="off" style="font-size: 0.85rem;">
+                <div style="font-size: 0.72rem; color: var(--text-4); margin-top: 4px;">Topic par right-click karke <b>Copy Link</b> karein (link ka aakhiri number Topic ID hai).</div>
+              </div>
+
+              <div class="field">
                 <label style="font-size: 0.8rem; font-weight: 600;">Student Portal / Website Link (Optional)</label>
                 <input type="text" id="tgPortalUrlInput" placeholder="e.g. https://spiderclasses.com ya http://localhost:8085" style="font-size: 0.85rem;">
                 <div style="font-size: 0.72rem; color: var(--text-4); margin-top: 4px;">Students ke liye Telegram message me direct join button ka link.</div>
@@ -2644,7 +2653,8 @@
               2. Bot ka name aur username choose karein. BotFather aapko ek <b>HTTP API Token</b> dega, use yahan <b>Bot Token</b> me paste karein.<br>
               3. Apne Telegram Study Group me iss bot ko <b>Add karein</b> aur use group ka <b>Admin</b> bana dein.<br>
               4. Group ka Chat ID nikalne ke liye <b>@RawDataBot</b> ko apne group me temporarily add karein. Wo group ki chat ID dikha dega (jaise <code>-1002345678901</code>). ID copy karne ke baad RawDataBot ko remove kar sakte hain.<br>
-              5. Token aur Chat ID daal kar <b>⚡ Test Message</b> par click karein. Group me test message aate hi <b>Save Settings</b> dabayein!
+              5. <b>Specific Topic me message bhejne ke liye:</b> Jis Topic (jaise 'Live Classes') me message bhejna chahte hain, us topic par right-click / long-press karke <b>'Copy Link'</b> karein. Link aisi dikhegi: <code>https://t.me/c/1234567890/<b>42</b></code>. Link ka aakhiri number (jaise <code>42</code>) aapka <b>Topic ID</b> hai! Use yahan Topic ID field me daal dein.<br>
+              6. Token aur Chat ID daal kar <b>⚡ Test Message</b> par click karein. Group me test message aate hi <b>Save Settings</b> dabayein!
             </div>
           </div>
           </div>
@@ -5310,11 +5320,13 @@
       const cfg = DB.getTelegramConfig();
       const tokenInput = document.getElementById('tgBotTokenInput');
       const chatInput = document.getElementById('tgChatIdInput');
+      const topicInput = document.getElementById('tgTopicIdInput');
       const portalInput = document.getElementById('tgPortalUrlInput');
       const autoChk = document.getElementById('tgAutoEnabledCheckbox');
 
       if (tokenInput && !tokenInput.value) tokenInput.value = cfg.botToken || '';
       if (chatInput && !chatInput.value) chatInput.value = cfg.chatId || '';
+      if (topicInput && !topicInput.value) topicInput.value = cfg.topicId || '';
       if (portalInput && !portalInput.value) portalInput.value = cfg.portalUrl || window.location.origin;
       if (autoChk) autoChk.checked = cfg.enabled !== false && cfg.autoAlertLive !== false;
 
@@ -5326,6 +5338,7 @@
           if (remoteCfg && (remoteCfg.botToken || remoteCfg.chatId)) {
             if (tokenInput && !tokenInput.value) tokenInput.value = remoteCfg.botToken || '';
             if (chatInput && !chatInput.value) chatInput.value = remoteCfg.chatId || '';
+            if (topicInput && !topicInput.value) topicInput.value = remoteCfg.topicId || '';
             if (portalInput && !portalInput.value) portalInput.value = remoteCfg.portalUrl || '';
             updateTelegramStatusBadge(remoteCfg);
           }
@@ -5340,7 +5353,7 @@
       const isEnabled = cfg && cfg.enabled !== false && cfg.autoAlertLive !== false;
 
       if (hasConfig && isEnabled) {
-        badge.textContent = 'Active 🟢';
+        badge.textContent = cfg.topicId ? 'Active 🟢 (Topic #' + cfg.topicId + ')' : 'Active 🟢';
         badge.style.background = 'rgba(16, 185, 129, 0.15)';
         badge.style.color = '#34d399';
         badge.style.borderColor = 'rgba(16, 185, 129, 0.3)';
@@ -5360,24 +5373,27 @@
     function handleSaveTelegramSettings() {
       const botToken = (document.getElementById('tgBotTokenInput').value || '').trim();
       const chatId = (document.getElementById('tgChatIdInput').value || '').trim();
+      const topicId = (document.getElementById('tgTopicIdInput') ? document.getElementById('tgTopicIdInput').value : '').trim();
       const portalUrl = (document.getElementById('tgPortalUrlInput').value || '').trim();
       const isAuto = document.getElementById('tgAutoEnabledCheckbox') ? document.getElementById('tgAutoEnabledCheckbox').checked : true;
 
       const saved = DB.saveTelegramConfig({
         botToken,
         chatId,
+        topicId,
         portalUrl,
         enabled: isAuto,
         autoAlertLive: isAuto
       });
 
       updateTelegramStatusBadge(saved);
-      DB.showToast('✅ Telegram Bot settings saved successfully!', 'success');
+      DB.showToast('✅ Telegram Bot settings saved successfully!' + (topicId ? ` (Target Topic: #${topicId})` : ''), 'success');
     }
 
     async function handleTestTelegramAlert() {
       const botToken = (document.getElementById('tgBotTokenInput').value || '').trim();
       const chatId = (document.getElementById('tgChatIdInput').value || '').trim();
+      const topicId = (document.getElementById('tgTopicIdInput') ? document.getElementById('tgTopicIdInput').value : '').trim();
       const portalUrl = (document.getElementById('tgPortalUrlInput').value || '').trim();
 
       if (!botToken || !chatId) {
@@ -5396,22 +5412,24 @@
         const testRes = await DB.testTelegramNotification({
           botToken,
           chatId,
+          topicId,
           portalUrl,
           enabled: true,
           autoAlertLive: true
         });
 
         if (testRes && testRes.success) {
-          DB.showToast('🎉 Test message sent successfully to your Telegram group!', 'success');
+          DB.showToast('🎉 Test message sent successfully to your Telegram ' + (topicId ? 'Topic #' + topicId + '!' : 'group!'), 'success');
           // Auto-save the working configuration
           DB.saveTelegramConfig({
             botToken,
             chatId,
+            topicId,
             portalUrl,
             enabled: true,
             autoAlertLive: true
           });
-          updateTelegramStatusBadge({ botToken, chatId, enabled: true, autoAlertLive: true });
+          updateTelegramStatusBadge({ botToken, chatId, topicId, enabled: true, autoAlertLive: true });
         } else {
           const errMsg = testRes && (testRes.error || testRes.description) ? (testRes.description || testRes.error) : 'Failed to send test message';
           DB.showToast('❌ Telegram Error: ' + errMsg, 'error');

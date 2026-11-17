@@ -3224,6 +3224,7 @@ function getTelegramConfig() {
         return {
           botToken: (parsed.botToken || '').trim(),
           chatId: (parsed.chatId || '').trim(),
+          topicId: (parsed.topicId !== undefined && parsed.topicId !== null ? String(parsed.topicId).trim() : ''),
           portalUrl: (parsed.portalUrl || '').trim(),
           enabled: parsed.enabled !== undefined ? !!parsed.enabled : true,
           autoAlertLive: parsed.autoAlertLive !== undefined ? !!parsed.autoAlertLive : true
@@ -3236,6 +3237,7 @@ function getTelegramConfig() {
   return {
     botToken: '',
     chatId: '',
+    topicId: '',
     portalUrl: '',
     enabled: true,
     autoAlertLive: true
@@ -3247,6 +3249,7 @@ function saveTelegramConfig(cfg) {
   const sanitized = {
     botToken: (cfg.botToken || '').trim(),
     chatId: (cfg.chatId || '').trim(),
+    topicId: (cfg.topicId !== undefined && cfg.topicId !== null ? String(cfg.topicId).trim() : ''),
     portalUrl: (cfg.portalUrl || '').trim(),
     enabled: cfg.enabled !== undefined ? !!cfg.enabled : true,
     autoAlertLive: cfg.autoAlertLive !== undefined ? !!cfg.autoAlertLive : true
@@ -3307,6 +3310,7 @@ async function sendTelegramMessage(text, options = {}) {
 
   const token = cfg.botToken.trim();
   const chatId = cfg.chatId.trim();
+  const topicId = options.message_thread_id || options.topicId || cfg.topicId;
 
   const payload = {
     chat_id: chatId,
@@ -3314,6 +3318,10 @@ async function sendTelegramMessage(text, options = {}) {
     parse_mode: 'HTML',
     disable_web_page_preview: false
   };
+
+  if (topicId && !isNaN(Number(topicId)) && Number(topicId) > 0) {
+    payload.message_thread_id = Number(topicId);
+  }
 
   if (options.reply_markup) {
     payload.reply_markup = options.reply_markup;
@@ -3355,6 +3363,7 @@ async function sendTelegramMessage(text, options = {}) {
           token,
           chatId,
           text,
+          message_thread_id: payload.message_thread_id,
           reply_markup: options.reply_markup
         })
       });
@@ -3451,6 +3460,7 @@ async function sendTelegramLiveNotification(liveData, customConfig = null) {
 
   return await sendTelegramMessage(message, {
     config: cfg,
+    message_thread_id: liveData.topicId || liveData.message_thread_id || cfg.topicId,
     reply_markup: reply_markup
   });
 }
@@ -3481,6 +3491,9 @@ async function testTelegramNotification(customConfig = null) {
   let testMsg = `🤖 <b>Spider Classes Bot Connected!</b> ✅\n`;
   testMsg += `━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
   testMsg += `📢 <i>Your Telegram Alert System is working perfectly!</i>\n\n`;
+  if (cfg.topicId) {
+    testMsg += `📌 <b>Topic / Thread ID:</b> <code>${cfg.topicId}</code>\n`;
+  }
   testMsg += `📅 <b>Date:</b> ${dateStr}\n`;
   testMsg += `⏰ <b>Time:</b> ${timeStr} (IST)\n\n`;
   testMsg += `Whenever you add a new Live Class from Admin Panel, automatic lecture alerts will be posted here immediately.`;
@@ -3498,6 +3511,7 @@ async function testTelegramNotification(customConfig = null) {
   return await sendTelegramMessage(testMsg, {
     config: cfg,
     isTest: true,
+    message_thread_id: cfg.topicId,
     reply_markup: reply_markup
   });
 }

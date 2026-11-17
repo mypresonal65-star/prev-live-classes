@@ -445,6 +445,7 @@ const server = http.createServer(async (req, res) => {
       const token = (data.token || '').trim();
       const chatId = (data.chatId || '').trim();
       const text = data.text || '';
+      const threadId = data.message_thread_id || data.threadId || data.topicId || null;
 
       if (!token || !chatId || !text) {
         res.writeHead(400, {
@@ -460,6 +461,9 @@ const server = http.createServer(async (req, res) => {
         parse_mode: 'HTML',
         disable_web_page_preview: false
       };
+      if (threadId && !isNaN(Number(threadId)) && Number(threadId) > 0) {
+        postPayload.message_thread_id = Number(threadId);
+      }
       if (data.reply_markup) {
         postPayload.reply_markup = data.reply_markup;
       }
