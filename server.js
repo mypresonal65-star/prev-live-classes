@@ -6,6 +6,7 @@ const crypto = require('crypto');
 
 const PORT = process.env.PORT || 8085;
 const WORKER_TARGET = process.env.WORKER_TARGET || 'https://video-play-api.newstreamcp.workers.dev/api';
+const CLOUDFLARE_STREAM_WORKER = process.env.CLOUDFLARE_STREAM_WORKER || 'https://video-play-api.newstreamcp.workers.dev';
 
 process.on('uncaughtException', (err) => {
   console.error('[Server] Uncaught Exception:', err?.message || err);
@@ -164,7 +165,8 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       return res.end(JSON.stringify({ 
         success: true,
-        secureStreamUrl: `/stream-proxy.bin?t=${token}`
+        // 🚀 Offload video stream relay to Cloudflare Worker (0MB Render Bandwidth!)
+        secureStreamUrl: `${CLOUDFLARE_STREAM_WORKER}/stream-proxy.bin?t=${token}`
       }));
     } catch(e) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
@@ -172,84 +174,19 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
-  // 🛡️ STREAM PROXY: Relays .m3u8 manifests and chunks with zero leak of original URL
+  // 🛡️ STREAM PROXY: Instant 302 Redirect to Cloudflare Worker to protect Render bandwidth
   if (req.url.startsWith('/stream-proxy.bin') || req.url.startsWith('/stream-proxy')) {
     try {
       const u = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-      const token = u.searchParams.get('t');
-      if (!token) {
-        res.writeHead(403, { 'Content-Type': 'text/plain' });
-        return res.end('Access Denied: Missing stream token');
-      }
-
-      const targetUrl = decryptStreamUrl(token);
-      if (!targetUrl || !isSafeUpstreamUrl(targetUrl)) {
-        res.writeHead(403, { 'Content-Type': 'text/plain' });
-        return res.end('Access Denied: Invalid or disallowed stream target');
-      }
-
-      const upstreamRes = await fetch(targetUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) SpiderStreamer/2.0',
-          'Referer': targetUrl
-        }
+      const targetWorkerUrl = `${CLOUDFLARE_STREAM_WORKER}${u.pathname}${u.search}`;
+      res.writeHead(302, {
+        'Location': targetWorkerUrl,
+        'Access-Control-Allow-Origin': '*'
       });
-
-      if (!upstreamRes.ok) {
-        res.writeHead(upstreamRes.status, { 'Content-Type': 'text/plain' });
-        return res.end('Upstream stream error: ' + upstreamRes.status);
-      }
-
-      const contentType = upstreamRes.headers.get('content-type') || '';
-      const isM3u8 = targetUrl.toLowerCase().includes('.m3u8') || 
-                     contentType.includes('mpegurl') || 
-                     contentType.includes('application/x-mpegURL');
-
-      if (isM3u8) {
-        const text = await upstreamRes.text();
-        const lines = text.split(/\r?\n/);
-        const rewritten = lines.map(line => {
-          const trimmed = line.trim();
-          if (!trimmed) return line;
-          if (trimmed.startsWith('#')) {
-            return trimmed.replace(/URI=["']([^"']+)["']/g, (_, uri) => {
-              try {
-                const resolved = new URL(uri, targetUrl).href;
-                if (!isSafeUpstreamUrl(resolved)) return _;
-                return `URI="/stream-proxy.bin?t=${encryptStreamUrl(resolved, 180)}"`;
-              } catch(e) { return _; }
-            });
-          }
-          try {
-            const resolved = new URL(trimmed, targetUrl).href;
-            if (!isSafeUpstreamUrl(resolved)) return line;
-            return `/stream-proxy.bin?t=${encryptStreamUrl(resolved, 180)}`;
-          } catch(e) {
-            return line;
-          }
-        }).join('\n');
-
-        res.writeHead(200, {
-          'Content-Type': 'application/vnd.apple.mpegurl; charset=utf-8',
-          'Cache-Control': 'no-store, no-cache, must-revalidate, private, max-age=0',
-          'Pragma': 'no-cache',
-          'Access-Control-Allow-Origin': '*'
-        });
-        return res.end(rewritten);
-      } else {
-        // Binary media segment (.ts, .m4s, .aac, .mp4 chunk)
-        const arrayBuf = await upstreamRes.arrayBuffer();
-        res.writeHead(200, {
-          'Content-Type': contentType || 'video/mp2t',
-          'Cache-Control': 'private, max-age=120',
-          'Access-Control-Allow-Origin': '*'
-        });
-        return res.end(Buffer.from(arrayBuf));
-      }
-    } catch(err) {
-      console.error('Stream proxy error:', err.message);
-      res.writeHead(502, { 'Content-Type': 'text/plain' });
-      return res.end('Proxy streaming failed: ' + err.message);
+      return res.end();
+    } catch(e) {
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      return res.end('Proxy redirect error: ' + e.message);
     }
   }
 
@@ -721,11 +658,15 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(404, { 'Content-Type': 'text/plain' });
       return res.end('404 Not Found');
     }
+    // ⚡ Smart Caching: HTML is fresh; CSS, JS, JSON & Images are cached to save Render bandwidth
+    const isHtml = ext === '.html';
+    const cacheControl = isHtml
+      ? 'no-cache, must-revalidate'
+      : 'public, max-age=86400, stale-while-revalidate=3600';
+
     res.writeHead(200, {
       'Content-Type': MIME_TYPES[ext] || 'application/octet-stream',
-      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
-      'Pragma': 'no-cache',
-      'Expires': '0',
+      'Cache-Control': cacheControl,
       'X-Content-Type-Options': 'nosniff',
       'X-Frame-Options': 'SAMEORIGIN'
     });
