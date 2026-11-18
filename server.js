@@ -6,7 +6,7 @@ const crypto = require('crypto');
 
 const PORT = process.env.PORT || 8085;
 const WORKER_TARGET = process.env.WORKER_TARGET || 'https://video-play-api.newstreamcp.workers.dev/api';
-const CLOUDFLARE_STREAM_WORKER = process.env.CLOUDFLARE_STREAM_WORKER || 'https://video-play-api.newstreamcp.workers.dev';
+const CLOUDFLARE_STREAM_WORKER = process.env.CLOUDFLARE_STREAM_WORKER || 'https://videpplayer.mypresonal65.workers.dev';
 
 process.on('uncaughtException', (err) => {
   console.error('[Server] Uncaught Exception:', err?.message || err);

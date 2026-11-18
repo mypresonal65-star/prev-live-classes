@@ -939,8 +939,20 @@
             if (data && data.secureStreamUrl) {
               streamSource = data.secureStreamUrl;
             }
+          } else {
+            throw new Error('Render token endpoint error');
           }
-        } catch(e) {}
+        } catch(e) {
+          try {
+            const cfRes = await fetch('https://videpplayer.mypresonal65.workers.dev/api/secure-stream-token?url=' + encodeURIComponent(url));
+            if (cfRes.ok) {
+              const cfData = await cfRes.json();
+              if (cfData && cfData.secureStreamUrl) {
+                streamSource = cfData.secureStreamUrl;
+              }
+            }
+          } catch(err2) {}
+        }
 
         if(Hls.isSupported()){
           hls=new Hls({
