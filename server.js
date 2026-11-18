@@ -85,17 +85,16 @@ function encryptStreamUrl(url, expMinutes = 180) {
   const exp = Date.now() + (expMinutes * 60 * 1000);
   const payload = JSON.stringify({ u: url, e: exp });
   const cipher = crypto.createCipheriv('aes-256-cbc', KEY_BUFFER, IV_BUFFER);
-  let enc = cipher.update(payload, 'utf8', 'base64');
-  enc += cipher.final('base64');
-  return Buffer.from(enc).toString('base64url');
+  const encBuffer = Buffer.concat([cipher.update(payload, 'utf8'), cipher.final()]);
+  return encBuffer.toString('base64url');
 }
 
 function decryptStreamUrl(token) {
   try {
-    const enc = Buffer.from(token, 'base64url').toString('utf8');
+    const clean = (token || '').trim();
+    const encBuffer = Buffer.from(clean, 'base64url');
     const decipher = crypto.createDecipheriv('aes-256-cbc', KEY_BUFFER, IV_BUFFER);
-    let dec = decipher.update(enc, 'base64', 'utf8');
-    dec += decipher.final('utf8');
+    const dec = Buffer.concat([decipher.update(encBuffer), decipher.final()]).toString('utf8');
     const parsed = JSON.parse(dec);
     if (!parsed || !parsed.u) return null;
     if (parsed.e && Date.now() > parsed.e) return null; // Expired token
