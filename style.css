@@ -5023,6 +5023,51 @@ select option {
   box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35) !important;
   color: #ffffff !important;
 }
+.yt-btn-connected {
+  background: var(--green-subtle) !important;
+  color: var(--green) !important;
+  border-color: var(--green-border) !important;
+}
+.yt-btn-connected:hover {
+  background: var(--green) !important;
+  color: #ffffff !important;
+  border-color: var(--green) !important;
+}
+
+/* Compact Google Token Status Bar on index.html */
+.google-connect-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  margin-bottom: 14px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+  flex-wrap: wrap;
+}
+.google-connect-status {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: var(--text-1);
+}
+.google-status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--red);
+  box-shadow: 0 0 0 3px var(--red-subtle);
+}
+.google-status-dot.connected {
+  background: var(--green);
+  box-shadow: 0 0 0 3px var(--green-subtle);
+}
 
 /* Generated Access Key Display Card */
 .key-result-card {

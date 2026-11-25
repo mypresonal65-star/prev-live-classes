@@ -362,6 +362,7 @@ function clearAllAuthSessions(includePermanent = false) {
     sessionStorage.removeItem('admin_logged_in');
     if (includePermanent) {
       localStorage.removeItem('cp_permanent_student_session');
+      localStorage.removeItem('google_session');
     }
   } catch (e) { }
 }
@@ -5764,6 +5765,217 @@ async function testYouTubeConnection(customToken = '', customKey = '') {
   }
 }
 
+// ===== GOOGLE OAUTH TOKEN STORAGE (FOR PRIVATE YOUTUBE VIDEOS) =====
+const GOOGLE_SESSION_KEY = 'google_session';
+const GOOGLE_OAUTH_CLIENT_ID = '853267104713-46mrftcdeva7a8di4bdq6i6br29bd3vn.apps.googleusercontent.com';
+const GOOGLE_OAUTH_SCOPE = 'https://www.googleapis.com/auth/youtube.readonly email profile';
+const GOOGLE_RETURN_URL_KEY = 'sp_google_oauth_return_url';
+
+function getGoogleAuthUrl(redirectUriOverride = '') {
+  const origin = (typeof window !== 'undefined' && window.location && window.location.origin && window.location.origin !== 'null')
+    ? window.location.origin
+    : 'https://video-portal-klrv.onrender.com';
+  const redirectUri = redirectUriOverride || origin;
+  return 'https://accounts.google.com/o/oauth2/v2/auth'
+    + '?client_id=' + encodeURIComponent(GOOGLE_OAUTH_CLIENT_ID)
+    + '&redirect_uri=' + encodeURIComponent(redirectUri)
+    + '&response_type=token'
+    + '&scope=' + encodeURIComponent(GOOGLE_OAUTH_SCOPE)
+    + '&prompt=consent';
+}
+
+function startGoogleOAuthLogin(returnUrl = '') {
+  try {
+    const targetReturn = returnUrl || (typeof window !== 'undefined' ? window.location.href : '');
+    if (targetReturn) {
+      try { localStorage.setItem(GOOGLE_RETURN_URL_KEY, targetReturn); } catch (e) { }
+      try { sessionStorage.setItem(GOOGLE_RETURN_URL_KEY, targetReturn); } catch (e) { }
+    }
+    window.location.href = getGoogleAuthUrl();
+  } catch (e) {
+    console.warn('Google OAuth start error:', e);
+  }
+}
+
+function checkGoogleSession() {
+  try {
+    const raw = localStorage.getItem(GOOGLE_SESSION_KEY);
+    if (!raw) return null;
+    const session = JSON.parse(raw);
+    if (!session || !session.accessToken) {
+      localStorage.removeItem(GOOGLE_SESSION_KEY);
+      return null;
+    }
+    // Keep 7-day window matching Worker google_tokens expiry
+    if (session.loginTime && (Date.now() - session.loginTime > 7 * 24 * 60 * 60 * 1000)) {
+      localStorage.removeItem(GOOGLE_SESSION_KEY);
+      return null;
+    }
+    return session;
+  } catch (e) {
+    return null;
+  }
+}
+
+async function storeGoogleTokenInBackend(email, accessToken, googleUser = null) {
+  const cleanEmail = (email || '').trim().toLowerCase();
+  if (!cleanEmail || !accessToken) return { success: false, error: 'Email and token required' };
+  try {
+    const res = await workerApiCall('/google/store-token', {
+      method: 'POST',
+      body: JSON.stringify({
+        email: cleanEmail,
+        google_token: accessToken,
+        google_user: googleUser || { email: cleanEmail }
+      })
+    });
+    return res || { success: true };
+  } catch (e) {
+    console.warn('Backend Google token sync notice:', e.message);
+    return { success: false, error: e.message };
+  }
+}
+
+async function revokeGoogleSession() {
+  const sess = checkGoogleSession();
+  const email = (sess && sess.user && sess.user.email) || (getCurrentUser() && getCurrentUser().email) || '';
+  try { localStorage.removeItem(GOOGLE_SESSION_KEY); } catch (e) { }
+  if (email) {
+    try {
+      await workerApiCall('/google/revoke-token', {
+        method: 'DELETE',
+        body: JSON.stringify({ email: email.trim().toLowerCase() })
+      });
+    } catch (e) { }
+  }
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('spider_google_auth_updated', { detail: { user: null, accessToken: null } }));
+  }
+}
+
+function _saveGoogleSessionLocal(googleUser, accessToken) {
+  try {
+    localStorage.setItem(GOOGLE_SESSION_KEY, JSON.stringify({
+      user: googleUser,
+      accessToken,
+      loginTime: Date.now()
+    }));
+  } catch (e) { }
+}
+
+function _decodeJwtPayloadSafe(token) {
+  try {
+    const parts = String(token || '').split('.');
+    if (parts.length !== 3) return null;
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(atob(base64));
+  } catch (e) {
+    return null;
+  }
+}
+
+let _googleOAuthCapturePromise = null;
+function captureGoogleOAuthTokenFromHash() {
+  if (typeof window === 'undefined' || !window.location || !window.location.hash) return null;
+  const hash = window.location.hash;
+
+  if (hash.includes('error=') && !hash.includes('access_token=')) {
+    const errParams = new URLSearchParams(hash.substring(1));
+    const errMsg = errParams.get('error_description') || errParams.get('error') || 'Google sign-in cancelled';
+    try {
+      window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+    } catch (e) { }
+    setTimeout(() => { try { showToast('⚠️ ' + errMsg, 'error'); } catch (e) { } }, 200);
+    return null;
+  }
+
+  if (!hash.includes('access_token=')) return null;
+
+  const params = new URLSearchParams(hash.substring(1));
+  const token = params.get('access_token');
+  const idToken = params.get('id_token');
+  if (!token) return null;
+
+  // Clean token fragment from URL immediately so it never stays in browser history
+  try {
+    window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+  } catch (e) { }
+
+  const portalUser = getCurrentUser();
+  const decoded = _decodeJwtPayloadSafe(idToken || token);
+  let googleUser = {
+    email: (decoded && decoded.email) || (portalUser && portalUser.email) || '',
+    name: (decoded && decoded.name) || (portalUser && portalUser.name) || 'Google User',
+    picture: (decoded && decoded.picture) || '',
+    id: (decoded && decoded.sub) || ''
+  };
+
+  // Persist immediately in localStorage so any immediate UI check sees it
+  _saveGoogleSessionLocal(googleUser, token);
+
+  _googleOAuthCapturePromise = (async () => {
+    try {
+      const userRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (userRes.ok) {
+        const info = await userRes.json();
+        if (info && (info.email || info.sub)) {
+          googleUser = {
+            email: info.email || googleUser.email,
+            name: info.name || googleUser.name,
+            picture: info.picture || googleUser.picture,
+            id: info.sub || googleUser.id
+          };
+          _saveGoogleSessionLocal(googleUser, token);
+        }
+      }
+    } catch (e) {
+      console.warn('Google userinfo lookup notice:', e.message);
+    }
+
+    const emailToStore = (googleUser.email || (portalUser && portalUser.email) || '').trim().toLowerCase();
+    if (emailToStore) {
+      await Promise.race([
+        storeGoogleTokenInBackend(emailToStore, token, googleUser),
+        new Promise(resolve => setTimeout(resolve, 2500))
+      ]);
+    }
+
+    window.dispatchEvent(new CustomEvent('spider_google_auth_updated', {
+      detail: { user: googleUser, accessToken: token }
+    }));
+
+    try {
+      showToast(`✅ Google Connected: ${emailToStore || 'Token stored'}`, 'success');
+    } catch (e) { }
+
+    // Return user straight back to the lecture/page where they clicked "Sign in with Google"
+    try {
+      const savedReturn = sessionStorage.getItem(GOOGLE_RETURN_URL_KEY) || localStorage.getItem(GOOGLE_RETURN_URL_KEY) || '';
+      sessionStorage.removeItem(GOOGLE_RETURN_URL_KEY);
+      localStorage.removeItem(GOOGLE_RETURN_URL_KEY);
+      if (savedReturn) {
+        const retUrl = new URL(savedReturn, window.location.origin);
+        const normPath = p => (p === '/' ? '/index.html' : p);
+        const curFull = normPath(window.location.pathname) + window.location.search;
+        const retFull = normPath(retUrl.pathname) + retUrl.search;
+        if (retUrl.origin === window.location.origin && retFull !== curFull) {
+          window.location.replace(retUrl.href);
+        }
+      }
+    } catch (e) { }
+
+    return googleUser;
+  })();
+
+  return _googleOAuthCapturePromise;
+}
+
+if (typeof window !== 'undefined') {
+  captureGoogleOAuthTokenFromHash();
+}
+
 // ===== CHAPTER YOUTUBE PLAYLIST AUTOSYNC SYSTEM =====
 const CHAPTER_PLAYLISTS_KEY = 'sp_chapter_playlists';
 
@@ -7006,6 +7218,8 @@ window.DB = {
   // YouTube Utilities (Synced from old admin)
   extractYouTubePlaylistId, extractYouTubeVideoId, parseBulkYouTubeVideos, fetchYouTubePlaylistVideos,
   fetchYouTubeBatchVideos, parseBulkLinksOrPlaylist, DEFAULT_YT_API_KEY, testYouTubeConnection,
+  // Google OAuth Token Storage (For Private YouTube Videos)
+  getGoogleAuthUrl, startGoogleOAuthLogin, checkGoogleSession, storeGoogleTokenInBackend, revokeGoogleSession,
   // YouTube Playlist AutoSync & Cleanup
   getAllChapterPlaylists, getChapterPlaylist, setChapterPlaylist, syncCloudChapterPlaylists, syncChapterWithPlaylist, syncAllChapterPlaylists,
   applyRealTitlesToChapter,

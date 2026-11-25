@@ -32,7 +32,7 @@
       }
     }
   </script>
-  <link rel="stylesheet" href="style.css?v=2.6">
+  <link rel="stylesheet" href="style.css?v=2.9">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>▶</text></svg>">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -176,6 +176,18 @@
   </aside>
 
   <div class="page">
+    <!-- 🔑 Google Token Connect Bar (For Private YouTube Videos) -->
+    <div id="googleConnectBar" class="google-connect-bar">
+      <div class="google-connect-status">
+        <span id="indexGoogleDot" class="google-status-dot"></span>
+        <span id="indexGoogleStatusText">Google not connected — Sign in to watch private YouTube videos.</span>
+      </div>
+      <button type="button" id="indexGoogleBtn" class="yt-help-btn yt-btn-primary" onclick="handleIndexGoogleSignIn()" title="Sign in with Google & Store Token">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m21 4.5-8.5 8.5"/><path d="m15.5 10 2 2"/><path d="m18 7.5 2 2"/></svg>
+        <span id="indexGoogleBtnLabel">Sign in with Google</span>
+      </button>
+    </div>
+
     <!-- 🔴 HERO LIVE ALERT BANNER (Active when class is streaming now) -->
     <div id="liveHeroArea"></div>
 
@@ -236,7 +248,7 @@
   </div>
 
 
-  <script src="store.js?v=2.8"></script>
+  <script src="store.js?v=2.9"></script>
   <script>
     // ===== AUTH GUARD & ZERO-TRUST SESSION CHECK =====
     (function authGuard() {
@@ -383,7 +395,12 @@
         if (embedMatch) id = embedMatch[1];
       }
       if (id) {
-        return `https://www.youtube.com/embed/${id}?enablejsapi=1&autoplay=1&rel=0&modestbranding=1&controls=1&showinfo=0&iv_load_policy=3`;
+        let embedUrl = `https://www.youtube.com/embed/${id}?enablejsapi=1&autoplay=1&rel=0&modestbranding=1&controls=1&showinfo=0&iv_load_policy=3`;
+        const gSess = (window.DB && DB.checkGoogleSession) ? DB.checkGoogleSession() : null;
+        if (gSess && gSess.user && window.location.origin && window.location.origin !== 'null') {
+          embedUrl += `&origin=${encodeURIComponent(window.location.origin)}`;
+        }
+        return embedUrl;
       }
       return null;
     }
@@ -1319,7 +1336,46 @@
       } catch (e) {}
     }
 
+    function updateIndexGoogleStatus() {
+      const dot = document.getElementById('indexGoogleDot');
+      const txt = document.getElementById('indexGoogleStatusText');
+      const btn = document.getElementById('indexGoogleBtn');
+      const lbl = document.getElementById('indexGoogleBtnLabel');
+      const gSess = (window.DB && DB.checkGoogleSession) ? DB.checkGoogleSession() : null;
+      if (gSess && gSess.accessToken) {
+        const curU = (window.DB && DB.getCurrentUser) ? DB.getCurrentUser() : null;
+        const em = (gSess.user && gSess.user.email) || (curU && curU.email) || 'Connected';
+        if (dot) dot.classList.add('connected');
+        if (txt) txt.textContent = 'Google Connected: ' + em;
+        if (btn) {
+          btn.classList.remove('yt-btn-primary');
+          btn.classList.add('yt-btn-connected');
+        }
+        if (lbl) lbl.textContent = 'Connected (Switch)';
+      } else {
+        if (dot) dot.classList.remove('connected');
+        if (txt) txt.textContent = 'Google not connected — Sign in to watch private YouTube videos.';
+        if (btn) {
+          btn.classList.remove('yt-btn-connected');
+          btn.classList.add('yt-btn-primary');
+        }
+        if (lbl) lbl.textContent = 'Sign in with Google';
+      }
+    }
+
+    function handleIndexGoogleSignIn() {
+      if (window.DB && DB.startGoogleOAuthLogin) {
+        DB.startGoogleOAuthLogin(window.location.href);
+      }
+    }
+
+    window.addEventListener('spider_google_auth_updated', updateIndexGoogleStatus);
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'google_session') updateIndexGoogleStatus();
+    });
+
     async function init(){
+      updateIndexGoogleStatus();
       // 1. Instant Cache Paint (0ms load time!)
       loadFromCache();
       renderPills();

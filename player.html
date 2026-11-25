@@ -35,7 +35,7 @@
       }
     }
   </script>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=2.9">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>▶</text></svg>">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
@@ -262,11 +262,11 @@
         </div>
       </div>
 
-      <!-- YouTube Google Account Verification & Help Bar (Positioned at bottom of class) -->
+      <!-- YouTube Google Account Verification & Token Connect Bar (Positioned at bottom of class) -->
       <div id="ytPrivateHelpBar" class="yt-private-help-bar" style="display: none;">
         <div class="yt-help-text">
           <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"/><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"/><path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.3 0 15.2s.7 5.5 1.9 7.9l3.7-2.9z"/><path fill="#34A853" d="M12 23.5c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2-6.4-4.8L1.9 17c1.8 3.7 5.6 6.5 10.1 6.5z"/></svg>
-          <span>Private Video Access: Ensure your registered Google account (<b id="ytHelperUserEmail">student@gmail.com</b>) is signed in to YouTube.</span>
+          <span id="ytHelpStatusMsg">Private Video Access: Sign in with your Google account (<b id="ytHelperUserEmail">student@gmail.com</b>) to store your token.</span>
         </div>
         <div class="yt-help-actions">
           <button type="button" class="yt-help-btn yt-cc-btn" id="ytCcBtn" onclick="toggleYouTubeCaptions()" title="Toggle Subtitles / Captions">
@@ -276,10 +276,10 @@
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
             Refresh Player
           </button>
-          <a href="https://accounts.google.com/ServiceLogin?service=youtube" target="_blank" class="yt-help-btn yt-btn-primary" title="Check YouTube Google Sign-In">
+          <button type="button" class="yt-help-btn yt-btn-primary" id="ytGoogleSignInBtn" onclick="handleGoogleSignInClick()" title="Sign in with Google & Store Token">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m21 4.5-8.5 8.5"/><path d="m15.5 10 2 2"/><path d="m18 7.5 2 2"/></svg>
-            Sign In to YouTube
-          </a>
+            <span id="ytGoogleBtnText">Sign in with Google</span>
+          </button>
         </div>
       </div>
     </div>
@@ -356,7 +356,7 @@
   </div>
 
   <div class="toast-container"></div>
-  <script src="store.js?v=2.8"></script>
+  <script src="store.js?v=2.9"></script>
   <script>
     // ===== AUTH GUARD & FORENSIC ANTI-PIRACY SHIELD =====
     (function authGuard() {
@@ -708,6 +708,52 @@
       }
     }
 
+    function updateGoogleConnectUI() {
+      const msgEl = document.getElementById('ytHelpStatusMsg');
+      const btn = document.getElementById('ytGoogleSignInBtn');
+      const btnText = document.getElementById('ytGoogleBtnText');
+      const gSess = (typeof DB !== 'undefined' && DB.checkGoogleSession) ? DB.checkGoogleSession() : null;
+      const curU = (typeof DB !== 'undefined' && DB.getCurrentUser) ? DB.getCurrentUser() : null;
+      const fallbackEmail = (curU && curU.email) || 'Student Gmail';
+
+      if (gSess && gSess.accessToken) {
+        const gEmail = (gSess.user && gSess.user.email) || fallbackEmail;
+        if (msgEl) {
+          msgEl.innerHTML = `✅ <strong>Google Connected:</strong> <b id="ytHelperUserEmail">${escapeHtml(gEmail)}</b> — Token active for private videos.`;
+        }
+        if (btn) {
+          btn.classList.remove('yt-btn-primary');
+          btn.classList.add('yt-btn-connected');
+          btn.title = 'Google token saved — click to switch Google account';
+        }
+        if (btnText) btnText.textContent = 'Google Connected';
+      } else {
+        if (msgEl) {
+          msgEl.innerHTML = `Private Video Access: Sign in with your Google account (<b id="ytHelperUserEmail">${escapeHtml(fallbackEmail)}</b>) to store your token.`;
+        }
+        if (btn) {
+          btn.classList.remove('yt-btn-connected');
+          btn.classList.add('yt-btn-primary');
+          btn.title = 'Sign in with Google & Store Token';
+        }
+        if (btnText) btnText.textContent = 'Sign in with Google';
+      }
+    }
+
+    function handleGoogleSignInClick() {
+      if (typeof DB !== 'undefined' && DB.startGoogleOAuthLogin) {
+        DB.startGoogleOAuthLogin(window.location.href);
+      }
+    }
+
+    window.addEventListener('spider_google_auth_updated', () => {
+      updateGoogleConnectUI();
+      reloadYouTubePlayer();
+    });
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'google_session') updateGoogleConnectUI();
+    });
+
     function unmuteYouTubePlayer() {
       const ytFrame = document.getElementById('ytEmbedPlayer');
       if (ytFrame && ytFrame.contentWindow) {
@@ -880,9 +926,7 @@
         const ytHelp = document.getElementById('ytPrivateHelpBar');
         if(ytHelp){
           ytHelp.style.display = 'flex';
-          const emailEl = document.getElementById('ytHelperUserEmail');
-          const curU = (typeof DB !== 'undefined' && DB.getCurrentUser) ? DB.getCurrentUser() : null;
-          if(emailEl) emailEl.textContent = curU?.email || 'Student Gmail';
+          updateGoogleConnectUI();
         }
 
         ytCaptionsEnabled = false;
@@ -909,7 +953,12 @@
             }, ms);
           });
         };
-        ytFrame.src = `https://www.youtube.com/embed/${ytId}?enablejsapi=1&autoplay=1&mute=0&playsinline=1&rel=0&modestbranding=1&controls=1&showinfo=0&iv_load_policy=3`;
+        let ytEmbedUrl = `https://www.youtube.com/embed/${ytId}?enablejsapi=1&autoplay=1&mute=0&playsinline=1&rel=0&modestbranding=1&controls=1&showinfo=0&iv_load_policy=3`;
+        const gSess = (typeof DB !== 'undefined' && DB.checkGoogleSession) ? DB.checkGoogleSession() : null;
+        if (gSess && gSess.user && window.location.origin && window.location.origin !== 'null') {
+          ytEmbedUrl += `&origin=${encodeURIComponent(window.location.origin)}`;
+        }
+        ytFrame.src = ytEmbedUrl;
         return;
       }
 

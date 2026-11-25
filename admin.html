@@ -3202,7 +3202,7 @@
   </div>
 
   <div class="toast-container"></div>
-  <script src="store.js?v=2.8"></script>
+  <script src="store.js?v=2.9"></script>
 
   <script>
     // ===== STATE =====
@@ -3485,7 +3485,7 @@
       if (!window._presencePollingTimer) {
         window._presencePollingTimer = setInterval(() => {
           if (typeof updateOnlinePresence === 'function') updateOnlinePresence();
-        }, 3500);
+        }, 15000);
       }
       if (window.DB && typeof DB.initSupabaseAdminPresence === 'function') {
         DB.initSupabaseAdminPresence(() => {
@@ -5526,7 +5526,7 @@
         renderUsersTableRows();
 
         if (!presencePollingInterval) {
-          presencePollingInterval = setInterval(updateOnlinePresence, 3500);
+          presencePollingInterval = setInterval(updateOnlinePresence, 15000);
         }
 
         // 🔄 Automatic background refresh (silent) every 15 seconds
